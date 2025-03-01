@@ -4,7 +4,9 @@ TSX (Tow-Tone Shift-XOR) is an erasure code algorithm integrated into Ceph. This
 
 ## Integration into Ceph
 
-To integrate the TSX erasure code algorithm into Ceph, you need to modify the `CMakeLists.txt` file located in the `src/erasure-code` directory. Specifically, you should add the following lines:
+To integrate the TSX erasure code algorithm into Ceph, you need to place the repository folder in the `/src/erasure-code` directory, with the repository name itself being `tsx`.
+
+Next, you need to modify the `CMakeLists.txt` file located in the `src/erasure-code` directory. Specifically, you should add the following lines:
 
 ```cmake
 add_subdirectory(tsx)
@@ -18,4 +20,4 @@ add_custom_target(ec_tsx)
 
 ## Reference
 
-For more detailed information about the TSX algorithm, you can refer to the research paper available at the following link: [Tow-Tone Shift-XOR Algorithm](https://ieeexplore.ieee.org/document/9518205).
+For more detailed information about the TSX algorithm, you can refer to the research paper available at the following link: [Two-tone Shift-XOR Storage Codes](https://ieeexplore.ieee.org/document/9518205).
