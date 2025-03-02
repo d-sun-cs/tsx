@@ -1,6 +1,6 @@
-# TSX (Tow-Tone Shift-XOR) Erasure Code Algorithm
+# TSX (Tow-tone Shift-XOR) Erasure Code Algorithm
 
-TSX (Tow-Tone Shift-XOR) is an erasure code algorithm integrated into Ceph. This algorithm provides efficient data protection and recovery capabilities.
+TSX (Tow-tone Shift-XOR) is an erasure code algorithm integrated into Ceph. This algorithm provides efficient data protection and recovery capabilities.
 
 ## Integration into Ceph
 
