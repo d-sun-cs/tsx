@@ -23,7 +23,6 @@
 #include "erasure-code/ErasureCodePlugin.h"
 
 #include "ErasureCodeTsx.h"
-#include "shift_xor_simple.cpp"
 
 #define dout_context g_ceph_context
 #define dout_subsys ceph_subsys_osd
@@ -51,10 +50,17 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   dout(10) << "encode_chunks: want_to_encode size = " << want_to_encode.size() << dendl;
 
   // Prepare input chunks
-  uint8_t* input_chunks[8];
-  for (int i = 0; i < 8; ++i) {
-    input_chunks[i] = (uint8_t*)(*encoded)[i].c_str();
+  uint8_t* chunks[chunk_count];
+  for (unsigned int i = 0; i < chunk_count; ++i) {
+    chunks[i] = (uint8_t*)(*encoded)[i].c_str();
   }
+
+  // Calculate k and m
+  const int k = data_chunk_count;
+
+  // Define constants
+  const int SLICE = 8;
+  const int TOTAL_SLICE_NUM = (get_chunk_size((*encoded)[0].length()) / SLICE);
 
   // Shift XOR encode algorithm
   uint64_t slice_offset_1;
@@ -65,78 +71,73 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = slice_id * SLICE;
     slice_offset_3 = ((slice_id + 7) * SLICE);
-    *(uint64_t*)(parity_packet_1 + slice_offset_1) = *(uint64_t*)(input_chunks[0] + slice_offset_2);
-    *(uint64_t*)(parity_packet_2 + slice_offset_2) = *(uint64_t*)(input_chunks[0] + slice_offset_2);
-    *(uint64_t*)(parity_packet_3 + slice_offset_3) = *(uint64_t*)(input_chunks[0] + slice_offset_2);
+    *(uint64_t*)(chunks[k] + slice_offset_1) = *(uint64_t*)(chunks[0] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 1] + slice_offset_2) = *(uint64_t*)(chunks[0] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 2] + slice_offset_3) = *(uint64_t*)(chunks[0] + slice_offset_2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 1) * SLICE);
     slice_offset_3 = ((slice_id + 6) * SLICE);
-    *(uint64_t*)(parity_packet_1 + slice_offset_1) ^= *(uint64_t*)(input_chunks[1] + slice_offset_2);
-    *(uint64_t*)(parity_packet_2 + slice_offset_2) ^= *(uint64_t*)(input_chunks[1] + slice_offset_2);
-    *(uint64_t*)(parity_packet_3 + slice_offset_3) ^= *(uint64_t*)(input_chunks[1] + slice_offset_2);
+    *(uint64_t*)(chunks[k] + slice_offset_1) ^= *(uint64_t*)(chunks[1] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 1] + slice_offset_2) ^= *(uint64_t*)(chunks[1] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 2] + slice_offset_3) ^= *(uint64_t*)(chunks[1] + slice_offset_2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 2) * SLICE);
     slice_offset_3 = ((slice_id + 5) * SLICE);
-    *(uint64_t*)(parity_packet_1 + slice_offset_1) ^= *(uint64_t*)(input_chunks[2] + slice_offset_2);
-    *(uint64_t*)(parity_packet_2 + slice_offset_2) ^= *(uint64_t*)(input_chunks[2] + slice_offset_2);
-    *(uint64_t*)(parity_packet_3 + slice_offset_3) ^= *(uint64_t*)(input_chunks[2] + slice_offset_2);
+    *(uint64_t*)(chunks[k] + slice_offset_1) ^= *(uint64_t*)(chunks[2] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 1] + slice_offset_2) ^= *(uint64_t*)(chunks[2] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 2] + slice_offset_3) ^= *(uint64_t*)(chunks[2] + slice_offset_2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 3) * SLICE);
     slice_offset_3 = ((slice_id + 4) * SLICE);
-    *(uint64_t*)(parity_packet_1 + slice_offset_1) ^= *(uint64_t*)(input_chunks[3] + slice_offset_2);
-    *(uint64_t*)(parity_packet_2 + slice_offset_2) ^= *(uint64_t*)(input_chunks[3] + slice_offset_2);
-    *(uint64_t*)(parity_packet_3 + slice_offset_3) ^= *(uint64_t*)(input_chunks[3] + slice_offset_2);
+    *(uint64_t*)(chunks[k] + slice_offset_1) ^= *(uint64_t*)(chunks[3] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 1] + slice_offset_2) ^= *(uint64_t*)(chunks[3] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 2] + slice_offset_3) ^= *(uint64_t*)(chunks[3] + slice_offset_2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 4) * SLICE);
     slice_offset_3 = ((slice_id + 3) * SLICE);
-    *(uint64_t*)(parity_packet_1 + slice_offset_1) ^= *(uint64_t*)(input_chunks[4] + slice_offset_2);
-    *(uint64_t*)(parity_packet_2 + slice_offset_2) ^= *(uint64_t*)(input_chunks[4] + slice_offset_2);
-    *(uint64_t*)(parity_packet_3 + slice_offset_3) ^= *(uint64_t*)(input_chunks[4] + slice_offset_2);
+    *(uint64_t*)(chunks[k] + slice_offset_1) ^= *(uint64_t*)(chunks[4] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 1] + slice_offset_2) ^= *(uint64_t*)(chunks[4] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 2] + slice_offset_3) ^= *(uint64_t*)(chunks[4] + slice_offset_2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 5) * SLICE);
     slice_offset_3 = ((slice_id + 2) * SLICE);
-    *(uint64_t*)(parity_packet_1 + slice_offset_1) ^= *(uint64_t*)(input_chunks[5] + slice_offset_2);
-    *(uint64_t*)(parity_packet_2 + slice_offset_2) ^= *(uint64_t*)(input_chunks[5] + slice_offset_2);
-    *(uint64_t*)(parity_packet_3 + slice_offset_3) ^= *(uint64_t*)(input_chunks[5] + slice_offset_2);
+    *(uint64_t*)(chunks[k] + slice_offset_1) ^= *(uint64_t*)(chunks[5] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 1] + slice_offset_2) ^= *(uint64_t*)(chunks[5] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 2] + slice_offset_3) ^= *(uint64_t*)(chunks[5] + slice_offset_2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 6) * SLICE);
     slice_offset_3 = ((slice_id + 1) * SLICE);
-    *(uint64_t*)(parity_packet_1 + slice_offset_1) ^= *(uint64_t*)(input_chunks[6] + slice_offset_2);
-    *(uint64_t*)(parity_packet_2 + slice_offset_2) ^= *(uint64_t*)(input_chunks[6] + slice_offset_2);
-    *(uint64_t*)(parity_packet_3 + slice_offset_3) ^= *(uint64_t*)(input_chunks[6] + slice_offset_2);
+    *(uint64_t*)(chunks[k] + slice_offset_1) ^= *(uint64_t*)(chunks[6] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 1] + slice_offset_2) ^= *(uint64_t*)(chunks[6] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 2] + slice_offset_3) ^= *(uint64_t*)(chunks[6] + slice_offset_2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 7) * SLICE);
     slice_offset_3 = slice_id * SLICE;
-    *(uint64_t*)(parity_packet_1 + slice_offset_1) ^= *(uint64_t*)(input_chunks[7] + slice_offset_2);
-    *(uint64_t*)(parity_packet_2 + slice_offset_2) ^= *(uint64_t*)(input_chunks[7] + slice_offset_2);
-    *(uint64_t*)(parity_packet_3 + slice_offset_3) ^= *(uint64_t*)(input_chunks[7] + slice_offset_2);
+    *(uint64_t*)(chunks[k] + slice_offset_1) ^= *(uint64_t*)(chunks[7] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 1] + slice_offset_2) ^= *(uint64_t*)(chunks[7] + slice_offset_2);
+    *(uint64_t*)(chunks[k + 2] + slice_offset_3) ^= *(uint64_t*)(chunks[7] + slice_offset_2);
   }
-
-  // Store encoded chunks
-  (*encoded)[8].append((char*)parity_packet_1, PARITY_SIZE);
-  (*encoded)[9].append((char*)parity_packet_2, PARITY_SIZE);
-  (*encoded)[10].append((char*)parity_packet_3, PARITY_SIZE);
 
   return 0;
 }
@@ -154,7 +155,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   int erasures_count = 0;
   uint8_t* data[data_chunk_count];
   uint8_t* coding[chunk_count - data_chunk_count];
-  for (int i = 0; i < chunk_count; i++) {
+  for (unsigned int i = 0; i < chunk_count; i++) {
     if (chunks.find(i) == chunks.end()) {
       erasures[erasures_count] = i;
       erasures_count++;
@@ -168,6 +169,14 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 
   ceph_assert(erasures_count > 0);
 
+  // Calculate k and m
+  const int k = data_chunk_count;
+
+  // Define constants
+  const int SLICE = 8;
+  const int TOTAL_SLICE_NUM = (blocksize / SLICE);
+  const int PARITY_SIZE = blocksize + (SLICE * 20);
+
   // Shift XOR decode algorithm
   uint64_t slice_offset_1;
   uint64_t slice_offset_2;
@@ -179,6 +188,10 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   memcpy(decode_arr_1, coding[0], PARITY_SIZE);
   memcpy(decode_arr_2, coding[1], PARITY_SIZE);
   memcpy(decode_arr_3, coding[2], PARITY_SIZE);
+
+  uint8_t output_chunk_6[blocksize];
+  uint8_t output_chunk_7[blocksize];
+  uint8_t output_chunk_8[blocksize];
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
@@ -265,9 +278,9 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   free(decode_arr_3);
 
   // Store decoded chunks
-  (*decoded)[8].append((char*)output_chunk_6, CHUNK_SIZE);
-  (*decoded)[9].append((char*)output_chunk_7, CHUNK_SIZE);
-  (*decoded)[10].append((char*)output_chunk_8, CHUNK_SIZE);
+  (*decoded)[k].append((char*)output_chunk_6, blocksize);
+  (*decoded)[k + 1].append((char*)output_chunk_7, blocksize);
+  (*decoded)[k + 2].append((char*)output_chunk_8, blocksize);
 
   return 0;
 }
