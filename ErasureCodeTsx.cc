@@ -331,11 +331,11 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     }
   }
 
-  if (available_chunks.find(6) != available_chunks.end()) {
+  if (available_chunks.find(7) != available_chunks.end()) {
     for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
       slice_offset_2 = slice_id * SLICE;
       slice_offset_1 = (slice_id + 7) * SLICE;
-      slice_offset_3 = (slice_id * SLICE;
+      slice_offset_3 = (slice_id * SLICE);
 
       if (available_chunks.find(k) != available_chunks.end()){
         *(uint64_t*)(decode_arr_1 + slice_offset_1) ^= *(uint64_t*)(data[7] + slice_offset_2);
