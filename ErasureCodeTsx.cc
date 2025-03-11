@@ -17,6 +17,7 @@
 
 #include <cerrno>
 #include <algorithm>
+#include <fstream>
 
 #include "common/debug.h"
 #include "include/stringify.h"
@@ -32,6 +33,7 @@
 using namespace std;
 using namespace ceph;
 
+
 static ostream& _prefix(std::ostream* _dout)
 {
   return *_dout << "ErasureCodeTsx: ";
@@ -46,12 +48,17 @@ unsigned int ErasureCodeTsx::get_chunk_size(unsigned int object_size) const
 int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 				  map<int, bufferlist> *encoded)
 {
-  // Debug output
-  dout(10) << "encode_chunks: want_to_encode size = " << want_to_encode.size() << dendl;
+  static int encode_call_count = 0;
+  encode_call_count++;
+  ofstream encode_log("mylog-encode.txt", ios_base::app);
+  encode_log << "Encode call count: " << encode_call_count << endl;
+  encode_log.close();
 
   // Prepare input chunks
   uint8_t* chunks[chunk_count];
   for (unsigned int i = 0; i < chunk_count; ++i) {
+    // (*encoded)[i].push_back(buffer::create_aligned(160, SIMD_ALIGN));
+    // chunks[i] = (uint8_t*)(*encoded)[i].to_str().c_str();
     chunks[i] = (uint8_t*)(*encoded)[i].c_str();
   }
 
@@ -60,7 +67,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 
   // Define constants
   const int SLICE = 8;
-  const int TOTAL_SLICE_NUM = (get_chunk_size((*encoded)[0].length()) / SLICE);
+  const int TOTAL_SLICE_NUM = (*encoded)[0].length() / SLICE / 2;
 
   // Shift XOR encode algorithm
   uint64_t slice_offset_1;
@@ -146,8 +153,11 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 				  const map<int, bufferlist> &chunks,
 				  map<int, bufferlist> *decoded)
 {
-  // Debug output
-  dout(10) << "decode_chunks: want_to_read size = " << want_to_read.size() << dendl;
+  static int decode_call_count = 0;
+  decode_call_count++;
+  ofstream decode_log("mylog-decode.txt", ios_base::app);
+  decode_log << "Decode call count: " << decode_call_count << endl;
+  decode_log.close();
 
   // Prepare input chunks
   unsigned blocksize = (*chunks.begin()).second.length();
@@ -161,9 +171,9 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       erasures_count++;
     }
     if (i < data_chunk_count)
-      data[i] = (uint8_t*)(*decoded)[i].c_str();
+      data[i] = (uint8_t*)(*decoded)[i].to_str().c_str();
     else
-      coding[i - data_chunk_count] = (uint8_t*)(*decoded)[i].c_str();
+      coding[i - data_chunk_count] = (uint8_t*)(*decoded)[i].to_str().c_str();
   }
   erasures[erasures_count] = -1;
 
@@ -188,10 +198,6 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   memcpy(decode_arr_1, coding[0], PARITY_SIZE);
   memcpy(decode_arr_2, coding[1], PARITY_SIZE);
   memcpy(decode_arr_3, coding[2], PARITY_SIZE);
-
-  uint8_t output_chunk_6[blocksize];
-  uint8_t output_chunk_7[blocksize];
-  uint8_t output_chunk_8[blocksize];
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
@@ -248,7 +254,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_3 = ((slice_id) + 2) * SLICE;
 
-    *(uint64_t*)(output_chunk_6 + slice_offset_2) = *(uint64_t*)(decode_arr_1 + slice_offset_1);
+    *(uint64_t*)(data[5] + slice_offset_2) = *(uint64_t*)(decode_arr_1 + slice_offset_1);
     *(uint64_t*)(decode_arr_2 + slice_offset_2) ^= *(uint64_t*)(decode_arr_1 + slice_offset_1);
     *(uint64_t*)(decode_arr_3 + slice_offset_3) ^= *(uint64_t*)(decode_arr_1 + slice_offset_1);
   }
@@ -258,7 +264,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_3 = slice_id * SLICE;
 
-    *(uint64_t*)(output_chunk_8 + slice_offset_2) = *(uint64_t*)(decode_arr_3 + slice_offset_3);
+    *(uint64_t*)(data[7] + slice_offset_2) = *(uint64_t*)(decode_arr_3 + slice_offset_3);
     *(uint64_t*)(decode_arr_1 + slice_offset_1) ^= *(uint64_t*)(decode_arr_3 + slice_offset_3);
     *(uint64_t*)(decode_arr_2 + slice_offset_2) ^= *(uint64_t*)(decode_arr_3 + slice_offset_3);
   }
@@ -268,7 +274,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_3 = ((slice_id + 1) * SLICE);
 
-    *(uint64_t*)(output_chunk_7 + slice_offset_2) = *(uint64_t*)(decode_arr_2 + slice_offset_2);
+    *(uint64_t*)(data[6] + slice_offset_2) = *(uint64_t*)(decode_arr_2 + slice_offset_2);
     *(uint64_t*)(decode_arr_1 + slice_offset_1) ^= *(uint64_t*)(decode_arr_2 + slice_offset_2);
     *(uint64_t*)(decode_arr_3 + slice_offset_3) ^= *(uint64_t*)(decode_arr_2 + slice_offset_2);
   }
@@ -276,11 +282,6 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   free(decode_arr_1);
   free(decode_arr_2);
   free(decode_arr_3);
-
-  // Store decoded chunks
-  (*decoded)[k].append((char*)output_chunk_6, blocksize);
-  (*decoded)[k + 1].append((char*)output_chunk_7, blocksize);
-  (*decoded)[k + 2].append((char*)output_chunk_8, blocksize);
 
   return 0;
 }
