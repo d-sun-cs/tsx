@@ -10,6 +10,7 @@ CEPH_SRC=$(cd ../.. && pwd)
 
 cd $CEPH_BUILD
 
+ninja vstart
 $CEPH_BUILD/bin/init-ceph stop
 $CEPH_SRC/stop.sh
 env OSD=11 $CEPH_SRC/vstart.sh -d -n

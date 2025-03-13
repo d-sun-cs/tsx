@@ -33,7 +33,7 @@
 
 #define EXTRA_DATA_SIZE 64
 #define PARITY_CHUNKS 3
-#define ENABLE_LOGGING 1
+#define ENABLE_LOGGING 0
 
 using namespace std;
 using namespace ceph;

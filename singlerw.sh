@@ -18,10 +18,11 @@ $CEPH_BUILD/bin/ceph osd stop osd.8
 $CEPH_BUILD/bin/ceph osd stop osd.3
 $CEPH_BUILD/bin/ceph osd stop osd.1
 
+rm -f $CEPH_BUILD/mylargefile
 $CEPH_BUILD/bin/rados get largefile mylargefile -p tsx-pool
 diff $CEPH_BUILD/mylargefile /tmp/largefile
 if [ $? -eq 0 ]; then
-  echo "The files are identical"
+  echo "Test passed! The files are identical"
 fi
 
 cd $current_dir
