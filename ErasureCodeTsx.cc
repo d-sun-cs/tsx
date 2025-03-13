@@ -33,6 +33,7 @@
 
 #define EXTRA_DATA_SIZE 64
 #define PARITY_CHUNKS 3
+#define ENABLE_LOGGING 1
 
 using namespace std;
 using namespace ceph;
@@ -55,8 +56,10 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 {
   static int encode_call_count = -1;
   encode_call_count++;
+#if ENABLE_LOGGING
   ofstream encode_log("mylog-encode.txt", ios_base::app);
   // encode_log << "Encode call count: " << encode_call_count << std::endl;
+#endif
 
   // Prepare input chunks
   uint8_t *chunks[chunk_count];
@@ -176,6 +179,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   parity_extra_data[encode_call_count] = extra_data;
 
   // Log the extra data for debugging
+#if ENABLE_LOGGING
   encode_log << "Extra data for encode call " << encode_call_count << ":" << std::endl;
   for (int i = 0; i < PARITY_CHUNKS; ++i) {
     encode_log << "  Chunk " << i << ": ";
@@ -195,6 +199,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     encode_log << std::endl;
   }
   encode_log.close();
+#endif
 
   delete[] temp_chunks_k;
   delete[] temp_chunks_k1;
@@ -209,8 +214,10 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 {
   static int decode_call_count = -1;
   decode_call_count++;
+#if ENABLE_LOGGING
   ofstream decode_log("mylog-decode.txt", ios_base::app);
   // decode_log << "Decode call count: " << decode_call_count << std::endl;
+#endif
 
   // Prepare input chunks
   unsigned blocksize = (*chunks.begin()).second.length();
@@ -248,6 +255,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   memcpy(decode_arr_3 + blocksize, extra_data[2].data(), EXTRA_DATA_SIZE);
 
   // Log the extra data for debugging
+#if ENABLE_LOGGING
   decode_log << "Extra data for decode call " << decode_call_count << ":" << std::endl;
   for (int i = 0; i < PARITY_CHUNKS; ++i) {
     decode_log << "  Chunk " << i << ": ";
@@ -267,6 +275,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     decode_log << std::endl;
   }
   decode_log.close();
+#endif
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
   {
