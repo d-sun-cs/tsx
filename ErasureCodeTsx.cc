@@ -58,7 +58,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   encode_call_count++;
 #if ENABLE_LOGGING
   ofstream encode_log("mylog-encode.txt", ios_base::app);
-  // encode_log << "Encode call count: " << encode_call_count << std::endl;
+  encode_log << "Encode call count: " << encode_call_count << std::endl;
 #endif
 
   // Prepare input chunks
@@ -216,7 +216,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   decode_call_count++;
 #if ENABLE_LOGGING
   ofstream decode_log("mylog-decode.txt", ios_base::app);
-  // decode_log << "Decode call count: " << decode_call_count << std::endl;
+  decode_log << "Decode call count: " << decode_call_count << std::endl;
 #endif
 
   // Prepare input chunks
