@@ -33,7 +33,7 @@
 
 #define EXTRA_DATA_SIZE 64
 #define PARITY_CHUNKS 3
-#define ENABLE_LOGGING 0
+#define ENABLE_LOGGING 1
 
 using namespace std;
 using namespace ceph;
@@ -42,8 +42,6 @@ static ostream& _prefix(std::ostream* _dout)
 {
   return *_dout << "ErasureCodeTsx: ";
 }
-
-static std::unordered_map<int, std::array<std::array<uint8_t, EXTRA_DATA_SIZE>, PARITY_CHUNKS>> parity_extra_data;
 
 unsigned int ErasureCodeTsx::get_chunk_size(unsigned int object_size) const
 {
@@ -54,11 +52,9 @@ unsigned int ErasureCodeTsx::get_chunk_size(unsigned int object_size) const
 int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
                                   map<int, bufferlist> *encoded)
 {
-  static int encode_call_count = -1;
-  encode_call_count++;
+
 #if ENABLE_LOGGING
   ofstream encode_log("mylog-encode.txt", ios_base::app);
-  // encode_log << "Encode call count: " << encode_call_count << std::endl;
 #endif
 
   // Prepare input chunks
@@ -73,8 +69,13 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 
   // Define constants
   const int SLICE = 8;
-  const int TOTAL_SLICE_NUM = (*encoded)[0].length() / SLICE;
-  const int PARITY_SIZE = (*encoded)[0].length() + EXTRA_DATA_SIZE;
+  const unsigned int blocksize = (*encoded)[0].length();
+  const int TOTAL_SLICE_NUM = blocksize / SLICE;
+  const int PARITY_SIZE = blocksize + EXTRA_DATA_SIZE;
+
+#if ENABLE_LOGGING
+  encode_log << "Block size: " << blocksize << std::endl;
+#endif
 
   // Allocate temporary arrays for parity chunks
   uint8_t *temp_chunks_k = new uint8_t[PARITY_SIZE]();
@@ -167,30 +168,28 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   }
 
   // Copy the encoded data back to the original chunks and store extra data
-  memcpy(chunks[k], temp_chunks_k, (*encoded)[0].length());
-  memcpy(chunks[k + 1], temp_chunks_k1, (*encoded)[0].length());
-  memcpy(chunks[k + 2], temp_chunks_k2, (*encoded)[0].length());
+  memcpy(chunks[k],     temp_chunks_k,  blocksize);
+  memcpy(chunks[k + 1], temp_chunks_k1, blocksize);
+  memcpy(chunks[k + 2], temp_chunks_k2, blocksize);
 
-  std::array<std::array<uint8_t, EXTRA_DATA_SIZE>, PARITY_CHUNKS> extra_data;
-  memcpy(extra_data[0].data(), temp_chunks_k + (*encoded)[0].length(), EXTRA_DATA_SIZE);
-  memcpy(extra_data[1].data(), temp_chunks_k1 + (*encoded)[0].length(), EXTRA_DATA_SIZE);
-  memcpy(extra_data[2].data(), temp_chunks_k2 + (*encoded)[0].length(), EXTRA_DATA_SIZE);
-
-  parity_extra_data[encode_call_count] = extra_data;
+  // Store extra data in the last chunk
+  memcpy(chunks[k + PARITY_CHUNKS],                       temp_chunks_k  + blocksize, EXTRA_DATA_SIZE);
+  memcpy(chunks[k + PARITY_CHUNKS] + EXTRA_DATA_SIZE,     temp_chunks_k1 + blocksize, EXTRA_DATA_SIZE);
+  memcpy(chunks[k + PARITY_CHUNKS] + 2 * EXTRA_DATA_SIZE, temp_chunks_k2 + blocksize, EXTRA_DATA_SIZE);
 
   // Log the extra data for debugging
 #if ENABLE_LOGGING
-  encode_log << "Extra data for encode call " << encode_call_count << ":" << std::endl;
+  encode_log << "Extra data for encode" << std::endl;
   for (int i = 0; i < PARITY_CHUNKS; ++i) {
     encode_log << "  Chunk " << i << ": ";
     for (int j = 0; j < EXTRA_DATA_SIZE; ++j) {
-      encode_log << std::hex << (int)extra_data[i][j] << " ";
+      encode_log << std::hex << (int)chunks[k + PARITY_CHUNKS][i * EXTRA_DATA_SIZE + j] << " ";
     }
     encode_log << std::endl;
   }
 
   // Log the first few bytes of the parity chunks
-  encode_log << "First few bytes of parity chunks for encode call " << encode_call_count << ":" << std::endl;
+  encode_log << "First few bytes of parity chunks for encode" << std::endl;
   for (int i = 0; i < PARITY_CHUNKS; ++i) {
     encode_log << "  Parity Chunk " << i << ": ";
     for (int j = 0; j < 8; ++j) { // Log first 8 bytes
@@ -212,29 +211,42 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
                                   const map<int, bufferlist> &chunks,
                                   map<int, bufferlist> *decoded)
 {
-  static int decode_call_count = -1;
-  decode_call_count++;
+
 #if ENABLE_LOGGING
   ofstream decode_log("mylog-decode.txt", ios_base::app);
-  // decode_log << "Decode call count: " << decode_call_count << std::endl;
 #endif
 
   // Prepare input chunks
   unsigned blocksize = (*chunks.begin()).second.length();
+  int erasures[chunk_count];
+  int erasures_count = 0;
   uint8_t *data[data_chunk_count];
   uint8_t *coding[chunk_count - data_chunk_count];
   for (unsigned int i = 0; i < chunk_count; i++)
   {
+    if (chunks.find(i) == chunks.end()) {
+      erasures[erasures_count] = i;
+      erasures_count++;
+    }
     if (i < data_chunk_count)
       data[i] = (uint8_t *)(*decoded)[i].c_str();
     else
       coding[i - data_chunk_count] = (uint8_t *)(*decoded)[i].c_str();
   }
+  erasures[erasures_count] = -1;
+  ceph_assert(erasures_count > 0);
 
   // Define constants
   const int SLICE = 8;
-  const int TOTAL_SLICE_NUM = (blocksize / SLICE);
+  const int TOTAL_SLICE_NUM = blocksize / SLICE;
   const int PARITY_SIZE = blocksize + EXTRA_DATA_SIZE;
+
+#if ENABLE_LOGGING
+  decode_log << "Block size: " << blocksize << std::endl;
+  for (int i = 0; i < erasures_count; ++i) {
+    decode_log << "Erasure " << i << ": " << erasures[i] << std::endl;
+  }
+#endif
 
   // Shift XOR decode algorithm
   uint64_t slice_offset_1;
@@ -248,25 +260,24 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   memcpy(decode_arr_2, coding[1], blocksize);
   memcpy(decode_arr_3, coding[2], blocksize);
 
-  // Append extra data from the global hash map
-  auto extra_data = parity_extra_data[decode_call_count];
-  memcpy(decode_arr_1 + blocksize, extra_data[0].data(), EXTRA_DATA_SIZE);
-  memcpy(decode_arr_2 + blocksize, extra_data[1].data(), EXTRA_DATA_SIZE);
-  memcpy(decode_arr_3 + blocksize, extra_data[2].data(), EXTRA_DATA_SIZE);
+  // Append extra data from the last chunk
+  memcpy(decode_arr_1 + blocksize, coding[PARITY_CHUNKS],                       EXTRA_DATA_SIZE);
+  memcpy(decode_arr_2 + blocksize, coding[PARITY_CHUNKS] + EXTRA_DATA_SIZE,     EXTRA_DATA_SIZE);
+  memcpy(decode_arr_3 + blocksize, coding[PARITY_CHUNKS] + 2 * EXTRA_DATA_SIZE, EXTRA_DATA_SIZE);
 
   // Log the extra data for debugging
 #if ENABLE_LOGGING
-  decode_log << "Extra data for decode call " << decode_call_count << ":" << std::endl;
+  decode_log << "Extra data for decode call" << std::endl;
   for (int i = 0; i < PARITY_CHUNKS; ++i) {
     decode_log << "  Chunk " << i << ": ";
     for (int j = 0; j < EXTRA_DATA_SIZE; ++j) {
-      decode_log << std::hex << (int)extra_data[i][j] << " ";
+      decode_log << std::hex << (int)coding[PARITY_CHUNKS][i * EXTRA_DATA_SIZE + j] << " ";
     }
     decode_log << std::endl;
   }
 
   // Log the first few bytes of the parity chunks
-  decode_log << "First few bytes of parity chunks for decode call " << decode_call_count << ":" << std::endl;
+  decode_log << "First few bytes of parity chunks for decode call" << std::endl;
   for (int i = 0; i < PARITY_CHUNKS; ++i) {
     decode_log << "  Parity Chunk " << i << ": ";
     for (int j = 0; j < 8; ++j) { // Log first 8 bytes

@@ -24,7 +24,7 @@
 class ErasureCodeTsx final : public ceph::ErasureCode {
 public:
   explicit ErasureCodeTsx(const std::string &dir)
-    : directory(dir), chunk_count(11), data_chunk_count(8) {}
+    : directory(dir), chunk_count(11 + 1), data_chunk_count(8) {}
 
   ~ErasureCodeTsx() override {}
 

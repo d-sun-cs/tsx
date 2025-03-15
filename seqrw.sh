@@ -22,7 +22,7 @@ $CEPH_BUILD/bin/rados ls -p tsx-pool
 $CEPH_BUILD/bin/ceph osd map tsx-pool largefile 
 
 $CEPH_BUILD/bin/ceph osd stop osd.8
-$CEPH_BUILD/bin/ceph osd stop osd.3
+$CEPH_BUILD/bin/ceph osd stop osd.6
 $CEPH_BUILD/bin/ceph osd stop osd.1
 
 rm -f $CEPH_BUILD/mylargefile
