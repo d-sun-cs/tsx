@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <fstream>
 #include <unordered_map>
+#include <immintrin.h>
 
 #include "common/debug.h"
 #include "include/stringify.h"
@@ -31,7 +32,7 @@
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 
-#define EXTRA_DATA_SIZE 64
+#define EXTRA_DATA_SIZE 256
 #define PARITY_CHUNKS 3
 #define ENABLE_LOGGING 0
 
@@ -72,7 +73,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   const int k = data_chunk_count;
 
   // Define constants
-  const int SLICE = 8;
+  const int SLICE = 32;
   const int TOTAL_SLICE_NUM = (*encoded)[0].length() / SLICE;
   const int PARITY_SIZE = (*encoded)[0].length() + EXTRA_DATA_SIZE;
 
@@ -85,15 +86,17 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   uint64_t slice_offset_1;
   uint64_t slice_offset_2;
   uint64_t slice_offset_3;
+  __m256i mxx1, mxx2;
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
   {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = slice_id * SLICE;
     slice_offset_3 = ((slice_id + 7) * SLICE);
-    *(uint64_t *)(temp_chunks_k + slice_offset_1) = *(uint64_t *)(chunks[0] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k1 + slice_offset_2) = *(uint64_t *)(chunks[0] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k2 + slice_offset_3) = *(uint64_t *)(chunks[0] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(chunks[0] + slice_offset_2));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k + slice_offset_1), mxx1);
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k1 + slice_offset_2), mxx1);
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k2 + slice_offset_3), mxx1);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -101,9 +104,13 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 1) * SLICE);
     slice_offset_3 = ((slice_id + 6) * SLICE);
-    *(uint64_t *)(temp_chunks_k + slice_offset_1) ^= *(uint64_t *)(chunks[1] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k1 + slice_offset_2) ^= *(uint64_t *)(chunks[1] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k2 + slice_offset_3) ^= *(uint64_t *)(chunks[1] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(chunks[1] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k1 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k1 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k2 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k2 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -111,9 +118,13 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 2) * SLICE);
     slice_offset_3 = ((slice_id + 5) * SLICE);
-    *(uint64_t *)(temp_chunks_k + slice_offset_1) ^= *(uint64_t *)(chunks[2] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k1 + slice_offset_2) ^= *(uint64_t *)(chunks[2] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k2 + slice_offset_3) ^= *(uint64_t *)(chunks[2] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(chunks[2] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k1 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k1 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k2 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k2 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -121,9 +132,13 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 3) * SLICE);
     slice_offset_3 = ((slice_id + 4) * SLICE);
-    *(uint64_t *)(temp_chunks_k + slice_offset_1) ^= *(uint64_t *)(chunks[3] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k1 + slice_offset_2) ^= *(uint64_t *)(chunks[3] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k2 + slice_offset_3) ^= *(uint64_t *)(chunks[3] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(chunks[3] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k1 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k1 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k2 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k2 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -131,9 +146,13 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 4) * SLICE);
     slice_offset_3 = ((slice_id + 3) * SLICE);
-    *(uint64_t *)(temp_chunks_k + slice_offset_1) ^= *(uint64_t *)(chunks[4] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k1 + slice_offset_2) ^= *(uint64_t *)(chunks[4] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k2 + slice_offset_3) ^= *(uint64_t *)(chunks[4] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(chunks[4] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k1 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k1 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k2 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k2 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -141,9 +160,13 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 5) * SLICE);
     slice_offset_3 = ((slice_id + 2) * SLICE);
-    *(uint64_t *)(temp_chunks_k + slice_offset_1) ^= *(uint64_t *)(chunks[5] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k1 + slice_offset_2) ^= *(uint64_t *)(chunks[5] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k2 + slice_offset_3) ^= *(uint64_t *)(chunks[5] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(chunks[5] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k1 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k1 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k2 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k2 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -151,9 +174,13 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 6) * SLICE);
     slice_offset_3 = ((slice_id + 1) * SLICE);
-    *(uint64_t *)(temp_chunks_k + slice_offset_1) ^= *(uint64_t *)(chunks[6] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k1 + slice_offset_2) ^= *(uint64_t *)(chunks[6] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k2 + slice_offset_3) ^= *(uint64_t *)(chunks[6] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(chunks[6] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k1 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k1 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k2 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k2 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -161,9 +188,13 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = ((slice_id + 7) * SLICE);
     slice_offset_3 = slice_id * SLICE;
-    *(uint64_t *)(temp_chunks_k + slice_offset_1) ^= *(uint64_t *)(chunks[7] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k1 + slice_offset_2) ^= *(uint64_t *)(chunks[7] + slice_offset_2);
-    *(uint64_t *)(temp_chunks_k2 + slice_offset_3) ^= *(uint64_t *)(chunks[7] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(chunks[7] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k1 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k1 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(temp_chunks_k2 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(temp_chunks_k2 + slice_offset_3), mxx2);
   }
 
   // Copy the encoded data back to the original chunks and store extra data
@@ -232,7 +263,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   }
 
   // Define constants
-  const int SLICE = 8;
+  const int SLICE = 32;
   const int TOTAL_SLICE_NUM = (blocksize / SLICE);
   const int PARITY_SIZE = blocksize + EXTRA_DATA_SIZE;
 
@@ -240,6 +271,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   uint64_t slice_offset_1;
   uint64_t slice_offset_2;
   uint64_t slice_offset_3;
+  __m256i mxx1, mxx2;
 
   uint8_t *decode_arr_1 = (uint8_t *)malloc(PARITY_SIZE * sizeof(uint8_t));
   uint8_t *decode_arr_2 = (uint8_t *)malloc(PARITY_SIZE * sizeof(uint8_t));
@@ -282,10 +314,13 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = slice_id * SLICE;
     slice_offset_3 = (slice_id + 7) * SLICE;
-
-    *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(data[0] + slice_offset_2);
-    *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(data[0] + slice_offset_2);
-    *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(data[0] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(data[0] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_1 + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_1 + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_2 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_2 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_3 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_3 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -293,10 +328,13 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = (slice_id + 1) * SLICE;
     slice_offset_3 = (slice_id + 6) * SLICE;
-
-    *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(data[1] + slice_offset_2);
-    *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(data[1] + slice_offset_2);
-    *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(data[1] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(data[1] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_1 + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_1 + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_2 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_2 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_3 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_3 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -304,10 +342,13 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = (slice_id + 2) * SLICE;
     slice_offset_3 = (slice_id + 5) * SLICE;
-
-    *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(data[2] + slice_offset_2);
-    *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(data[2] + slice_offset_2);
-    *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(data[2] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(data[2] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_1 + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_1 + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_2 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_2 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_3 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_3 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -315,10 +356,13 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = (slice_id + 3) * SLICE;
     slice_offset_3 = (slice_id + 4) * SLICE;
-
-    *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(data[3] + slice_offset_2);
-    *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(data[3] + slice_offset_2);
-    *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(data[3] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(data[3] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_1 + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_1 + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_2 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_2 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_3 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_3 + slice_offset_3), mxx2);
   }
 
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
@@ -326,37 +370,83 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = (slice_id + 4) * SLICE;
     slice_offset_3 = (slice_id + 3) * SLICE;
-
-    *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(data[4] + slice_offset_2);
-    *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(data[4] + slice_offset_2);
-    *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(data[4] + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *)(data[4] + slice_offset_2));
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_1 + slice_offset_1)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_1 + slice_offset_1), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_2 + slice_offset_2)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_2 + slice_offset_2), mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)(decode_arr_3 + slice_offset_3)));
+    _mm256_storeu_si256((__m256i *)(decode_arr_3 + slice_offset_3), mxx2);
   }
 
+  // for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
+  // {
+  //   slice_offset_1 = ((slice_id + 5) * SLICE);
+  //   slice_offset_2 = slice_id * SLICE;
+  //   slice_offset_3 = ((slice_id) + 2) * SLICE;
+    
+  //   *(uint64_t *)(data[5] + slice_offset_2) = *(uint64_t *)(decode_arr_1 + slice_offset_1);
+  //   *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(decode_arr_1 + slice_offset_1);
+  //   *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(decode_arr_1 + slice_offset_1);
+  
+  //   slice_offset_1 = ((slice_id + 7) * SLICE);
+  //   slice_offset_2 = slice_id * SLICE;
+  //   slice_offset_3 = slice_id * SLICE;
+    
+  //   *(uint64_t *)(data[7] + slice_offset_2) = *(uint64_t *)(decode_arr_3 + slice_offset_3);
+  //   *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(decode_arr_3 + slice_offset_3);
+  //   *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(decode_arr_3 + slice_offset_3);
+  
+  //   slice_offset_1 = ((slice_id + 6) * SLICE);
+  //   slice_offset_2 = slice_id * SLICE;
+  //   slice_offset_3 = ((slice_id + 1) * SLICE);
+    
+  //   *(uint64_t *)(data[6] + slice_offset_2) = *(uint64_t *)(decode_arr_2 + slice_offset_2);
+  //   *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(decode_arr_2 + slice_offset_2);
+  //   *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(decode_arr_2 + slice_offset_2);
+  // }
+
+  // Solve chunk 6, 7, 8 in 256-bitwise
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
   {
+    // Step 1: solve 256 bits in packet 6 
     slice_offset_1 = ((slice_id + 5) * SLICE);
     slice_offset_2 = slice_id * SLICE;
-    slice_offset_3 = ((slice_id) + 2) * SLICE;
+    slice_offset_3 = ((slice_id + 2) * SLICE);
 
-    *(uint64_t *)(data[5] + slice_offset_2) = *(uint64_t *)(decode_arr_1 + slice_offset_1);
-    *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(decode_arr_1 + slice_offset_1);
-    *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(decode_arr_1 + slice_offset_1);
+    mxx1 = _mm256_loadu_si256((__m256i *) &decode_arr_1[slice_offset_1]);
+    _mm256_storeu_si256((__m256i *) &data[5][slice_offset_2], mxx1);
 
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *) &decode_arr_2[slice_offset_2]));
+    _mm256_storeu_si256((__m256i *) &decode_arr_2[slice_offset_2], mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *) &decode_arr_3[slice_offset_3]));
+    _mm256_storeu_si256((__m256i *) &decode_arr_3[slice_offset_3], mxx2);
+
+    // Step 2: solve 256 bits in packet 8
     slice_offset_1 = ((slice_id + 7) * SLICE);
     slice_offset_2 = slice_id * SLICE;
     slice_offset_3 = slice_id * SLICE;
 
-    *(uint64_t *)(data[7] + slice_offset_2) = *(uint64_t *)(decode_arr_3 + slice_offset_3);
-    *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(decode_arr_3 + slice_offset_3);
-    *(uint64_t *)(decode_arr_2 + slice_offset_2) ^= *(uint64_t *)(decode_arr_3 + slice_offset_3);
+    mxx1 = _mm256_loadu_si256((__m256i *) &decode_arr_3[slice_offset_3]);
+    _mm256_storeu_si256((__m256i *) &data[7][slice_offset_2], mxx1);
 
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *) &decode_arr_1[slice_offset_1]));
+    _mm256_storeu_si256((__m256i *) &decode_arr_1[slice_offset_1], mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *) &decode_arr_2[slice_offset_2]));
+    _mm256_storeu_si256((__m256i *) &decode_arr_2[slice_offset_2], mxx2);
+
+    // Step 3: solve 256 bits in packet 7
     slice_offset_1 = ((slice_id + 6) * SLICE);
     slice_offset_2 = slice_id * SLICE;
     slice_offset_3 = ((slice_id + 1) * SLICE);
 
-    *(uint64_t *)(data[6] + slice_offset_2) = *(uint64_t *)(decode_arr_2 + slice_offset_2);
-    *(uint64_t *)(decode_arr_1 + slice_offset_1) ^= *(uint64_t *)(decode_arr_2 + slice_offset_2);
-    *(uint64_t *)(decode_arr_3 + slice_offset_3) ^= *(uint64_t *)(decode_arr_2 + slice_offset_2);
+    mxx1 = _mm256_loadu_si256((__m256i *) &decode_arr_2[slice_offset_2]);
+    _mm256_storeu_si256((__m256i *) &data[6][slice_offset_2], mxx1);
+
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *) &decode_arr_1[slice_offset_1]));
+    _mm256_storeu_si256((__m256i *) &decode_arr_1[slice_offset_1], mxx2);
+    mxx2 = _mm256_xor_si256(mxx1, *((__m256i *) &decode_arr_3[slice_offset_3]));
+    _mm256_storeu_si256((__m256i *) &decode_arr_3[slice_offset_3], mxx2);
   }
 
   free(decode_arr_1);

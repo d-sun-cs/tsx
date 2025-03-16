@@ -9,6 +9,7 @@ set(tsx_srcs
 )   
 
 add_library(ec_tsx SHARED ${tsx_srcs})
+target_compile_options(ec_tsx PRIVATE -mavx2)
 set_target_properties(ec_tsx PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsx json_spirit)
