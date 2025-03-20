@@ -26,8 +26,6 @@ $CEPH_BUILD/bin/ceph osd pool set isa-pool min_size 8
 
 $CEPH_BUILD/bin/ceph config set global osd_max_object_size 2G
 
-for i in {1..10}; do
-  dd if=/dev/urandom of=/tmp/largefile$i bs=4M count=256
-done
+dd if=/dev/urandom of=/tmp/largefile bs=4M count=256
 
 cd $current_dir

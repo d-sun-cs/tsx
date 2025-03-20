@@ -24,7 +24,7 @@ total_get_time=0
 
 for i in {1..10}; do
     start_time=$(date +%s.%N)
-    $CEPH_BUILD/bin/rados put largefile$i /tmp/largefile$i -p isa-pool
+    $CEPH_BUILD/bin/rados put largefile /tmp/largefile -p isa-pool
     end_time=$(date +%s.%N)
     put_time=$(echo "$end_time - $start_time" | bc)
     total_put_time=$(echo "$total_put_time + $put_time" | bc)
@@ -44,7 +44,7 @@ rm -f $CEPH_BUILD/mylargefile*
 
 for i in {1..10}; do
     start_time=$(date +%s.%N)
-    $CEPH_BUILD/bin/rados get largefile$i mylargefile$i -p isa-pool
+    $CEPH_BUILD/bin/rados get largefile mylargefile -p isa-pool
     end_time=$(date +%s.%N)
     get_time=$(echo "$end_time - $start_time" | bc)
     total_get_time=$(echo "$total_get_time + $get_time" | bc)
@@ -60,13 +60,14 @@ for osd_id in 2 0 5; do
     done
 end
 
-for i in {1..10}; do
-    diff $CEPH_BUILD/mylargefile$i /tmp/largefile$i
-    if [ $? -ne 0 ]; then
-        echo "ISA test failed! The files largefile$i and mylargefile$i are not identical!"
-        exit 1
-    fi
-done
+diff $CEPH_BUILD/mylargefile /tmp/largefile
+if [ $? -ne 0 ]; then
+    echo "ISA test failed! The files largefile and mylargefile are not identical!"
+    exit 1
+fi
+
+$CEPH_BUILD/bin/rados cleanup -p isa-pool
+rm $CEPH_BUILD/mylargefile
 
 echo "ISA test passed! All files are identical!"
 
