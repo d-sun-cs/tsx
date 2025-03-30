@@ -1,3 +1,5 @@
+#!/bin/bash
+
 current_dir=$(pwd)
 
 if [[ ! $current_dir =~ /ceph/src/erasure-code/tsx$ ]]; then
@@ -11,9 +13,9 @@ cd $CEPH_BUILD
 
 if $CEPH_BUILD/bin/ceph osd tree | grep -q "down"; then
     echo "Error: Found 'down' status in OSD tree. Running restart-osds.sh and exiting."
-    ./restart-osds.sh
     echo "Please run this script again after the OSDs have restarted."
     cd $current_dir
+    ./restart-osds.sh
     exit 1
 fi
 
@@ -23,6 +25,7 @@ total_put_time=0
 total_get_time=0
 
 for i in {1..10}; do
+    $CEPH_BUILD/bin/rados cleanup -p isa-pool  # 清空存储池
     start_time=$(date +%s.%N)
     $CEPH_BUILD/bin/rados put largefile /tmp/largefile -p isa-pool
     end_time=$(date +%s.%N)
@@ -36,13 +39,18 @@ put_speed=$(echo "$file_size / $avg_put_time / 1024 / 1024" | bc -l)
 $CEPH_BUILD/bin/rados ls -p isa-pool
 $CEPH_BUILD/bin/ceph osd map isa-pool largefile 
 
-$CEPH_BUILD/bin/ceph osd stop osd.2
-$CEPH_BUILD/bin/ceph osd stop osd.0
-$CEPH_BUILD/bin/ceph osd stop osd.5
+osd_map_output=$($CEPH_BUILD/bin/ceph osd map isa-pool largefile)
+osd_ids=($(echo "$osd_map_output" | grep -oP '\[.*?\]' | tr -d '[]' | tr ',' ' '))
+osd_to_stop=(${osd_ids[5]} ${osd_ids[6]} ${osd_ids[7]})
+
+for osd_id in "${osd_to_stop[@]}"; do
+    $CEPH_BUILD/bin/ceph osd stop osd.$osd_id
+done
 
 rm -f $CEPH_BUILD/mylargefile*
 
 for i in {1..10}; do
+    rm -f $CEPH_BUILD/mylargefile  # 清空本地文件
     start_time=$(date +%s.%N)
     $CEPH_BUILD/bin/rados get largefile mylargefile -p isa-pool
     end_time=$(date +%s.%N)
@@ -53,12 +61,12 @@ done
 avg_get_time=$(echo "$total_get_time / $N" | bc -l)
 get_speed=$(echo "$file_size / $avg_get_time / 1024 / 1024" | bc -l)
 
-for osd_id in 2 0 5; do
+for osd_id in "${osd_to_stop[@]}"; do
     until ! $CEPH_BUILD/bin/ceph osd tree | grep "osd.$osd_id " | grep -q "down"; do
         $CEPH_BUILD/bin/ceph-osd -i $osd_id --cluster ceph
         sleep 1
     done
-end
+done
 
 diff $CEPH_BUILD/mylargefile /tmp/largefile
 if [ $? -ne 0 ]; then

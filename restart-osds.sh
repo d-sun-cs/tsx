@@ -1,3 +1,5 @@
+#!/bin/bash
+
 current_dir=$(pwd)
 
 if [[ ! $current_dir =~ /ceph/src/erasure-code/tsx$ ]]; then
