@@ -19,7 +19,7 @@ if $CEPH_BUILD/bin/ceph osd tree | grep -q "down"; then
     exit 1
 fi
 
-file_size=$(stat -c%s /tmp/largefile)
+file_size=$(stat -c%s $CEPH_BUILD/tmp/largefile)
 N=10
 total_put_time=0
 total_get_time=0
@@ -27,7 +27,7 @@ total_get_time=0
 for i in {1..10}; do
     $CEPH_BUILD/bin/rados cleanup -p tsx-pool  # 清空存储池
     start_time=$(date +%s.%N)
-    $CEPH_BUILD/bin/rados put largefile /tmp/largefile -p tsx-pool
+    $CEPH_BUILD/bin/rados put largefile $CEPH_BUILD/tmp/largefile -p tsx-pool
     end_time=$(date +%s.%N)
     put_time=$(echo "$end_time - $start_time" | bc)
     total_put_time=$(echo "$total_put_time + $put_time" | bc)
@@ -50,9 +50,9 @@ done
 rm -f $CEPH_BUILD/mylargefile*
 
 for i in {1..10}; do
-    rm -f $CEPH_BUILD/mylargefile  # 清空本地文件
+    rm -f $CEPH_BUILD/tmp/mylargefile  # 清空本地文件
     start_time=$(date +%s.%N)
-    $CEPH_BUILD/bin/rados get largefile mylargefile -p tsx-pool
+    $CEPH_BUILD/bin/rados get largefile $CEPH_BUILD/tmp/mylargefile -p tsx-pool
     end_time=$(date +%s.%N)
     get_time=$(echo "$end_time - $start_time" | bc)
     total_get_time=$(echo "$total_get_time + $get_time" | bc)
@@ -68,14 +68,14 @@ for osd_id in "${osd_to_stop[@]}"; do
     done
 done
 
-diff $CEPH_BUILD/mylargefile /tmp/largefile
+diff $CEPH_BUILD/tmp/mylargefile $CEPH_BUILD/tmp/largefile
 if [ $? -ne 0 ]; then
     echo "TSX test failed! The files largefile and mylargefile are not identical!"
     exit 1
 fi
 
 $CEPH_BUILD/bin/rados cleanup -p tsx-pool
-rm $CEPH_BUILD/mylargefile
+rm $CEPH_BUILD/tmp/mylargefile
 
 echo "TSX test passed! All files are identical!"
 
