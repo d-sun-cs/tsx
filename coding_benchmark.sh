@@ -31,16 +31,14 @@ if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" 
 fi
 
 # 测试命令
+$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT
+$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
 
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
 
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BLOCK_SIZE -i $TEST_COUNT
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
-
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
-
 
 cd $current_dir
 
