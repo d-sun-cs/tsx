@@ -23,9 +23,12 @@ CEPH_BUILD=$(cd ../../../build && pwd)
 
 cd $CEPH_BUILD
 
-ninja ec_tsx
-ninja ceph_erasure_code_benchmark
-sudo ninja install 
+ninja_output_ec_tsx=$(ninja ec_tsx)
+ninja_output_benchmark=$(ninja ceph_erasure_code_benchmark)
+
+if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" != *"no work to do."* ]]; then
+    sudo ninja install
+fi
 
 # 测试命令
 
