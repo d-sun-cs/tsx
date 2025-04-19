@@ -18,11 +18,11 @@ CEPH_SRC=$(cd ../.. && pwd)
 
 cd $CEPH_BUILD
 
-ninja vstart 2>/dev/null
+ninja vstart 
 
-$CEPH_BUILD/bin/init-ceph stop 2>/dev/null
-$CEPH_SRC/stop.sh 2>/dev/null
-env OSD=11 $CEPH_SRC/vstart.sh -d -n 2>/dev/null
+$CEPH_BUILD/bin/init-ceph stop 
+$CEPH_SRC/stop.sh 
+env OSD=11 $CEPH_SRC/vstart.sh -d -n 
 
 # 从命令行读取块大小参数
 BLOCK_SIZES=("$@")
@@ -37,18 +37,18 @@ for BLOCK_SIZE in "${BLOCK_SIZES[@]}"; do
     fi
 
     # 创建 tsx 配置
-    $CEPH_BUILD/bin/ceph osd erasure-code-profile set tsx-${BLOCK_SIZE}-profile plugin=tsx crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 2>/dev/null
-    $CEPH_BUILD/bin/ceph osd pool create tsx-${BLOCK_SIZE}-pool erasure tsx-${BLOCK_SIZE}-profile 2>/dev/null
-    $CEPH_BUILD/bin/ceph osd pool set tsx-${BLOCK_SIZE}-pool min_size 8 2>/dev/null
+    $CEPH_BUILD/bin/ceph osd erasure-code-profile set tsx-${BLOCK_SIZE}-profile plugin=tsx crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
+    $CEPH_BUILD/bin/ceph osd pool create tsx-${BLOCK_SIZE}-pool erasure tsx-${BLOCK_SIZE}-profile 
+    $CEPH_BUILD/bin/ceph osd pool set tsx-${BLOCK_SIZE}-pool min_size 8 
 
     # 创建 isa 配置
-    $CEPH_BUILD/bin/ceph osd erasure-code-profile set isa-${BLOCK_SIZE}-profile plugin=isa k=8 m=3 crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 2>/dev/null
-    $CEPH_BUILD/bin/ceph osd pool create isa-${BLOCK_SIZE}-pool erasure isa-${BLOCK_SIZE}-profile 2>/dev/null
-    $CEPH_BUILD/bin/ceph osd pool set isa-${BLOCK_SIZE}-pool min_size 8 2>/dev/null
+    $CEPH_BUILD/bin/ceph osd erasure-code-profile set isa-${BLOCK_SIZE}-profile plugin=isa k=8 m=3 crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
+    $CEPH_BUILD/bin/ceph osd pool create isa-${BLOCK_SIZE}-pool erasure isa-${BLOCK_SIZE}-profile 
+    $CEPH_BUILD/bin/ceph osd pool set isa-${BLOCK_SIZE}-pool min_size 8 
 done
 
-$CEPH_BUILD/bin/ceph config set global osd_max_object_size 3G 2>/dev/null
+$CEPH_BUILD/bin/ceph config set global osd_max_object_size 3G 
 
-dd if=/dev/zero of=$CEPH_BUILD/largefile bs=1GiB count=1
+dd if=/dev/zero of=$CEPH_BUILD/largefile bs=16MiB count=128
 
 cd $current_dir

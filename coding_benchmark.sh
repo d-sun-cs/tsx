@@ -31,13 +31,21 @@ if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" 
 fi
 
 # 测试命令
+echo "Chunk size: ${BLOCK_SIZE_KB}KB"
+echo "Test count: $TEST_COUNT"
+echo "Running tsx encode test..."
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT
+echo "Running tsx decode test..."
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
-
+echo "--------------------------"
+echo "Running isa encode test..."
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT
+echo "Running isa decode test..."
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
-
+echo "--------------------------"
+echo "Running jerasure encode test..."
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BLOCK_SIZE -i $TEST_COUNT
+echo "Running jerasure decode test..."
 $CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
 
 cd $current_dir

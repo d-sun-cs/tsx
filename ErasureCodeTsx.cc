@@ -45,7 +45,7 @@ static ostream& _prefix(std::ostream* _dout)
   return *_dout << "ErasureCodeTsx: ";
 }
 
-static std::unordered_map<int, std::array<std::array<uint8_t, EXTRA_DATA_SIZE>, PARITY_CHUNKS>> parity_extra_data;
+static std::unordered_map<int, std::array<uint8_t*, PARITY_CHUNKS>> parity_extra_data;
 
 class ParityChunkPtr {
 public:
@@ -58,11 +58,11 @@ public:
     }
   }
 
-  ~ParityChunkPtr() {
-    if (!external_extradata) {
-      free(extradata);
-    }
-  }
+  // ~ParityChunkPtr() {
+  //   if (!external_extradata) {
+  //     free(extradata);
+  //   }
+  // }
 
   uint8_t* operator[](size_t idx) {
     if (idx >= blocksize) {
@@ -155,11 +155,12 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     }
   }
 
-  // Store extra data into the global hash map
-  std::array<std::array<uint8_t, EXTRA_DATA_SIZE>, PARITY_CHUNKS> extra_data;
-  memcpy(extra_data[0].data(), parity_k.get_extradata(), EXTRA_DATA_SIZE);
-  memcpy(extra_data[1].data(), parity_k1.get_extradata(), EXTRA_DATA_SIZE);
-  memcpy(extra_data[2].data(), parity_k2.get_extradata(), EXTRA_DATA_SIZE);
+  // Store extradata pointers into the global hash map
+  std::array<uint8_t*, PARITY_CHUNKS> extra_data = {
+    parity_k.get_extradata(),
+    parity_k1.get_extradata(),
+    parity_k2.get_extradata()
+  };
 
   parity_extra_data[encode_call_count] = extra_data;
 
@@ -187,13 +188,13 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       coding[i - data_chunk_count] = (uint8_t *)(*decoded)[i].c_str();
   }
 
-  // Append extra data from the global hash map
+  // Retrieve extradata pointers from the global hash map
   auto extra_data = parity_extra_data[decode_call_count];
 
   // Use ParityChunkPtr for decoding
-  ParityChunkPtr parity_k(blocksize, coding[0], extra_data[0].data());
-  ParityChunkPtr parity_k1(blocksize, coding[1], extra_data[1].data());
-  ParityChunkPtr parity_k2(blocksize, coding[2], extra_data[2].data());
+  ParityChunkPtr parity_k(blocksize, coding[0], extra_data[0]);
+  ParityChunkPtr parity_k1(blocksize, coding[1], extra_data[1]);
+  ParityChunkPtr parity_k2(blocksize, coding[2], extra_data[2]);
 
   // Define constants
   const int SLICE = 32;
