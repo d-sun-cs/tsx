@@ -14,8 +14,8 @@ cd $CEPH_BUILD
 
 $CEPH_BUILD/bin/init-ceph stop
 $CEPH_SRC/stop.sh
+rm -rf out dev
+# 删除largefile
+rm -f ./largefile
 
 cd $current_dir
-
-# 删除largefile
-rm -f /tmp/largefile
