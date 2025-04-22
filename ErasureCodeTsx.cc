@@ -20,6 +20,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <immintrin.h>
+#include <chrono>
 
 #include "common/debug.h"
 #include "include/stringify.h"
@@ -36,6 +37,7 @@
 #define PARITY_CHUNKS 3
 #define ENABLE_ENCODE 1
 #define ENABLE_DECODE 1
+#define ENABLE_LOG 0
 
 using namespace std;
 using namespace ceph;
@@ -58,12 +60,6 @@ public:
     }
   }
 
-  // ~ParityChunkPtr() {
-  //   if (!external_extradata) {
-  //     free(extradata);
-  //   }
-  // }
-
   uint8_t* operator[](size_t idx) {
     if (idx >= blocksize) {
       return &extradata[idx - blocksize];
@@ -84,43 +80,42 @@ private:
 
 unsigned int ErasureCodeTsx::get_chunk_size(unsigned int object_size) const
 {
-  // According to the comment, calculate the chunk size
   return (object_size + data_chunk_count - 1) / data_chunk_count;
 }
 
 int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
                                   map<int, bufferlist> *encoded) {
-  static int encode_call_count = -1;
-  encode_call_count++;
 
-  // Prepare input chunks
   uint8_t* chunks[chunk_count];
   for (unsigned int i = 0; i < chunk_count; ++i) {
     chunks[i] = (uint8_t*)(*encoded)[i].c_str();
   }
 
-  // Calculate k and m
   const int k = data_chunk_count;
   unsigned blocksize = (*encoded)[0].length();
 
-  // Define constants
+#if ENABLE_ENCODE
+
+  static int encode_call_count = -1;
+  encode_call_count++;
+
+#if ENABLE_LOG
+  static double total_encode_time_ms = 0;
+  auto encode_start = std::chrono::high_resolution_clock::now();
+#endif
+
   const int SLICE = 32;
   const int TOTAL_SLICE_NUM = blocksize / SLICE;
 
-  // Use ParityChunkPtr for parity chunks
   ParityChunkPtr parity_k(blocksize, chunks[k]);
   ParityChunkPtr parity_k1(blocksize, chunks[k + 1]);
   ParityChunkPtr parity_k2(blocksize, chunks[k + 2]);
 
-#if ENABLE_ENCODE
-
-  // Shift XOR encode algorithm
   uint64_t slice_offset_1;
   uint64_t slice_offset_2;
   uint64_t slice_offset_3;
   __m256i mxx1, mxx2;
 
-  // First loop: directly store chunks[0] into parity
   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
     slice_offset_2 = slice_id * SLICE;
     slice_offset_1 = slice_id * SLICE;
@@ -131,7 +126,6 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     _mm256_storeu_si256((__m256i*)parity_k2[slice_offset_3], mxx1);
   }
 
-  // Apply the chunks[1] loop pattern to all subsequent chunks
   for (int chunk_idx = 1; chunk_idx < 8; chunk_idx++) {
     for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++) {
       slice_offset_2 = slice_id * SLICE;
@@ -155,7 +149,6 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     }
   }
 
-  // Store extradata pointers into the global hash map
   std::array<uint8_t*, PARITY_CHUNKS> extra_data = {
     parity_k.get_extradata(),
     parity_k1.get_extradata(),
@@ -164,20 +157,31 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 
   parity_extra_data[encode_call_count] = extra_data;
 
+#if ENABLE_LOG
+  auto encode_end = std::chrono::high_resolution_clock::now();
+  double encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(encode_end - encode_start).count() / 1000.0;
+  total_encode_time_ms += encode_duration;
+
+  std::ofstream encode_log("tsx-encode-timing.log", std::ios::app);
+  encode_log << "encode_call_count: " << encode_call_count 
+             << ", blocksize: " << blocksize
+             << ", total_time_ms: " << total_encode_time_ms << "\n";
+  encode_log.close();
+#endif
+
   return 0;
+
 #else
+
   return 0;
+
 #endif
 }
 
 int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
                                   const map<int, bufferlist> &chunks,
                                   map<int, bufferlist> *decoded) {
-#if ENABLE_DECODE
-  static int decode_call_count = -1;
-  decode_call_count++;
 
-  // Prepare input chunks
   unsigned blocksize = (*chunks.begin()).second.length();
   uint8_t *data[data_chunk_count];
   uint8_t *coding[chunk_count - data_chunk_count];
@@ -188,19 +192,25 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       coding[i - data_chunk_count] = (uint8_t *)(*decoded)[i].c_str();
   }
 
-  // Retrieve extradata pointers from the global hash map
+#if ENABLE_DECODE
+
+  static int decode_call_count = -1;
+  decode_call_count++;
+  
+#if ENABLE_LOG
+  static double total_decode_time_ms = 0;
+  auto decode_start = std::chrono::high_resolution_clock::now();
+#endif
+
   auto extra_data = parity_extra_data[decode_call_count];
 
-  // Use ParityChunkPtr for decoding
   ParityChunkPtr parity_k(blocksize, coding[0], extra_data[0]);
   ParityChunkPtr parity_k1(blocksize, coding[1], extra_data[1]);
   ParityChunkPtr parity_k2(blocksize, coding[2], extra_data[2]);
 
-  // Define constants
   const int SLICE = 32;
   const int TOTAL_SLICE_NUM = (blocksize / SLICE);
 
-  // Shift XOR decode algorithm
   uint64_t slice_offset_1;
   uint64_t slice_offset_2;
   uint64_t slice_offset_3;
@@ -309,8 +319,23 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
     _mm256_storeu_si256((__m256i *)parity_k2[slice_offset_3], mxx2);
   }
 
+#if ENABLE_LOG
+  auto decode_end = std::chrono::high_resolution_clock::now();
+  double decode_duration = std::chrono::duration_cast<std::chrono::microseconds>(decode_end - decode_start).count() / 1000.0;
+  total_decode_time_ms += decode_duration;
+
+  std::ofstream decode_log("tsx-decode-timing.log", std::ios::app);
+  decode_log << "decode_call_count: " << decode_call_count 
+             << ", blocksize: " << blocksize
+             << ", total_time_ms: " << total_decode_time_ms << "\n";
+  decode_log.close();
+#endif
+
   return 0;
+
 #else
+
   return 0;
+
 #endif
 }

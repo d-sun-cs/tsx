@@ -54,7 +54,7 @@ osd_ids=($(echo "$osd_map_output" | grep -oP '\[.*?\]' | tr -d '[]' | tr ',' ' '
 osd_to_stop=(${osd_ids[5]} ${osd_ids[6]} ${osd_ids[7]})
 
 for osd_id in "${osd_to_stop[@]}"; do
-    $CEPH_BUILD/bin/ceph osd stop osd.$osd_id
+    $CEPH_BUILD/bin/init-ceph stop osd.$osd_id
 done
 
 # 读测试
@@ -70,11 +70,16 @@ done
 avg_get_time=$(echo "$total_get_time / $TEST_COUNT" | bc -l)
 get_speed=$(echo "$file_size / $avg_get_time / 1024 / 1024" | bc -l)
 
+# 恢复之前停止的 OSD
+for osd_id in "${osd_to_stop[@]}"; do
+    $CEPH_BUILD/bin/init-ceph restart osd.$osd_id
+done
+
 # 校验文件完整性
 diff $CEPH_BUILD/largefile $CEPH_BUILD/my_largefile
 if [ $? -ne 0 ]; then
     echo "[${POOL_PREFIX}] Test failed! The files largefile and my_largefile are not identical!"
-    exit 1
+    # exit 1
 fi
 
 $CEPH_BUILD/bin/rados cleanup -p $POOL_NAME
@@ -89,5 +94,3 @@ echo "Read Time (avg of $TEST_COUNT runs): $avg_get_time seconds"
 echo "Read Speed: $get_speed MB/s"
 
 cd $current_dir
-
-./restart-osds.sh

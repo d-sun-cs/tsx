@@ -22,7 +22,8 @@ ninja vstart
 
 $CEPH_BUILD/bin/init-ceph stop 
 $CEPH_SRC/stop.sh 
-env OSD=11 $CEPH_SRC/vstart.sh -d -n 
+# env OSD=11 $CEPH_SRC/vstart.sh -d -n 
+env OSD=11 $CEPH_SRC/vstart.sh -n 
 
 # 从命令行读取块大小参数
 BLOCK_SIZES=("$@")
@@ -49,6 +50,6 @@ done
 
 $CEPH_BUILD/bin/ceph config set global osd_max_object_size 3G 
 
-dd if=/dev/zero of=$CEPH_BUILD/largefile bs=16MiB count=128
+dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=16MiB count=128
 
 cd $current_dir

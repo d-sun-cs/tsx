@@ -2,15 +2,15 @@
 
 # 参数校验
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <block-size-in-KB> <test-count>"
+    echo "Usage: $0 <chunk-size-in-KB> <test-count>"
     exit 1
 fi
 
-BLOCK_SIZE_KB=$1
+CHUNK_SIZE_KB=$1
 TEST_COUNT=$2
 
-# 将块大小从 KB 转换为 B
-BLOCK_SIZE=$((BLOCK_SIZE_KB * 1024))
+# 计算 buffer size
+BUFFER_SIZE=$((CHUNK_SIZE_KB * 8 * 1024))
 
 current_dir=$(pwd)
 
@@ -31,22 +31,23 @@ if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" 
 fi
 
 # 测试命令
-echo "Chunk size: ${BLOCK_SIZE_KB}KB"
+echo "Chunk size: ${CHUNK_SIZE_KB}KB"
+echo "Buffer size: $((CHUNK_SIZE_KB * 8))KB"
 echo "Test count: $TEST_COUNT"
 echo "Running tsx encode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT
+$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT
 echo "Running tsx decode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
+$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
 echo "--------------------------"
 echo "Running isa encode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT
+$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT
 echo "Running isa decode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
+$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
 echo "--------------------------"
 echo "Running jerasure encode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BLOCK_SIZE -i $TEST_COUNT
+$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT
 echo "Running jerasure decode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BLOCK_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
+$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
 
 cd $current_dir
 
