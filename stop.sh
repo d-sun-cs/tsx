@@ -12,7 +12,7 @@ CEPH_SRC=$(cd ../.. && pwd)
 
 cd $CEPH_BUILD
 
-$CEPH_BUILD/bin/init-ceph stop
+# $CEPH_BUILD/bin/init-ceph stop
 $CEPH_SRC/stop.sh
 rm -rf out dev
 # 删除largefile

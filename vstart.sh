@@ -20,8 +20,9 @@ cd $CEPH_BUILD
 
 ninja vstart 
 
-$CEPH_BUILD/bin/init-ceph stop 
+# $CEPH_BUILD/bin/init-ceph stop 
 $CEPH_SRC/stop.sh 
+rm -rf out dev
 # env OSD=11 $CEPH_SRC/vstart.sh -d -n 
 env OSD=11 $CEPH_SRC/vstart.sh -n 
 
