@@ -38,6 +38,7 @@
 #define ENABLE_ENCODE 1
 #define ENABLE_DECODE 1
 #define ENABLE_LOG 0
+#define WINDOW_SIZE 64
 
 using namespace std;
 using namespace ceph;
@@ -106,7 +107,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 
   const int SLICE = 32;
   const int TOTAL_SLICE_NUM = blocksize / SLICE;
-  const int window_size = 32;
+  const int window_size = WINDOW_SIZE;
   const int windows_num = TOTAL_SLICE_NUM / window_size;
 
   ParityChunkPtr parity_k(blocksize, chunks[k]);
@@ -229,7 +230,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 
   const int SLICE = 32;
   const int TOTAL_SLICE_NUM = blocksize / SLICE;
-  const int window_size = 128;
+  const int window_size = WINDOW_SIZE;
   const int windows_num = TOTAL_SLICE_NUM / window_size;
 
   uint64_t slice_offset_1;

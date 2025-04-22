@@ -34,20 +34,35 @@ fi
 echo "Chunk size: ${CHUNK_SIZE_KB}KB"
 echo "Buffer size: $((CHUNK_SIZE_KB * 8))KB"
 echo "Test count: $TEST_COUNT"
-echo "Running tsx encode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT
-echo "Running tsx decode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
+
+run_test() {
+    local description=$1
+    local command=$2
+
+    echo "$description"
+    output=$($command)
+    echo "$output"
+
+    # 提取时间和总量
+    time=$(echo "$output" | grep -oP '^\d+\.\d+')
+    total_kb=$(echo "$output" | grep -oP '\d+$')
+
+    if [[ -n "$time" && -n "$total_kb" ]]; then
+        throughput=$(echo "scale=2; $total_kb / 1024 / $time" | bc)
+        echo "Throughput: ${throughput} MB/s"
+    else
+        echo "Failed to calculate throughput for $description"
+    fi
+}
+
+run_test "Running tsx encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "Running tsx decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
 echo "--------------------------"
-echo "Running isa encode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT
-echo "Running isa decode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
+run_test "Running isa encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "Running isa decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
 echo "--------------------------"
-echo "Running jerasure encode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT
-echo "Running jerasure decode test..."
-$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7
+run_test "Running jerasure encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "Running jerasure decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
 
 cd $current_dir
 
