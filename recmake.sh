@@ -12,6 +12,7 @@ CEPH_ROOT=$(cd ../../../ && pwd)
 
 cd $CEPH_ROOT
 
+rm -rf build
 sudo rm -rf build
 # ./do_cmake.sh -DCMAKE_INSTALL_PREFIX=/opt/ceph -DCMAKE_C_FLAGS="-Og -g3 -gdwarf-4"
 ./do_cmake.sh -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_FLAGS="-mavx2" -DCMAKE_C_FLAGS="-mavx2"

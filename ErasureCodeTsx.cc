@@ -38,7 +38,7 @@
 #define ENABLE_ENCODE 1
 #define ENABLE_DECODE 1
 #define ENABLE_LOG 0
-#define WINDOW_SIZE 64
+#define WINDOW_SIZE 32
 
 using namespace std;
 using namespace ceph;

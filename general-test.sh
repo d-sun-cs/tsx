@@ -39,12 +39,12 @@ for ((i = 1; i <= TEST_COUNT; i++)); do
     start_time=$(date +%s.%N)
     $CEPH_BUILD/bin/rados put largefile $CEPH_BUILD/largefile -p $POOL_NAME
     end_time=$(date +%s.%N)
-    put_time=$(echo "$end_time - $start_time" | bc)
-    total_put_time=$(echo "$total_put_time + $put_time" | bc)
+    put_time=$(python3 -c "print($end_time - $start_time)")
+    total_put_time=$(python3 -c "print($total_put_time + $put_time)")
 done
 
-avg_put_time=$(echo "$total_put_time / $TEST_COUNT" | bc -l)
-put_speed=$(echo "$file_size / $avg_put_time / 1024 / 1024" | bc -l)
+avg_put_time=$(python3 -c "print($total_put_time / $TEST_COUNT)")
+put_speed=$(python3 -c "print(($file_size / $avg_put_time) / 1024 / 1024)")
 
 $CEPH_BUILD/bin/rados ls -p $POOL_NAME
 $CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile
@@ -63,12 +63,12 @@ for ((i = 1; i <= TEST_COUNT; i++)); do
     start_time=$(date +%s.%N)
     $CEPH_BUILD/bin/rados get largefile $CEPH_BUILD/my_largefile -p $POOL_NAME
     end_time=$(date +%s.%N)
-    get_time=$(echo "$end_time - $start_time" | bc)
-    total_get_time=$(echo "$total_get_time + $get_time" | bc)
+    get_time=$(python3 -c "print($end_time - $start_time)")
+    total_get_time=$(python3 -c "print($total_get_time + $get_time)")
 done
 
-avg_get_time=$(echo "$total_get_time / $TEST_COUNT" | bc -l)
-get_speed=$(echo "$file_size / $avg_get_time / 1024 / 1024" | bc -l)
+avg_get_time=$(python3 -c "print($total_get_time / $TEST_COUNT)")
+get_speed=$(python3 -c "print(($file_size / $avg_get_time) / 1024 / 1024)")
 
 # 恢复之前停止的 OSD
 for osd_id in "${osd_to_stop[@]}"; do
@@ -87,7 +87,7 @@ rm -f $CEPH_BUILD/my_largefile
 
 echo "[${POOL_PREFIX}] Test passed! The files are identical!"
 
-echo "File Size: $(echo "$file_size / 1024 / 1024" | bc -l) MB"
+echo "File Size: $(python3 -c "print($file_size / 1024 / 1024)") MB"
 echo "Write Time (avg of $TEST_COUNT runs): $avg_put_time seconds"
 echo "Write Speed: $put_speed MB/s"
 echo "Read Time (avg of $TEST_COUNT runs): $avg_get_time seconds"
