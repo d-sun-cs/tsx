@@ -1,3 +1,11 @@
+# 编码解码算法所在文件
+
+- `ErasureCodeTsx.cc`：优化版本的Shift Xor Two-tone
+- `archive/naive.cc`：naive版本的Shift Xor Two-tone
+- `ErasureCodeTsxse.cc`：用于测试某个优化方法是否有效的对照版本
+
+
+
 # TSX (Tow-tone Shift-XOR) Erasure Code Algorithm
 
 TSX (Tow-tone Shift-XOR) is an erasure code algorithm integrated into Ceph. This algorithm provides efficient data protection and recovery capabilities.
