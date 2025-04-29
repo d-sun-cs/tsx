@@ -1,7 +1,7 @@
 # 编码解码算法所在文件
 
-- `ErasureCodeTsx.cc`：优化版本的Shift Xor Two-tone
-- `archive/naive.cc`：naive版本的Shift Xor Two-tone
+- `ErasureCodeTsx.cc`：优化版本的Two-tone Shift-Xor编解码
+- `archive/naive.cc`：naive版本的Two-tone Shift-Xor编解码
 - `ErasureCodeTsxse.cc`：用于测试某个优化方法是否有效的对照版本
 
 
