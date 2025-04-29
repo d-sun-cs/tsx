@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# 参数校验
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <pool-prefix> <test-count>"
+    exit 1
+fi
+
+POOL_PREFIX=$1
+TEST_COUNT=$2
+POOL_NAME="${POOL_PREFIX}-pool"  # 自动拼接 -pool
+
+current_dir=$(pwd)
+
+if [[ ! $current_dir =~ /ceph/src/erasure-code/tsx$ ]]; then
+    echo "please change directory to ceph/src/erasure-code/tsx to run this script"
+    exit 1
+fi
+
+CEPH_BUILD=$(cd ../../../build && pwd)
+
+cd $CEPH_BUILD
+
+if $CEPH_BUILD/bin/ceph osd tree  | grep -q "down"; then
+    echo "Error: Found 'down' status in OSD tree. Running restart-osds.sh and exiting."
+    echo "Please run this script again after the OSDs have restarted."
+    cd $current_dir
+    ./restart-osds.sh
+    exit 1
+fi
+
+file_size=$(stat -c%s $CEPH_BUILD/largefile)
+total_put_time=0
+total_get_time=0
+
+# 写测试
+for ((i = 1; i <= TEST_COUNT; i++)); do
+    $CEPH_BUILD/bin/rados cleanup -p $POOL_NAME  # 清空存储池
+    start_time=$(date +%s.%N)
+    $CEPH_BUILD/bin/rados put largefile $CEPH_BUILD/largefile -p $POOL_NAME
+    end_time=$(date +%s.%N)
+    put_time=$(python3 -c "print($end_time - $start_time)")
+    total_put_time=$(python3 -c "print($total_put_time + $put_time)")
+done
+
+avg_put_time=$(python3 -c "print($total_put_time / $TEST_COUNT)")
+put_speed=$(python3 -c "print(($file_size / $avg_put_time) / 1024 / 1024)")
+
+$CEPH_BUILD/bin/rados ls -p $POOL_NAME
+$CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile
+
+osd_map_output=$($CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile)
+osd_ids=($(echo "$osd_map_output" | grep -oP '\[.*?\]' | tr -d '[]' | tr ',' ' '))
+osd_to_stop=(${osd_ids[5]} ${osd_ids[6]} ${osd_ids[7]})
+
+for osd_id in "${osd_to_stop[@]}"; do
+    $CEPH_BUILD/bin/init-ceph stop osd.$osd_id
+done
+
+# 读测试
+for ((i = 1; i <= TEST_COUNT; i++)); do
+    rm -f $CEPH_BUILD/my_largefile  # 清空本地文件
+    start_time=$(date +%s.%N)
+    $CEPH_BUILD/bin/rados get largefile $CEPH_BUILD/my_largefile -p $POOL_NAME
+    end_time=$(date +%s.%N)
+    get_time=$(python3 -c "print($end_time - $start_time)")
+    total_get_time=$(python3 -c "print($total_get_time + $get_time)")
+done
+
+avg_get_time=$(python3 -c "print($total_get_time / $TEST_COUNT)")
+get_speed=$(python3 -c "print(($file_size / $avg_get_time) / 1024 / 1024)")
+
+# 恢复之前停止的 OSD
+for osd_id in "${osd_to_stop[@]}"; do
+    $CEPH_BUILD/bin/init-ceph restart osd.$osd_id
+done
+
+# 校验文件完整性
+diff $CEPH_BUILD/largefile $CEPH_BUILD/my_largefile
+if [ $? -ne 0 ]; then
+    echo "[${POOL_PREFIX}] Test failed! The files largefile and my_largefile are not identical!"
+    exit 1
+fi
+
+$CEPH_BUILD/bin/rados cleanup -p $POOL_NAME
+rm -f $CEPH_BUILD/my_largefile
+
+echo "[${POOL_PREFIX}] Test passed! The files are identical!"
+
+echo "File Size: $(python3 -c "print($file_size / 1024 / 1024)") MB"
+echo "Write Time (avg of $TEST_COUNT runs): $avg_put_time seconds"
+echo "Write Speed: $put_speed MB/s"
+echo "Read Time (avg of $TEST_COUNT runs): $avg_get_time seconds"
+echo "Read Speed: $get_speed MB/s"
+
+cd $current_dir

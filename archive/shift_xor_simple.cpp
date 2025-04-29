@@ -23,7 +23,7 @@
 #define PARITY_SIZE (CHUNK_SIZE + PARITY_PADDING)
 
 #define SAMPLE_NUM 0x01UL
-#define ENCODE_FILE "dummy.txt"
+#define ENCODE_FILE "/tmp/largefile"
 
 uint8_t input_chunk_1[CHUNK_SIZE] = {0};
 uint8_t input_chunk_2[CHUNK_SIZE] = {0};
