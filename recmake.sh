@@ -7,7 +7,7 @@ if [[ ! $current_dir =~ /ceph/src/erasure-code/tsx$ ]]; then
    exit 1
 fi
 
-CEPH_BUILD=$(cd ../../../build && pwd)
+CEPH_BUILD=$(cd ../../../ && pwd)/build
 CEPH_ROOT=$(cd ../../../ && pwd)
 
 cd $CEPH_ROOT

@@ -79,7 +79,7 @@ done
 diff $CEPH_BUILD/largefile $CEPH_BUILD/my_largefile
 if [ $? -ne 0 ]; then
     echo "[${POOL_PREFIX}] Test failed! The files largefile and my_largefile are not identical!"
-    # exit 1
+    exit 1
 fi
 
 $CEPH_BUILD/bin/rados cleanup -p $POOL_NAME

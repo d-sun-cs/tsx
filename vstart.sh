@@ -43,6 +43,11 @@ for BLOCK_SIZE in "${BLOCK_SIZES[@]}"; do
     $CEPH_BUILD/bin/ceph osd pool create tsx-${BLOCK_SIZE}-pool erasure tsx-${BLOCK_SIZE}-profile 
     $CEPH_BUILD/bin/ceph osd pool set tsx-${BLOCK_SIZE}-pool min_size 8 
 
+    # 创建 tsxse 配置
+    $CEPH_BUILD/bin/ceph osd erasure-code-profile set tsxse-${BLOCK_SIZE}-profile plugin=tsxse crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
+    $CEPH_BUILD/bin/ceph osd pool create tsxse-${BLOCK_SIZE}-pool erasure tsxse-${BLOCK_SIZE}-profile 
+    $CEPH_BUILD/bin/ceph osd pool set tsxse-${BLOCK_SIZE}-pool min_size 8 
+
     # 创建 isa 配置
     $CEPH_BUILD/bin/ceph osd erasure-code-profile set isa-${BLOCK_SIZE}-profile plugin=isa k=8 m=3 crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
     $CEPH_BUILD/bin/ceph osd pool create isa-${BLOCK_SIZE}-pool erasure isa-${BLOCK_SIZE}-profile 

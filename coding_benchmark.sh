@@ -24,9 +24,10 @@ CEPH_BUILD=$(cd ../../../build && pwd)
 cd $CEPH_BUILD
 
 ninja_output_ec_tsx=$(ninja ec_tsx)
+ninja_output_ec_tsxse=$(ninja ec_tsxse)
 ninja_output_benchmark=$(ninja ceph_erasure_code_benchmark)
 
-if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" != *"no work to do."* ]]; then
+if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" != *"no work to do."* || "$ninja_output_ec_tsxse" != *"no work to do."* ]]; then
     ninja install
     sudo ninja install
 fi
@@ -49,18 +50,21 @@ run_test() {
     total_kb=$(echo "$output" | grep -oP '\d+$')
 
     if [[ -n "$time" && -n "$total_kb" ]]; then
-        throughput=$(echo "scale=2; $total_kb / 1024 / $time" | bc)
+        throughput=$(python3 -c "print(round($total_kb / 1024 / $time, 2))")
         echo "Throughput: ${throughput} MB/s"
     else
         echo "Failed to calculate throughput for $description"
     fi
 }
 
-run_test "Running tsx encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "Running tsx decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
-echo "--------------------------"
 run_test "Running isa encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
 run_test "Running isa decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
+echo "--------------------------"
+run_test "Running tsxse encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "Running tsxse decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
+echo "--------------------------"
+run_test "Running tsx encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "Running tsx decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
 echo "--------------------------"
 run_test "Running jerasure encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT"
 run_test "Running jerasure decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
