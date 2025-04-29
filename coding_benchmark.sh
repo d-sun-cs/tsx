@@ -33,6 +33,7 @@ if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" 
 fi
 
 # 测试命令
+echo "-------------------------------------------"
 echo "Chunk size: ${CHUNK_SIZE_KB}KB"
 echo "Buffer size: $((CHUNK_SIZE_KB * 8))KB"
 echo "Test count: $TEST_COUNT"
@@ -57,17 +58,30 @@ run_test() {
     fi
 }
 
-run_test "Running isa encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "Running isa decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
-echo "--------------------------"
-run_test "Running tsxse encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "Running tsxse decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
-echo "--------------------------"
-run_test "Running tsx encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "Running tsx decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
-echo "--------------------------"
-run_test "Running jerasure encode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "Running jerasure decode test..." "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p jerasure -P k=8 -P m=3 -P technique=reed_sol_van -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
+# 在正式测试前进行预热
+warmup_test() {
+    local command=$1
+    $command > /dev/null 2>&1
+}
+
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+
+# 恢复正常测试部分
+echo "-------------------------------------------"
+run_test "ISA encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "ISA decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
+echo "-------------------------------------------"
+run_test "TSXSE encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "TSXSE decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
+echo "-------------------------------------------"
+run_test "TSX encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "TSX decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 5 --erased 6 --erased 7"
+echo "-------------------------------------------"
 
 cd $current_dir
 

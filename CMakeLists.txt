@@ -1,4 +1,5 @@
 # tsx plugin
+# find_package(OpenMP REQUIRED)
 
 set(tsx_srcs
   ErasureCodePluginTsx.cc

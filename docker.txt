@@ -1,0 +1,2 @@
+sudo docker exec -it ceph-dev /bin/bash
+cd /workspace/ceph/src/erasure-code/tsx/
