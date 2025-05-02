@@ -39,7 +39,7 @@
 #define ENABLE_DECODE 1
 #define ENABLE_LOG 0
 #define ENCODE_WINDOW_SIZE 16
-#define DECODE_WINDOW_SIZE 16
+#define DECODE_WINDOW_SIZE 32
 
 using namespace std;
 using namespace ceph;
@@ -94,11 +94,12 @@ unsigned int ErasureCodeTsxse::get_chunk_size(unsigned int object_size) const
 }
 
 int ErasureCodeTsxse::encode_chunks(const set<int> &want_to_encode,
-                                  map<int, bufferlist> *encoded)
+                                    map<int, bufferlist> *encoded)
 {
-  uint8_t* chunks[chunk_count];
-  for (unsigned int i = 0; i < chunk_count; ++i) {
-    chunks[i] = (uint8_t*)(*encoded)[i].c_str();
+  uint8_t *chunks[chunk_count];
+  for (unsigned int i = 0; i < chunk_count; ++i)
+  {
+    chunks[i] = (uint8_t *)(*encoded)[i].c_str();
   }
 
   const int k = data_chunk_count;
@@ -128,61 +129,72 @@ int ErasureCodeTsxse::encode_chunks(const set<int> &want_to_encode,
   uint64_t slice_offset_3;
   __m256i mxx1, mxx2;
 
-  for (int window_id = 0; window_id < windows_num; window_id++) {
+  for (int window_id = 0; window_id < windows_num; window_id++)
+  {
     const int slice_id_start = window_id * window_size;
     const int slice_id_end = slice_id_start + window_size;
 
-    for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++) {
+    for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
+    {
       slice_offset_2 = slice_id * SLICE;
       slice_offset_1 = slice_id * SLICE;
       slice_offset_3 = ((slice_id + 7) * SLICE);
-      mxx1 = _mm256_load_si256((__m256i*)&chunks[0][slice_offset_2]);
+      mxx1 = _mm256_load_si256((__m256i *)&chunks[0][slice_offset_2]);
 
-      if (slice_id >= window_size && slice_id - slice_id_start < k - 1) { // avoid overwrite
-        mxx2 = _mm256_xor_si256(mxx1, *((__m256i*)parity_k[slice_offset_1]));
-        _mm256_store_si256((__m256i*)parity_k[slice_offset_1], mxx2);
-      } else {
-        _mm256_store_si256((__m256i*)parity_k[slice_offset_1], mxx1);
-
+      if (slice_id >= window_size && slice_id - slice_id_start < k - 1)
+      { // avoid overwrite
+        mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k[slice_offset_1]));
+        _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx2);
+      }
+      else
+      {
+        _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx1);
       }
       // _mm256_store_si256((__m256i*)parity_k[slice_offset_1], mxx1);
 
-      _mm256_store_si256((__m256i*)parity_k1[slice_offset_2], mxx1);
-      _mm256_store_si256((__m256i*)parity_k2[slice_offset_3], mxx1);
+      _mm256_store_si256((__m256i *)parity_k1[slice_offset_2], mxx1);
+      _mm256_store_si256((__m256i *)parity_k2[slice_offset_3], mxx1);
     }
 
-    for (int chunk_idx = 1; chunk_idx < 8; chunk_idx++) {
-      for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++) {
+    for (int chunk_idx = 1; chunk_idx < 8; chunk_idx++)
+    {
+      for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
+      {
         slice_offset_2 = slice_id * SLICE;
         slice_offset_1 = ((slice_id + chunk_idx) * SLICE);
         slice_offset_3 = ((slice_id + (7 - chunk_idx)) * SLICE);
-        mxx1 = _mm256_load_si256((__m256i*)&chunks[chunk_idx][slice_offset_2]);
+        mxx1 = _mm256_load_si256((__m256i *)&chunks[chunk_idx][slice_offset_2]);
 
-        if (slice_id == slice_id_end - 1) {
-          _mm256_store_si256((__m256i*)parity_k[slice_offset_1], mxx1);
-        } else {
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i*)parity_k[slice_offset_1]));
-          _mm256_store_si256((__m256i*)parity_k[slice_offset_1], mxx2);
+        if (slice_id == slice_id_end - 1)
+        {
+          _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx1);
+        }
+        else
+        {
+          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k[slice_offset_1]));
+          _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx2);
         }
 
-        mxx2 = _mm256_xor_si256(mxx1, *((__m256i*)parity_k1[slice_offset_2]));
-        _mm256_store_si256((__m256i*)parity_k1[slice_offset_2], mxx2);
+        mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k1[slice_offset_2]));
+        _mm256_store_si256((__m256i *)parity_k1[slice_offset_2], mxx2);
 
-        if (slice_id == 0) { 
-          _mm256_store_si256((__m256i*)parity_k2[slice_offset_3], mxx1);
-        } else {
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i*)parity_k2[slice_offset_3]));
-          _mm256_store_si256((__m256i*)parity_k2[slice_offset_3], mxx2);
+        if (slice_id == 0)
+        {
+          _mm256_store_si256((__m256i *)parity_k2[slice_offset_3], mxx1);
+        }
+        else
+        {
+          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k2[slice_offset_3]));
+          _mm256_store_si256((__m256i *)parity_k2[slice_offset_3], mxx2);
         }
       }
     }
   }
 
-  std::array<uint8_t*, PARITY_CHUNKS> extra_data = {
-    parity_k.get_extradata(),
-    parity_k1.get_extradata(),
-    parity_k2.get_extradata()
-  };
+  std::array<uint8_t *, PARITY_CHUNKS> extra_data = {
+      parity_k.get_extradata(),
+      parity_k1.get_extradata(),
+      parity_k2.get_extradata()};
 
   parity_extra_data[encode_call_count] = extra_data;
 
@@ -192,7 +204,7 @@ int ErasureCodeTsxse::encode_chunks(const set<int> &want_to_encode,
   total_encode_time_ms += encode_duration;
 
   std::ofstream encode_log("tsx-encode-timing.log", std::ios::app);
-  encode_log << "encode_call_count: " << encode_call_count 
+  encode_log << "encode_call_count: " << encode_call_count
              << ", blocksize: " << blocksize
              << ", total_time_ms: " << total_encode_time_ms << "\n";
   encode_log.close();

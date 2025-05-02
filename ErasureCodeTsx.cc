@@ -38,8 +38,9 @@
 #define ENABLE_ENCODE 1
 #define ENABLE_DECODE 1
 #define ENABLE_LOG 0
+// !important: window_size >= k - 1
 #define ENCODE_WINDOW_SIZE 16
-#define DECODE_WINDOW_SIZE 32
+#define DECODE_WINDOW_SIZE 16
 
 using namespace std;
 using namespace ceph;
@@ -121,14 +122,14 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   const int window_size = ENCODE_WINDOW_SIZE;
   const int windows_num = TOTAL_SLICE_NUM / window_size;
 
-  ParityChunkPtr parity_k(blocksize, chunks[k]);
-  ParityChunkPtr parity_k1(blocksize, chunks[k + 1]);
-  ParityChunkPtr parity_k2(blocksize, chunks[k + 2]);
+  ParityChunkPtr parity1(blocksize, chunks[k]);
+  ParityChunkPtr parity2(blocksize, chunks[k + 1]);
+  ParityChunkPtr parity3(blocksize, chunks[k + 2]);
 
   uint64_t slice_offset_1;
   uint64_t slice_offset_2;
   uint64_t slice_offset_3;
-  __m256i mxx1, mxx2;
+  __m256i mxx1, mxx2, mxx3, mxx4, res1, res3, tmp;
 
   for (int window_id = 0; window_id < windows_num; window_id++)
   {
@@ -137,66 +138,102 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 
     for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
     {
-      slice_offset_2 = slice_id * SLICE;
       slice_offset_1 = slice_id * SLICE;
-      slice_offset_3 = ((slice_id + 7) * SLICE);
-      mxx1 = _mm256_load_si256((__m256i *)&chunks[0][slice_offset_2]);
+      slice_offset_2 = slice_id * SLICE;
+      slice_offset_3 = (slice_id + 6) * SLICE; // 7 - 1
+      bool first = slice_id != slice_id_start;
 
-      if (slice_id >= window_size && slice_id - slice_id_start < k - 1)
-      { // avoid overwrite
-        mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k[slice_offset_1]));
-        _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx2);
+      // Load two data chunks into registers and XOR them
+      mxx1 = _mm256_load_si256((__m256i *)&chunks[0][slice_offset_2]);
+      mxx2 = _mm256_load_si256((__m256i *)&chunks[1][slice_offset_2]);
+      res1 = _mm256_xor_si256(mxx1, mxx2);
+
+      // Store the result into parity chunks
+      _mm256_store_si256((__m256i *)parity2[slice_offset_2], res1);
+      if (slice_id == slice_id_start)
+      {
+        res1 = mxx1;
+        res3 = mxx2;
       }
       else
       {
-        _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx1);
+        res1 = _mm256_xor_si256(mxx1, mxx4);
+        res3 = _mm256_xor_si256(mxx2, mxx3);
       }
-      // _mm256_store_si256((__m256i*)parity_k[slice_offset_1], mxx1);
-
-      _mm256_store_si256((__m256i *)parity_k1[slice_offset_2], mxx1);
-      _mm256_store_si256((__m256i *)parity_k2[slice_offset_3], mxx1);
+      if (window_id != 0)
+      {
+        if (slice_id % window_size < k - 1)
+        {
+          tmp = _mm256_load_si256((__m256i *)parity1[slice_offset_1]);
+          res1 = _mm256_xor_si256(res1, tmp);
+        }
+        if (slice_id == slice_id_start)
+        {
+          tmp = _mm256_load_si256((__m256i *)parity3[slice_offset_3]);
+          res3 = _mm256_xor_si256(res, tmp);
+        }
+      }
+      _mm256_store_si256((__m256i *)parity1[slice_offset_1], res1);
+      _mm256_store_si256((__m256i *)parity3[slice_offset_3], res3);
+      if (slice_id != slice_id_end)
+      {
+        mxx3 = mxx1;
+        mxx4 = mxx2;
+      }
+      else
+      {
+        res1 = mmx2;
+        res3 = mmx1;
+        // !important: window_size >= k - 1
+        _mm256_store_si256((__m256i *)parity1[slice_offset_1 + SLICE], res1);
+        _mm256_store_si256((__m256i *)parity3[slice_offset_3 - SLICE], res3);
+      }
     }
 
-    for (int chunk_idx = 1; chunk_idx < 8; chunk_idx++)
+    for (int chunk_idx = 2; chunk_idx < 8; chunk_idx += 2)
     {
-      // #pragma omp parallel for num_threads(2)
       for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
       {
         slice_offset_2 = slice_id * SLICE;
-        slice_offset_1 = ((slice_id + chunk_idx) * SLICE);
-        slice_offset_3 = ((slice_id + (7 - chunk_idx)) * SLICE);
-        mxx1 = _mm256_load_si256((__m256i *)&chunks[chunk_idx][slice_offset_2]);
+        slice_offset_1 = (slice_id + chunk_idx - 1) * SLICE;
+        slice_offset_3 = (slice_id + chunk_idx + 1) * SLICE;
 
+        // Load two data chunks into registers and XOR them
+        mxx1 = _mm256_load_si256((__m256i *)&chunks[chunk_idx][slice_offset_2]);
+        mxx2 = _mm256_load_si256((__m256i *)&chunks[chunk_idx + 1][slice_offset_2]);
+        __m256i result = _mm256_xor_si256(mxx1, mxx2);
+
+        // Handle boundary conditions
         if (slice_id == slice_id_end - 1)
         {
-          _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx1);
+          _mm256_store_si256((__m256i *)parity1[slice_offset_1], result);
         }
         else
         {
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k[slice_offset_1]));
-          _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx2);
+          __m256i temp = _mm256_xor_si256(result, *((__m256i *)parity1[slice_offset_1]));
+          _mm256_store_si256((__m256i *)parity1[slice_offset_1], temp);
         }
 
-        mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k1[slice_offset_2]));
-        _mm256_store_si256((__m256i *)parity_k1[slice_offset_2], mxx2);
+        __m256i temp1 = _mm256_xor_si256(result, *((__m256i *)parity2[slice_offset_2]));
+        _mm256_store_si256((__m256i *)parity2[slice_offset_2], temp1);
 
         if (slice_id == 0)
         {
-          _mm256_store_si256((__m256i *)parity_k2[slice_offset_3], mxx1);
+          _mm256_store_si256((__m256i *)parity3[slice_offset_3], result);
         }
         else
         {
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k2[slice_offset_3]));
-          _mm256_store_si256((__m256i *)parity_k2[slice_offset_3], mxx2);
+          __m256i temp2 = _mm256_xor_si256(result, *((__m256i *)parity3[slice_offset_3]));
+          _mm256_store_si256((__m256i *)parity3[slice_offset_3], temp2);
         }
       }
     }
   }
 
   std::array<uint8_t *, PARITY_CHUNKS> extra_data = {
-      parity_k.get_extradata(),
-      parity_k1.get_extradata(),
-      parity_k2.get_extradata()};
+      parity1.get_extradata(),
+      parity2.get_extradata(),
+      parity3.get_extradata()};
 
   parity_extra_data[encode_call_count] = extra_data;
 
