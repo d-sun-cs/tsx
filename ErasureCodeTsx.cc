@@ -136,12 +136,34 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
     const int slice_id_start = window_id * window_size;
     const int slice_id_end = slice_id_start + window_size;
 
+    // for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
+    // {
+    //   slice_offset_2 = slice_id * SLICE;
+    //   slice_offset_1 = slice_id * SLICE;
+    //   slice_offset_3 = ((slice_id + 7) * SLICE);
+    //   mxx1 = _mm256_load_si256((__m256i *)&chunks[0][slice_offset_2]);
+
+    //   if (slice_id >= window_size && slice_id - slice_id_start < k - 1)
+    //   { // avoid overwrite
+    //     tmp = _mm256_load_si256((__m256i *)parity1[slice_offset_1]);
+    //     mxx2 = _mm256_xor_si256(mxx1, tmp);
+    //     _mm256_store_si256((__m256i *)parity1[slice_offset_1], mxx2);
+    //   }
+    //   else
+    //   {
+    //     _mm256_store_si256((__m256i *)parity1[slice_offset_1], mxx1);
+    //   }
+    //   // _mm256_store_si256((__m256i*)parity_k[slice_offset_1], mxx1);
+
+    //   _mm256_store_si256((__m256i *)parity2[slice_offset_2], mxx1);
+    //   _mm256_store_si256((__m256i *)parity3[slice_offset_3], mxx1);
+    // }
+
     for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
     {
       slice_offset_1 = slice_id * SLICE;
       slice_offset_2 = slice_id * SLICE;
       slice_offset_3 = (slice_id + 6) * SLICE; // 7 - 1
-      bool first = slice_id != slice_id_start;
 
       // Load two data chunks into registers and XOR them
       mxx1 = _mm256_load_si256((__m256i *)&chunks[0][slice_offset_2]);
@@ -162,7 +184,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
       }
       if (window_id != 0)
       {
-        if (slice_id % window_size < k - 1)
+        if ((slice_id % window_size) < k - 1)
         {
           tmp = _mm256_load_si256((__m256i *)parity1[slice_offset_1]);
           res1 = _mm256_xor_si256(res1, tmp);
@@ -170,7 +192,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
         if (slice_id == slice_id_start)
         {
           tmp = _mm256_load_si256((__m256i *)parity3[slice_offset_3]);
-          res3 = _mm256_xor_si256(res, tmp);
+          res3 = _mm256_xor_si256(res3, tmp);
         }
       }
       _mm256_store_si256((__m256i *)parity1[slice_offset_1], res1);
@@ -183,8 +205,8 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
       else
       {
         // [!] Assert window_size >= k - 1, or overwriting occurs
-        _mm256_store_si256((__m256i *)parity1[slice_offset_1 + SLICE], mmx2);
-        _mm256_store_si256((__m256i *)parity3[slice_offset_3 + SLICE], mmx1);
+        _mm256_store_si256((__m256i *)parity1[slice_offset_1 + SLICE], mxx2);
+        _mm256_store_si256((__m256i *)parity3[slice_offset_3 + SLICE], mxx1);
       }
     }
 
@@ -216,16 +238,19 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
           res1 = _mm256_xor_si256(mxx1, mxx4);
           res3 = _mm256_xor_si256(mxx2, mxx3);
         }
+
         if (slice_id > 1)
         {
           tmp = _mm256_load_si256((__m256i *)parity3[slice_offset_3]);
           res3 = _mm256_xor_si256(res3, tmp);
         }
         _mm256_store_si256((__m256i *)parity3[slice_offset_3], res3);
+
         if (slice_id != slice_id_end - 1)
         {
-          tmp = _mm256_xor_si256(result, *((__m256i *)parity1[slice_offset_1]));
-          _mm256_store_si256((__m256i *)parity1[slice_offset_1], temp);
+          tmp = _mm256_load_si256((__m256i *)parity1[slice_offset_1]);
+          res1 = _mm256_xor_si256(res1, tmp);
+          _mm256_store_si256((__m256i *)parity1[slice_offset_1], res1);
           mxx3 = mxx1;
           mxx4 = mxx2;
         }
@@ -234,10 +259,49 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
           _mm256_store_si256((__m256i *)parity1[slice_offset_1], res1);
           // the slice of shift end
           _mm256_store_si256((__m256i *)parity1[slice_offset_1 + SLICE], mxx2);
-          _mm256_store_si256((__m256i *)parity1[slice_offset_3 + SLICE], mxx1);
+          tmp = _mm256_load_si256((__m256i *)parity3[slice_offset_3 + SLICE]);
+          res3 = _mm256_xor_si256(mxx1, tmp);
+          _mm256_store_si256((__m256i *)parity3[slice_offset_3 + SLICE], res3);
         }
       }
     }
+
+    // for (int chunk_idx = 2; chunk_idx < 8; chunk_idx++)
+    // {
+    //   for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
+    //   {
+    //     slice_offset_2 = slice_id * SLICE;
+    //     slice_offset_1 = ((slice_id + chunk_idx) * SLICE);
+    //     slice_offset_3 = ((slice_id + (7 - chunk_idx)) * SLICE);
+    //     mxx1 = _mm256_load_si256((__m256i *)&chunks[chunk_idx][slice_offset_2]);
+
+    //     if (slice_id == slice_id_end - 1)
+    //     {
+    //       _mm256_store_si256((__m256i *)parity1[slice_offset_1], mxx1);
+    //     }
+    //     else
+    //     {
+    //       mxx2 = _mm256_load_si256((__m256i *)parity1[slice_offset_1]);
+    //       mxx2 = _mm256_xor_si256(mxx1, mxx2);
+    //       _mm256_store_si256((__m256i *)parity1[slice_offset_1], mxx2);
+    //     }
+
+    //     mxx2 = _mm256_load_si256((__m256i *)parity2[slice_offset_2]);
+    //     mxx2 = _mm256_xor_si256(mxx1, mxx2);
+    //     _mm256_store_si256((__m256i *)parity2[slice_offset_2], mxx2);
+
+    //     if (slice_id == 0)
+    //     {
+    //       _mm256_store_si256((__m256i *)parity3[slice_offset_3], mxx1);
+    //     }
+    //     else
+    //     {
+    //       mxx2 = _mm256_load_si256((__m256i *)parity3[slice_offset_3]);
+    //       mxx2 = _mm256_xor_si256(mxx1, mxx2);
+    //       _mm256_store_si256((__m256i *)parity3[slice_offset_3], mxx2);
+    //     }
+    //   }
+    // }
   }
 
   std::array<uint8_t *, PARITY_CHUNKS> extra_data = {

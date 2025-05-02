@@ -1,2 +1,2 @@
-sudo docker exec -it ceph-dev /bin/bash
-cd /workspace/ceph/src/erasure-code/tsx/
+sudo docker start cephtest
+sudo docker exec -it -w /workspace/ceph/src/erasure-code/tsx/ cephtest /bin/bash
