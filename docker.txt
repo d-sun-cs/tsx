@@ -1,2 +1,5 @@
 sudo docker start cephtest
 sudo docker exec -it -w /workspace/ceph/src/erasure-code/tsx/ cephtest /bin/bash
+
+docker start ceph_build
+docker exec -it -w /ceph/src/erasure-code/tsx/ ceph_build /bin/bash
