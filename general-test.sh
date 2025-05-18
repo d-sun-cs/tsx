@@ -35,7 +35,7 @@ total_get_time=0
 
 # 写测试
 for ((i = 1; i <= TEST_COUNT; i++)); do
-    $CEPH_BUILD/bin/rados cleanup -p $POOL_NAME  # 清空存储池
+    $CEPH_BUILD/bin/rados rm largefile -p $POOL_NAME  # 删除之前的测试大文件
     start_time=$(date +%s.%N)
     $CEPH_BUILD/bin/rados put largefile $CEPH_BUILD/largefile -p $POOL_NAME
     end_time=$(date +%s.%N)
@@ -51,7 +51,7 @@ $CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile
 
 osd_map_output=$($CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile)
 osd_ids=($(echo "$osd_map_output" | grep -oP '\[.*?\]' | tr -d '[]' | tr ',' ' '))
-osd_to_stop=(${osd_ids[5]} ${osd_ids[6]} ${osd_ids[7]})
+osd_to_stop=(${osd_ids[0]} ${osd_ids[9]} ${osd_ids[10]})
 
 for osd_id in "${osd_to_stop[@]}"; do
     $CEPH_BUILD/bin/init-ceph stop osd.$osd_id
@@ -72,7 +72,7 @@ get_speed=$(python3 -c "print(($file_size / $avg_get_time) / 1024 / 1024)")
 
 # 恢复之前停止的 OSD
 for osd_id in "${osd_to_stop[@]}"; do
-    $CEPH_BUILD/bin/init-ceph restart osd.$osd_id
+    $CEPH_BUILD/bin/init-ceph start osd.$osd_id
 done
 
 # 校验文件完整性
