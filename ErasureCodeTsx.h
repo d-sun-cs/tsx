@@ -22,6 +22,7 @@
 #include "erasure-code/ErasureCode.h"
 
 #include <hiredis/hiredis.h>
+#include <hiredis/async.h>
 
 class ErasureCodeTsx final : public ceph::ErasureCode {
 public:
@@ -30,6 +31,7 @@ public:
 
   ~ErasureCodeTsx() override {
     if (rctx) {
+      // redisAsyncFree(rctx);
       redisFree(rctx);
       rctx = nullptr;
     }
@@ -61,6 +63,7 @@ private:
   unsigned int chunk_count;
   unsigned int data_chunk_count;
   redisContext *rctx;
+  // redisAsyncContext *rctx;
 };
 
 #endif

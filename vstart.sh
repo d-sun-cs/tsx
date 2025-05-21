@@ -57,6 +57,7 @@ done
 $CEPH_BUILD/bin/ceph config set global osd_max_object_size 3G 
 
 # dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=16MiB count=64
-dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=64KiB count=1
+dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=8MiB count=32
+# dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=64KiB count=1
 
 cd $current_dir
