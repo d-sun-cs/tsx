@@ -143,7 +143,6 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 
   static int encode_call_count = -1;
   encode_call_count++;
-  char parity_key[32];
 
 #if ENABLE_LOG
   std::ofstream encode_log("tsx-encode.log", std::ios::app);
@@ -230,12 +229,6 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
         }
       }
     }
-
-    if (window_id == 0)
-    {
-      mxx1 = _mm256_load_si256((__m256i *)parity_k1[0]);
-      _mm256_store_si256((__m256i *)parity_key, mxx1);
-    }
   }
 
   std::array<uint8_t *, PARITY_CHUNKS> extra_data = {
@@ -247,11 +240,15 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
 
   // redisReply *reply = (redisReply *)redisCommand(
   //     rctx, "SET %s %b", std::to_string(encode_call_count), parity_k.get_extradata(), 256);
+  char parity_key[SLICE];
+  // parity_key[32] = '\0';
+  mxx1 = _mm256_load_si256((__m256i *)parity_k1[0]);
+  _mm256_store_si256((__m256i *)parity_key, mxx1);
   char parity_buffer[2 * EXTRA_DATA_SIZE];
   memcpy(parity_buffer, parity_k.get_extradata(), EXTRA_DATA_SIZE);
   memcpy(parity_buffer + EXTRA_DATA_SIZE, parity_k2.get_extradata(), EXTRA_DATA_SIZE);
   redisReply *reply = (redisReply *)redisCommand(
-      rctx, "SET %s %b", parity_key, parity_buffer, 256);
+      rctx, "SET %b %b", parity_key, SLICE, parity_buffer, 2 * EXTRA_DATA_SIZE);
   freeReplyObject(reply);
   // redisAppendCommand(
   //     rctx, "SET %s %b", std::to_string(encode_call_count), parity_k.get_extradata(), 256);
@@ -270,17 +267,35 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   //            << ", total_time_ms: " << total_encode_time_ms << "\n";
 
   // 输出chunks[0]数据到文件（十六进制编码）
-  encode_log << "chunks[0] encode_call_count: " << encode_call_count << "\n";
-  for (unsigned i = 0; i < blocksize; ++i)
+  // encode_log << "chunks[0] encode_call_count: " << encode_call_count << "\n";
+  // for (unsigned i = 0; i < blocksize; ++i)
+  // {
+  //   encode_log << std::hex << std::setw(2) << std::setfill('0') << chunks[0][i] << " ";
+  // }
+  // encode_log << "\n";
+  // // 输出parity_k2数据到文件（十六进制编码）
+  // encode_log << "parity_k2 encode_call_count: " << encode_call_count << "\n";
+  // for (unsigned i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
+  // {
+  //   encode_log << std::hex << std::setw(2) << std::setfill('0') << *(parity_k2[i]) << " ";
+  // }
+  // encode_log << "\n";
+  // 输出parity_key数据到文件（十六进制编码）
+  encode_log << std::dec << "parity_key encode_call_count: " << encode_call_count << "\n";
+  for (unsigned i = 0; i < SLICE; ++i)
   {
-    encode_log << std::hex << std::setw(2) << std::setfill('0') << (int)chunks[0][i] << " ";
+    encode_log << std::hex
+               << std::setw(2) << std::setfill('0')
+               << static_cast<int>(static_cast<uint8_t>(parity_key[i])) << " ";
   }
   encode_log << "\n";
-  // 输出parity_k2数据到文件（十六进制编码）
-  encode_log << "parity_k2 encode_call_count: " << encode_call_count << "\n";
-  for (unsigned i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
+  // 输出parity_buffer数据到文件（十六进制编码）
+  encode_log << std::dec << "parity_buffer encode_call_count: " << encode_call_count << "\n";
+  for (unsigned i = 0; i < 2 * EXTRA_DATA_SIZE; ++i)
   {
-    encode_log << std::hex << std::setw(2) << std::setfill('0') << (int)*(parity_k2[i]) << " ";
+    encode_log << std::hex
+               << std::setw(2) << std::setfill('0')
+               << static_cast<int>(static_cast<uint8_t>(parity_buffer[i])) << " ";
   }
   encode_log << "\n";
   encode_log.close();
@@ -350,7 +365,6 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 
   static int decode_call_count = -1;
   decode_call_count++;
-  char parity_key[32];
 
 #if ENABLE_LOG
   std::ofstream decode_log("tsx-decode.log", std::ios::app);
@@ -359,10 +373,6 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 #endif
 
   auto extra_data = parity_extra_data[decode_call_count];
-
-  ParityChunkPtr parity_k(blocksize, coding[0], extra_data[0]);
-  ParityChunkPtr parity_k1(blocksize, coding[1], extra_data[1]);
-  ParityChunkPtr parity_k2(blocksize, coding[2], extra_data[2]);
 
   const int SLICE = 32;
   const int TOTAL_SLICE_NUM = blocksize / SLICE;
@@ -374,28 +384,54 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   uint64_t slice_offset_3;
   __m256i mxx1, mxx2;
 
+  // ParityChunkPtr parity_k1(blocksize, coding[1], extra_data[1]);
+  ParityChunkPtr parity_k1(blocksize, coding[1]);
+  ParityChunkPtr parity_k(blocksize, coding[0], extra_data[0]);
+  // ParityChunkPtr parity_k(blocksize, coding[0], (uint8_t*)parity_buffer);
+  ParityChunkPtr parity_k2(blocksize, coding[2], extra_data[2]);
+  // ParityChunkPtr parity_k2(blocksize, coding[2], (uint8_t*)parity_buffer + EXTRA_DATA_SIZE);
+
 #if ENABLE_LOG
 
   // 输出original parity[2]数据到文件（十六进制编码）
-  decode_log << "original parity[2] decode_call_count: " << decode_call_count << "\n";
-  for (unsigned i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
+  // decode_log << "original parity[2] decode_call_count: " << decode_call_count << "\n";
+  // for (unsigned i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
+  // {
+  //   decode_log << std::hex << std::setw(2) << std::setfill('0') << *(parity[2][i]) << " ";
+  // }
+  // decode_log << "\n";
+  decode_log << std::dec << "parity_key decode_call_count: " << decode_call_count << "\n";
+  for (unsigned i = 0; i < SLICE; ++i)
   {
-    decode_log << std::hex << std::setw(2) << std::setfill('0') << (int)*(parity[2][i]) << " ";
+    decode_log << std::hex
+               << std::setw(2) << std::setfill('0')
+               << static_cast<int>(static_cast<uint8_t>(parity_key[i])) << " ";
   }
   decode_log << "\n";
+  if (reply == nullptr)
+  {
+    decode_log << "reply is null\n";
+  }
+  else
+  {
+    decode_log << std::dec << "reply->str size: " << reply->len << "\n";
+    for (unsigned i = 0; i < reply->len; ++i)
+    {
+      decode_log << std::hex
+                 << std::setw(2) << std::setfill('0')
+                 << static_cast<int>(static_cast<uint8_t>(reply->str[i])) << " ";
+    }
+    decode_log << "\n";
+  }
+  // decode_log << "reply->str decode_call_count: " << decode_call_count << "\n";
+  // for (unsigned i = 0; i < 2 * EXTRA_DATA_SIZE; ++i)
+  // {
+  //   decode_log << std::hex << std::setw(2) << std::setfill('0') << reply->str[i] << " ";
+  // }
+  // decode_log << "\n";
 
 #endif
-
-  char* parity_buffer= (char *)aligned_alloc(32, 2 * EXTRA_DATA_SIZE);
-  mxx1 = _mm256_load_si256((__m256i *)parity_k1[0]);
-  _mm256_store_si256((__m256i *)parity_key, mxx1);
-  redisReply *reply = (redisReply *)redisCommand(
-      rctx, "GET %s", parity_key);
-  memcpy(parity_buffer, reply->str, 2 * EXTRA_DATA_SIZE);
-  freeReplyObject(reply);
-  // parity_k.set_extradata((uint8_t *)parity_buffer);
-  // parity_k2.set_extradata((uint8_t *)(parity_buffer + EXTRA_DATA_SIZE));
-
+  // freeReplyObject(reply);
 
   for (int window_id = 0; window_id <= windows_num; window_id++)
   {
@@ -520,56 +556,29 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       }
     }
 
-    // if (window_id == 0)
-    // {
-    //   mxx1 = _mm256_load_si256((__m256i *)parity_k1[0]);
-    //   _mm256_store_si256((__m256i *)parity_key, mxx1);
-    //   redisReply *reply = (redisReply *)redisCommand(
-    //       rctx, "GET %s", parity_key);
+    if (window_id == 1)
+    {
+      mxx2 = _mm256_setzero_si256();
+      char parity_key[SLICE];
+      for (int i = 0; i < data_chunk_count; i++)
+      {
+        mxx1 = _mm256_load_si256((__m256i *)data[i][0]);
+        
+        _mm256_store_si256((__m256i *)parity_key, mxx1);
+      }
 
-    //   freeReplyObject(reply);
-    // }
+      char *parity_buffer = (char *)aligned_alloc(32, 2 * EXTRA_DATA_SIZE);
+      redisReply *reply = (redisReply *)redisCommand(
+          rctx, "GET %b", parity_key, SLICE);
+      // memcpy(parity_buffer, reply->str, 2 * EXTRA_DATA_SIZE);
+      // memcpy(parity_buffer, reply->str, reply->len);
+      auto testval = reply->len;
+      memcpy(parity_buffer, reply->str, testval);
+      // parity_k.set_extradata((uint8_t *)parity_buffer);
+      // parity_k2.set_extradata((uint8_t *)(parity_buffer + EXTRA_DATA_SIZE));
+      // freeReplyObject(reply); // 在日志输出后面
+    }
   }
-
-  // solve chunk 6, 7, 8 in 256-bitwise
-  // for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
-  // {
-  //   slice_offset_1 = ((slice_id + 5) * SLICE);
-  //   slice_offset_2 = slice_id * SLICE;
-  //   slice_offset_3 = ((slice_id + 2) * SLICE);
-
-  //   mxx1 = _mm256_load_si256((__m256i *)parity_k[slice_offset_1]);
-  //   _mm256_store_si256((__m256i *)&data[5][slice_offset_2], mxx1);
-
-  //   mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k1[slice_offset_2]));
-  //   _mm256_store_si256((__m256i *)parity_k1[slice_offset_2], mxx2);
-  //   mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k2[slice_offset_3]));
-  //   _mm256_store_si256((__m256i *)parity_k2[slice_offset_3], mxx2);
-
-  //   slice_offset_1 = ((slice_id + 7) * SLICE);
-  //   slice_offset_2 = slice_id * SLICE;
-  //   slice_offset_3 = slice_id * SLICE;
-
-  //   mxx1 = _mm256_load_si256((__m256i *)parity_k2[slice_offset_3]);
-  //   _mm256_store_si256((__m256i *)&data[7][slice_offset_2], mxx1);
-
-  //   mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k[slice_offset_1]));
-  //   _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx2);
-  //   mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k1[slice_offset_2]));
-  //   _mm256_store_si256((__m256i *)parity_k1[slice_offset_2], mxx2);
-
-  //   slice_offset_1 = ((slice_id + 6) * SLICE);
-  //   slice_offset_2 = slice_id * SLICE;
-  //   slice_offset_3 = ((slice_id + 1) * SLICE);
-
-  //   mxx1 = _mm256_load_si256((__m256i *)parity_k1[slice_offset_2]);
-  //   _mm256_store_si256((__m256i *)&data[6][slice_offset_2], mxx1);
-
-  //   mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k[slice_offset_1]));
-  //   _mm256_store_si256((__m256i *)parity_k[slice_offset_1], mxx2);
-  //   mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity_k2[slice_offset_3]));
-  //   _mm256_store_si256((__m256i *)parity_k2[slice_offset_3], mxx2);
-  // }
 
 #if ENABLE_LOG
   // auto decode_end = std::chrono::high_resolution_clock::now();
@@ -581,23 +590,24 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   //            << ", total_time_ms: " << total_decode_time_ms << "\n";
 
   // 输出data[0]数据到文件（十六进制编码）
-  decode_log << "data[0] decode_call_count: " << decode_call_count << "\n";
-  for (unsigned i = 0; i < blocksize; ++i)
-  {
-    decode_log << std::hex << std::setw(2) << std::setfill('0') << (int)data[0][i] << " ";
-  }
-  decode_log << "\n";
-  // 输出processed parity[2]数据到文件（十六进制编码）
-  decode_log << "processed parity[2] decode_call_count: " << decode_call_count << "\n";
-  for (unsigned i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
-  {
-    decode_log << std::hex << std::setw(2) << std::setfill('0') << (int)*(parity[2][i]) << " ";
-  }
-  decode_log << "\n";
+  // decode_log << "data[0] decode_call_count: " << decode_call_count << "\n";
+  // for (unsigned i = 0; i < blocksize; ++i)
+  // {
+  //   decode_log << std::hex << std::setw(2) << std::setfill('0') << data[0][i] << " ";
+  // }
+  // decode_log << "\n";
+  // // 输出processed parity[2]数据到文件（十六进制编码）
+  // decode_log << "processed parity[2] decode_call_count: " << decode_call_count << "\n";
+  // for (unsigned i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
+  // {
+  //   decode_log << std::hex << std::setw(2) << std::setfill('0') << *(parity[2][i]) << " ";
+  // }
+  // decode_log << "\n";
   decode_log.close();
 
 #endif
 
+  free(parity_buffer);
   return 0;
 
 #else

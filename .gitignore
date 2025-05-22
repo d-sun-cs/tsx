@@ -2,3 +2,4 @@ a.out
 dummy.txt
 .vscode
 build
+*.rdb

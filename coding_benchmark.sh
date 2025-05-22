@@ -64,12 +64,12 @@ warmup_test() {
     $command > /dev/null 2>&1
 }
 
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+# warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
+# warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+# warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
+# warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+# warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
+# warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
 
 # 恢复正常测试部分
 echo "-------------------------------------------"
