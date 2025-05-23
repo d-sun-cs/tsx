@@ -51,7 +51,7 @@ $CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile
 
 osd_map_output=$($CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile)
 osd_ids=($(echo "$osd_map_output" | grep -oP '\[.*?\]' | tr -d '[]' | tr ',' ' '))
-osd_to_stop=(${osd_ids[5]} ${osd_ids[6]} ${osd_ids[7]})
+osd_to_stop=(${osd_ids[0]} ${osd_ids[9]} ${osd_ids[8]})
 
 for osd_id in "${osd_to_stop[@]}"; do
     $CEPH_BUILD/bin/init-ceph stop osd.$osd_id
