@@ -21,12 +21,23 @@
 #include "include/err.h"
 #include "erasure-code/ErasureCode.h"
 
+#include <hiredis/hiredis.h>
+#include <hiredis/async.h>
+
 class ErasureCodeTsxse final : public ceph::ErasureCode {
 public:
   explicit ErasureCodeTsxse(const std::string &dir)
     : directory(dir), chunk_count(11), data_chunk_count(8) {}
 
-  ~ErasureCodeTsxse() override {}
+  ~ErasureCodeTsxse() override {
+    if (rctx) {
+      // redisAsyncFree(rctx);
+      redisFree(rctx);
+      rctx = nullptr;
+    }
+  }
+
+  int init(ceph::ErasureCodeProfile &profile, std::ostream *ss) override;
 
   unsigned int get_chunk_count() const override {
     return chunk_count;
@@ -47,9 +58,12 @@ public:
 
 
 private:
+
   std::string directory;
   unsigned int chunk_count;
   unsigned int data_chunk_count;
+  redisContext *rctx;
+  // redisAsyncContext *rctx;
 };
 
 #endif

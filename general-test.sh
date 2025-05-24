@@ -51,7 +51,8 @@ $CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile
 
 osd_map_output=$($CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile)
 osd_ids=($(echo "$osd_map_output" | grep -oP '\[.*?\]' | tr -d '[]' | tr ',' ' '))
-osd_to_stop=(${osd_ids[0]} ${osd_ids[9]} ${osd_ids[8]})
+osd_to_stop=(${osd_ids[7]} ${osd_ids[9]} ${osd_ids[8]})
+# osd_to_stop=(${osd_ids[0]}})
 
 for osd_id in "${osd_to_stop[@]}"; do
     $CEPH_BUILD/bin/init-ceph stop osd.$osd_id
@@ -82,7 +83,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-$CEPH_BUILD/bin/rados cleanup -p $POOL_NAME
+$CEPH_BUILD/bin/rados rm largefile -p $POOL_NAME
 rm -f $CEPH_BUILD/my_largefile
 
 echo "[${POOL_PREFIX}] Test passed! The files are identical!"

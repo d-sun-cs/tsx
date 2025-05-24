@@ -1,5 +1,6 @@
 # tsx plugin
 # find_package(OpenMP REQUIRED)
+find_library(HIREDIS_LIB hiredis PATHS /usr/local/lib REQUIRED)
 
 set(tsx_srcs
   ErasureCodePluginTsx.cc
@@ -13,7 +14,6 @@ add_library(ec_tsx SHARED ${tsx_srcs})
 target_compile_options(ec_tsx PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsx PROPERTIES
   INSTALL_RPATH "")
-find_library(HIREDIS_LIB hiredis PATHS /usr/local/lib REQUIRED)
 target_link_libraries(ec_tsx json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsx DESTINATION ${erasure_plugin_dir})
 
@@ -32,5 +32,5 @@ add_library(ec_tsxse SHARED ${tsxse_srcs})
 target_compile_options(ec_tsxse PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsxse PROPERTIES
   INSTALL_RPATH "")
-target_link_libraries(ec_tsxse json_spirit)
+target_link_libraries(ec_tsxse json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsxse DESTINATION ${erasure_plugin_dir})
