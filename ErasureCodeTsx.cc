@@ -31,12 +31,15 @@
 #undef dout_prefix
 #define dout_prefix _prefix(_dout)
 
-#define EXTRA_DATA_SIZE 256
+#define Kval 8 // to be standardized
+#define Mval 3 // to be standardized
+#define SLICE 32
+#define EXTRA_DATA_SIZE 224 // (Kval - 1) * SLICE
 #define PARITY_CHUNKS 3
 #define ENABLE_ENCODE 1
 #define ENABLE_DECODE 1
 #define ENABLE_LOG 0
-// !important: window_size >= k - 1
+// !important: window_size >= k - 1 = 7
 #define ENCODE_WINDOW_SIZE 16
 #define DECODE_WINDOW_SIZE 16
 
@@ -95,6 +98,51 @@ private:
   bool external_extradata; // True if extradata is externally managed
 };
 
+class MapErasureChunkPtr
+{
+public:
+  MapErasureChunkPtr(int blocksize, uint8_t *chunk_ptr, int map_data_idx, int map_parity_idx)
+      : blocksize(blocksize), chunk_ptr(chunk_ptr)
+  {
+    if (map_parity_idx == 0)
+    {
+      head_size = map_data_idx * SLICE;
+      tail_size = (Kval - 1 - map_data_idx) * SLICE;
+    }
+    else if (map_parity_idx == 2)
+    {
+      head_size = (Kval - 1 - map_data_idx) * SLICE;
+      tail_size = map_data_idx * SLICE;
+    }
+    head_data = (uint8_t *)aligned_alloc(SLICE, head_size);
+    tail_data = (uint8_t *)aligned_alloc(SLICE, tail_size);
+  }
+
+  uint8_t *operator[](int idx)
+  {
+    if (idx < head_size)
+    {
+      return &head_data[idx];
+    }
+    else if (idx < head_size + blocksize)
+    {
+      return &chunk_ptr[idx - head_size];
+    }
+    else
+    {
+      return &tail_data[idx - blocksize - head_size];
+    }
+  }
+
+private:
+  int blocksize;
+  uint8_t *chunk_ptr;
+  int head_size;
+  int tail_size;
+  uint8_t *head_data;
+  uint8_t *tail_data;
+};
+
 int ErasureCodeTsx::init(ErasureCodeProfile &profile, ostream *ss)
 {
   int err = 0;
@@ -141,7 +189,7 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   // auto encode_start = std::chrono::high_resolution_clock::now();
 #endif
 
-  const int SLICE = 32;
+  // const int SLICE = 32;
   const int TOTAL_SLICE_NUM = blocksize / SLICE;
   const int window_size = ENCODE_WINDOW_SIZE;
   const int windows_num = TOTAL_SLICE_NUM / window_size;
@@ -407,7 +455,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       {blocksize, coding[2]}};
   char *parity_buffer = (char *)aligned_alloc(32, 2 * EXTRA_DATA_SIZE);
 
-  const int SLICE = 32;
+  // const int SLICE = 32;
   const int TOTAL_SLICE_NUM = blocksize / SLICE;
   const int window_size = DECODE_WINDOW_SIZE;
   const int windows_num = TOTAL_SLICE_NUM / window_size;
