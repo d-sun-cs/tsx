@@ -127,7 +127,7 @@ public:
   // }
 
   PadChunkPtr(int blocksize, uint8_t *chunk_ptr, const int map_data_idx, int map_parity_idx)
-      : blocksize(blocksize), chunk_ptr(chunk_ptr), map_data_idx(map_data_idx)
+      : blocksize(blocksize), chunk_ptr(chunk_ptr)
   {
 
     // if (map_parity_idx == 1 || map_data_idx == -1) // parity2 or missed parity
@@ -516,7 +516,6 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
           //   forward_as_tuple(parity_idx),
           //   forward_as_tuple(blocksize, data[coding_data_map[parity_idx]], coding_data_map[parity_idx], parity_idx));
           maperasure_ptr[parity_idx] = data[coding_data_map[parity_idx]];
-          
         }
         else
         {
@@ -648,12 +647,12 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   // compute fusion init by parity
   for (int slice_id = 0; slice_id < Kval; slice_id++)
   {
-    if (maperasure[0] != nullptr)
+    if (maperasure_ptr[0] != nullptr)
     {
       tmp = _mm256_load_si256((__m256i *)parity[0][slice_id * SLICE]);
       _mm256_store_si256((__m256i *)(maperasure[0])[(slice_id - coding_data_map[0]) * SLICE], tmp);
     }
-    if (maperasure[2] != nullptr)
+    if (maperasure_ptr[2] != nullptr)
     {
       tmp = _mm256_load_si256((__m256i *)parity[2][slice_id * SLICE]);
       _mm256_store_si256((__m256i *)(maperasure[2])[(slice_id - 7 + coding_data_map[2]) * SLICE], tmp);
@@ -670,17 +669,17 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       // compute fusion init by parity
       for (int slice_id = slice_id_start + Kval; slice_id < slice_id_end + Kval; slice_id++)
       {
-        if (maperasure[0] != nullptr)
+        if (maperasure_ptr[0] != nullptr)
         {
           tmp = _mm256_load_si256((__m256i *)parity[2][slice_id * SLICE]);
           _mm256_store_si256((__m256i *)(maperasure[0])[(slice_id - coding_data_map[0]) * SLICE], tmp);
         }
-        if (maperasure[1] != nullptr)
+        if (maperasure_ptr[1] != nullptr)
         {
           tmp = _mm256_load_si256((__m256i *)parity[1][(slice_id - Kval) * SLICE]);
           _mm256_store_si256((__m256i *)(maperasure[1])[(slice_id - Kval) * SLICE], tmp);
         }
-        if (maperasure[2] != nullptr)
+        if (maperasure_ptr[2] != nullptr)
         {
           tmp = _mm256_load_si256((__m256i *)parity[2][slice_id * SLICE]);
           _mm256_store_si256((__m256i *)(maperasure[2])[(slice_id - 7 + coding_data_map[2]) * SLICE], tmp);
@@ -700,21 +699,21 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
           mxx1 = _mm256_load_si256((__m256i *)&data[retension_data_chunk_idx][slice_offset[1]]);
 
           // i == 0
-          if (maperasure[0] != nullptr)
+          if (maperasure_ptr[0] != nullptr)
           {
             tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
             mxx2 = _mm256_xor_si256(mxx1, tmp);
             _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
           }
           // i == 1
-          if (maperasure[1] != nullptr)
+          if (maperasure_ptr[1] != nullptr)
           {
             tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
             mxx2 = _mm256_xor_si256(mxx1, tmp);
             _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
           }
           // i == 2
-          if (maperasure[2] != nullptr)
+          if (maperasure_ptr[2] != nullptr)
           {
             tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
             mxx2 = _mm256_xor_si256(mxx1, tmp);
@@ -731,74 +730,86 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 
       for (int slice_id = solve_slice_id_start; slice_id < solve_slice_id_end; slice_id++)
       {
-        // int recover_data_chunk_idx;
-        if (exist_maperasure[0] && (need_decoded[0] != -1))
+        if (need_decoded[0] != -1)
         {
           slice_offset[1] = slice_id * SLICE;
-       
-
           mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[0]][slice_offset[1]]);
-          if (maperasure[1] != nullptr)
+          if (maperasure_ptr[1] != nullptr)
           {
-            tmp = _mm256_load_si256((__m256i *)(*maperasure[1])[slice_offset[1]]);
-            mxx1 = _mm256_xor_si256(mxx2, tmp);
-            _mm256_store_si256((__m256i *)(*maperasure[1])[slice_offset[1]], mxx1);
+            tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
           }
-          if (maperasure[2] != nullptr)
+          if (maperasure_ptr[2] != nullptr)
           {
             slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[0]) * SLICE;
-            tmp = _mm256_load_si256((__m256i *)(*maperasure[2])[slice_offset[2]]);
-            mxx1 = _mm256_xor_si256(mxx2, tmp);
-            _mm256_store_si256((__m256i *)(*maperasure[2])[slice_offset[2]], mxx1);
+            tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
           }
         }
-        if (maperasure[2] != nullptr && ((recover_data_chunk_idx = maperasure[2]->map_data_idx) != -1))
+        if (need_decoded[2] != -1)
         {
           slice_offset[1] = slice_id * SLICE;
-          slice_offset[0] = (slice_id + need_decoded[0] - coding_data_map[0]) * SLICE;
-          slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[0]) * SLICE;
 
-          mxx1 = _mm256_load_si256((__m256i *)(*parities[2])[slice_offset[2]]);
-          tmp = _mm256_load_si256((__m256i *)&data[recover_data_chunk_idx][slice_offset[1]]);
-          mxx2 = _mm256_xor_si256(mxx1, tmp);
-          _mm256_store_si256((__m256i *)&data[recover_data_chunk_idx][slice_offset[1]], mxx2);
-          if (maperasure[0] != nullptr)
+          mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[2]][slice_offset[1]]);
+          if (maperasure_ptr[0] != nullptr)
           {
-            tmp = _mm256_load_si256((__m256i *)(*maperasure[0])[slice_offset[0]]);
-            mxx1 = _mm256_xor_si256(mxx2, tmp);
-            _mm256_store_si256((__m256i *)(*maperasure[0])[slice_offset[0]], mxx1);
+            slice_offset[0] = (slice_id + need_decoded[2] - coding_data_map[0]) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
           }
-          if (maperasure[1] != nullptr)
+          if (maperasure_ptr[1] != nullptr)
           {
-            tmp = _mm256_load_si256((__m256i *)(*maperasure[1])[slice_offset[1]]);
-            mxx1 = _mm256_xor_si256(mxx2, tmp);
-            _mm256_store_si256((__m256i *)(*maperasure[1])[slice_offset[1]], mxx1);
+            tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
           }
         }
-        if (maperasure[1] != nullptr && ((recover_data_chunk_idx = maperasure[1]->map_data_idx) != -1))
+        if (need_decoded[1] != -1)
         {
           slice_offset[1] = slice_id * SLICE;
-          slice_offset[0] = (slice_id + need_decoded[0] - coding_data_map[0]) * SLICE;
-          slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[0]) * SLICE;
 
-          mxx1 = _mm256_load_si256((__m256i *)(*parities[1])[slice_offset[1]]);
-          tmp = _mm256_load_si256((__m256i *)&data[recover_data_chunk_idx][slice_offset[1]]);
-          mxx2 = _mm256_xor_si256(mxx1, tmp);
-          _mm256_store_si256((__m256i *)&data[recover_data_chunk_idx][slice_offset[1]], mxx2);
-          if (maperasure[0] != nullptr)
+          mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[1]][slice_offset[1]]);
+          if (maperasure_ptr[0] != nullptr)
           {
-            tmp = _mm256_load_si256((__m256i *)(*maperasure[0])[slice_offset[0]]);
-            mxx1 = _mm256_xor_si256(mxx2, tmp);
-            _mm256_store_si256((__m256i *)(*maperasure[0])[slice_offset[0]], mxx1);
+            slice_offset[0] = (slice_id + need_decoded[1] - coding_data_map[0]) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
           }
-          if (maperasure[2] != nullptr)
+          if (maperasure_ptr[2] != nullptr)
           {
-            tmp = _mm256_load_si256((__m256i *)(*maperasure[2])[slice_offset[2]]);
-            mxx1 = _mm256_xor_si256(mxx2, tmp);
-            _mm256_store_si256((__m256i *)(*maperasure[2])[slice_offset[2]], mxx1);
+            slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[1]) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
           }
         }
       }
+    }
+
+    if (window_id == 1)
+    {
+      mxx1 = _mm256_setzero_si256();
+      char *parity_key = (char *)aligned_alloc(32, SLICE);
+      for (int i = 0; i < Kval; i++)
+      {
+        tmp = _mm256_load_si256((__m256i *)&data[i][0]);
+        mxx1 = _mm256_xor_si256(mxx1, tmp);
+      }
+      _mm256_store_si256((__m256i *)parity_key, mxx1);
+
+      redisReply *reply = (redisReply *)redisCommand(
+          rctx, "GET %b", parity_key, SLICE);
+      memcpy(parity_buffer, reply->str, reply->len);
+
+      parity[0].set_extradata((uint8_t *)(parity_buffer));
+
+      parity[2].set_extradata((uint8_t *)(parity_buffer + EXTRA_DATA_SIZE));
+
+      freeReplyObject(reply);
     }
 
     // if (window_id < windows_num)
