@@ -462,6 +462,7 @@ int ErasureCodeTsxse::decode_chunks(const set<int> &want_to_read,
 
   for (int window_id = 0; window_id <= windows_num; window_id++)
   {
+    
     if (window_id < windows_num)
     {
       const int slice_id_start = window_id * window_size;
@@ -489,80 +490,81 @@ int ErasureCodeTsxse::decode_chunks(const set<int> &want_to_read,
       }
     }
 
-    if (window_id > 0)
-    {
-      const int solve_slice_id_start = (window_id - 1) * window_size;
-      const int solve_slice_id_end = solve_slice_id_start + window_size;
+    // if (window_id > 0)
+    // {
+    //   const int solve_slice_id_start = (window_id - 1) * window_size;
+    //   const int solve_slice_id_end = solve_slice_id_start + window_size;
 
-      for (int slice_id = solve_slice_id_start; slice_id < solve_slice_id_end; slice_id++)
-      {
-        int erasure_data_chunk_idx;
-        // if (retension_coding[0] && ((erasure_data_chunk_idx = coding_data_map[0]) != -1))
-        if ((erasure_data_chunk_idx = coding_data_map[0]) != -1)
-        {
-          // int erasure_data_chunk_idx = coding_data_map[0];
-          slice_offset[1] = slice_id * SLICE;
-          slice_offset[0] = (slice_id + erasure_data_chunk_idx) * SLICE;
-          slice_offset[2] = (slice_id + 7 - erasure_data_chunk_idx) * SLICE;
+    //   for (int slice_id = solve_slice_id_start; slice_id < solve_slice_id_end; slice_id++)
+    //   {
+    //     int erasure_data_chunk_idx;
+    //     // if (retension_coding[0] && ((erasure_data_chunk_idx = coding_data_map[0]) != -1))
+    //     if ((erasure_data_chunk_idx = coding_data_map[0]) != -1)
+    //     {
+    //       // int erasure_data_chunk_idx = coding_data_map[0];
+    //       slice_offset[1] = slice_id * SLICE;
+    //       slice_offset[0] = (slice_id + erasure_data_chunk_idx) * SLICE;
+    //       slice_offset[2] = (slice_id + 7 - erasure_data_chunk_idx) * SLICE;
 
-          mxx1 = _mm256_load_si256((__m256i *)parity[0][slice_offset[0]]);
-          _mm256_store_si256((__m256i *)&data[erasure_data_chunk_idx][slice_offset[1]], mxx1);
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[1][slice_offset[1]]));
-          _mm256_store_si256((__m256i *)parity[1][slice_offset[1]], mxx2);
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[2][slice_offset[2]]));
-          _mm256_store_si256((__m256i *)parity[2][slice_offset[2]], mxx2);
-        }
-        // if (retension_coding[2] && ((erasure_data_chunk_idx = coding_data_map[2]) != -1))
-        if ((erasure_data_chunk_idx = coding_data_map[2]) != -1)
-        {
-          // int erasure_data_chunk_idx = coding_data_map[2];
-          slice_offset[1] = slice_id * SLICE;
-          slice_offset[0] = (slice_id + erasure_data_chunk_idx) * SLICE;
-          slice_offset[2] = (slice_id + 7 - erasure_data_chunk_idx) * SLICE;
+    //       mxx1 = _mm256_load_si256((__m256i *)parity[0][slice_offset[0]]);
+    //       _mm256_store_si256((__m256i *)&data[erasure_data_chunk_idx][slice_offset[1]], mxx1);
+    //       mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[1][slice_offset[1]]));
+    //       _mm256_store_si256((__m256i *)parity[1][slice_offset[1]], mxx2);
+    //       mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[2][slice_offset[2]]));
+    //       _mm256_store_si256((__m256i *)parity[2][slice_offset[2]], mxx2);
+    //     }
+    //     // if (retension_coding[2] && ((erasure_data_chunk_idx = coding_data_map[2]) != -1))
+    //     if ((erasure_data_chunk_idx = coding_data_map[2]) != -1)
+    //     {
+    //       // int erasure_data_chunk_idx = coding_data_map[2];
+    //       slice_offset[1] = slice_id * SLICE;
+    //       slice_offset[0] = (slice_id + erasure_data_chunk_idx) * SLICE;
+    //       slice_offset[2] = (slice_id + 7 - erasure_data_chunk_idx) * SLICE;
 
-          mxx1 = _mm256_load_si256((__m256i *)parity[2][slice_offset[2]]);
-          _mm256_store_si256((__m256i *)&data[erasure_data_chunk_idx][slice_offset[1]], mxx1);
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[0][slice_offset[0]]));
-          _mm256_store_si256((__m256i *)parity[0][slice_offset[0]], mxx2);
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[1][slice_offset[1]]));
-          _mm256_store_si256((__m256i *)parity[1][slice_offset[1]], mxx2);
-        }
-        // if (retension_coding[1] && ((erasure_data_chunk_idx = coding_data_map[1]) != -1))
-        if ((erasure_data_chunk_idx = coding_data_map[1]) != -1)
-        {
-          // int erasure_data_chunk_idx = coding_data_map[1];
-          slice_offset[1] = slice_id * SLICE;
-          slice_offset[0] = (slice_id + erasure_data_chunk_idx) * SLICE;
-          slice_offset[2] = (slice_id + 7 - erasure_data_chunk_idx) * SLICE;
+    //       mxx1 = _mm256_load_si256((__m256i *)parity[2][slice_offset[2]]);
+    //       _mm256_store_si256((__m256i *)&data[erasure_data_chunk_idx][slice_offset[1]], mxx1);
+    //       mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[0][slice_offset[0]]));
+    //       _mm256_store_si256((__m256i *)parity[0][slice_offset[0]], mxx2);
+    //       mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[1][slice_offset[1]]));
+    //       _mm256_store_si256((__m256i *)parity[1][slice_offset[1]], mxx2);
+    //     }
+    //     // if (retension_coding[1] && ((erasure_data_chunk_idx = coding_data_map[1]) != -1))
+    //     if ((erasure_data_chunk_idx = coding_data_map[1]) != -1)
+    //     {
+    //       // int erasure_data_chunk_idx = coding_data_map[1];
+    //       slice_offset[1] = slice_id * SLICE;
+    //       slice_offset[0] = (slice_id + erasure_data_chunk_idx) * SLICE;
+    //       slice_offset[2] = (slice_id + 7 - erasure_data_chunk_idx) * SLICE;
 
-          mxx1 = _mm256_load_si256((__m256i *)parity[1][slice_offset[1]]);
-          _mm256_store_si256((__m256i *)&data[erasure_data_chunk_idx][slice_offset[1]], mxx1);
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[0][slice_offset[0]]));
-          _mm256_store_si256((__m256i *)parity[0][slice_offset[0]], mxx2);
-          mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[2][slice_offset[2]]));
-          _mm256_store_si256((__m256i *)parity[2][slice_offset[2]], mxx2);
-        }
-      }
-    }
+    //       mxx1 = _mm256_load_si256((__m256i *)parity[1][slice_offset[1]]);
+    //       _mm256_store_si256((__m256i *)&data[erasure_data_chunk_idx][slice_offset[1]], mxx1);
+    //       mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[0][slice_offset[0]]));
+    //       _mm256_store_si256((__m256i *)parity[0][slice_offset[0]], mxx2);
+    //       mxx2 = _mm256_xor_si256(mxx1, *((__m256i *)parity[2][slice_offset[2]]));
+    //       _mm256_store_si256((__m256i *)parity[2][slice_offset[2]], mxx2);
+    //     }
+    //   }
+    // }
 
-    if (window_id == 1)
-    {
-      mxx1 = _mm256_setzero_si256();
-      char *parity_key = (char *)aligned_alloc(32, SLICE);
-      for (unsigned int i = 0; i < data_chunk_count; i++)
-      {
-        tmp = _mm256_load_si256((__m256i *)&data[i][0]);
-        mxx1 = _mm256_xor_si256(mxx1, tmp);
-      }
-      _mm256_store_si256((__m256i *)parity_key, mxx1);
+    // if (window_id == 1)
+    // {
+    //   mxx1 = _mm256_setzero_si256();
+    //   char *parity_key = (char *)aligned_alloc(32, SLICE);
+    //   for (unsigned int i = 0; i < data_chunk_count; i++)
+    //   {
+    //     tmp = _mm256_load_si256((__m256i *)&data[i][0]);
+    //     mxx1 = _mm256_xor_si256(mxx1, tmp);
+    //   }
+    //   _mm256_store_si256((__m256i *)parity_key, mxx1);
 
-      redisReply *reply = (redisReply *)redisCommand(
-          rctx, "GET %b", parity_key, SLICE);
-      memcpy(parity_buffer, reply->str, reply->len);
-      parity[0].set_extradata((uint8_t *)parity_buffer);
-      parity[2].set_extradata((uint8_t *)(parity_buffer + EXTRA_DATA_SIZE));
-      freeReplyObject(reply);
-    }
+    //   redisReply *reply = (redisReply *)redisCommand(
+    //       rctx, "GET %b", parity_key, SLICE);
+    //   memcpy(parity_buffer, reply->str, reply->len);
+    //   parity[0].set_extradata((uint8_t *)parity_buffer);
+    //   parity[2].set_extradata((uint8_t *)(parity_buffer + EXTRA_DATA_SIZE));
+    //   freeReplyObject(reply);
+    // }
+  
   }
 
 #if ENABLE_LOG
