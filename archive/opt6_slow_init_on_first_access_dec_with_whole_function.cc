@@ -158,7 +158,7 @@ public:
     // {
     //   return &head_data[idx];
     // }
-    // else if (idx < head_size + blocksize)
+    // else if (idx < head_size + blocksize) 
     // {
     //   return &chunk_ptr[idx - head_size];
     // }
