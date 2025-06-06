@@ -421,9 +421,9 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   }
 
   if (erasure_data_count == 1 && retension_coding_count == Mval) {
-    decode_one_data_chunk();
+    return decode_one_data_chunk();
   } else if (erasure_data_count == 0 && retension_coding_count == Mval - 1) {
-    reencode_one_coding_chunk();
+    return reencode_one_coding_chunk();
   }
 
 #if ENABLE_DECODE

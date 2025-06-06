@@ -56,6 +56,8 @@ public:
 		    const std::map<int, ceph::buffer::list> &chunks,
 		    std::map<int, ceph::buffer::list> *decoded) override;
 
+  int decode_one_data_chunk(uint8_t* &data, uint8_t* &coding, int ,int blocksize, int erasure_idx)
+
 
 private:
 
