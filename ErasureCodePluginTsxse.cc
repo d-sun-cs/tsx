@@ -46,3 +46,4 @@ int __erasure_code_init(char *plugin_name, char *directory)
   auto& instance = ceph::ErasureCodePluginRegistry::instance();
   return instance.add(plugin_name, new ErasureCodePluginTsxse());
 }
+

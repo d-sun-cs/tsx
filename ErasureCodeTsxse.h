@@ -24,13 +24,16 @@
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
 
-class ErasureCodeTsxse final : public ceph::ErasureCode {
+class ErasureCodeTsxse final : public ceph::ErasureCode
+{
 public:
   explicit ErasureCodeTsxse(const std::string &dir)
-    : directory(dir), chunk_count(11), data_chunk_count(8) {}
+      : directory(dir), chunk_count(11), data_chunk_count(8) {}
 
-  ~ErasureCodeTsxse() override {
-    if (rctx) {
+  ~ErasureCodeTsxse() override
+  {
+    if (rctx)
+    {
       // redisAsyncFree(rctx);
       redisFree(rctx);
       rctx = nullptr;
@@ -39,26 +42,30 @@ public:
 
   int init(ceph::ErasureCodeProfile &profile, std::ostream *ss) override;
 
-  unsigned int get_chunk_count() const override {
+  unsigned int get_chunk_count() const override
+  {
     return chunk_count;
   }
 
-  unsigned int get_data_chunk_count() const override {
+  unsigned int get_data_chunk_count() const override
+  {
     return data_chunk_count;
   }
 
   unsigned int get_chunk_size(unsigned int object_size) const override;
 
   int encode_chunks(const std::set<int> &want_to_encode,
-		    std::map<int, ceph::buffer::list> *encoded) override;
+                    std::map<int, ceph::buffer::list> *encoded) override;
 
   int decode_chunks(const std::set<int> &want_to_read,
-		    const std::map<int, ceph::buffer::list> &chunks,
-		    std::map<int, ceph::buffer::list> *decoded) override;
+                    const std::map<int, ceph::buffer::list> &chunks,
+                    std::map<int, ceph::buffer::list> *decoded) override;
 
+  int decode_one_data_chunk(uint8_t **data, uint8_t *coding, int *retension_data, int blocksize, int erasure_idx);
+
+  int reencode_one_coding_chunk();
 
 private:
-
   std::string directory;
   unsigned int chunk_count;
   unsigned int data_chunk_count;

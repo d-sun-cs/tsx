@@ -401,6 +401,11 @@ int ErasureCodeTsxse::decode_chunks(const set<int> &want_to_read,
     }
   }
 
+  if (erasure_data_count == 1 && retension_coding_count == Mval)
+  {
+    return decode_one_data_chunk(data, coding[1], retension_data, blocksize, erasure_data[0]);
+  }
+
 #if ENABLE_DECODE
 
 #if ENABLE_LOG
@@ -734,4 +739,69 @@ int ErasureCodeTsxse::decode_chunks(const set<int> &want_to_read,
   return 0;
 
 #endif
+}
+
+
+int ErasureCodeTsxse::decode_one_data_chunk(uint8_t **data, uint8_t *coding, 
+                                        int *retention_data, int blocksize, 
+                                        int erasure_idx) {
+    const int TOTAL_SLICE_NUM = blocksize / SLICE;
+    const int kval = data_chunk_count;
+    const int UNROLL = 4; // 增大展开因子
+    const int PREFETCH_DISTANCE = 4; // 预取距离
+
+    __m256i sum[UNROLL];
+    uint8_t *tmp_ptr = data[erasure_idx];
+    data[erasure_idx] = coding;
+    coding = tmp_ptr;
+
+    // 优化1: 预计算指针数组
+    uint8_t *ptrs[kval];
+    for (int i = 0; i < kval; i++) {
+        ptrs[i] = data[i];
+    }
+
+    int slice_id = 0;
+    // 主循环（展开因子升级到8）
+    for (; slice_id + UNROLL - 1 < TOTAL_SLICE_NUM; slice_id += UNROLL) {
+        // 优化2: 交错加载与计算
+        for (int u = 0; u < UNROLL; u++) {
+            // 首次加载时不依赖前序结果
+            sum[u] = _mm256_load_si256((__m256i *)ptrs[0]);
+            ptrs[0] += SLICE;
+        }
+        
+        // 优化3: 循环展开+指针递增
+        for (int data_idx = 1; data_idx < kval; data_idx++) {
+            for (int u = 0; u < UNROLL; u++) {
+                __m256i chunk = _mm256_load_si256((__m256i *)ptrs[data_idx]);
+                ptrs[data_idx] += SLICE;
+                sum[u] = _mm256_xor_si256(sum[u], chunk);
+                
+                // 优化4: 交错预取
+                if (u == PREFETCH_DISTANCE && (slice_id + UNROLL < TOTAL_SLICE_NUM)) {
+                    _mm_prefetch(ptrs[data_idx] + (UNROLL << 5), _MM_HINT_T0);
+                }
+            }
+        }
+        
+        // 优化5: 批量化存储
+        for (int u = 0; u < UNROLL; u++) {
+            _mm256_stream_si256((__m256i *)&coding[0], sum[u]);
+            coding += SLICE;
+        }
+    }
+
+    // 优化6: 剩余处理（避免短距离预取）
+    // if (slice_id < TOTAL_SLICE_NUM) {
+    //     __m256i final_sum = _mm256_setzero_si256();
+    //     for (int data_idx = 0; data_idx < kval; data_idx++) {
+    //         __m256i chunk = _mm256_load_si256(
+    //             (__m256i *)&data[data_idx][slice_id << 5]);
+    //         final_sum = _mm256_xor_si256(final_sum, chunk);
+    //     }
+    //     _mm256_store_si256((__m256i *)&coding[0], final_sum);
+    // }
+
+    return 0;
 }
