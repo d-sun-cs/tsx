@@ -1,16 +1,17 @@
 #!/bin/bash
 
 # 参数校验
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <chunk-size-in-KB> <test-count>"
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+    echo "Usage: $0 <chunk-size-in-KB> <test-count> [k]"
     exit 1
 fi
 
 CHUNK_SIZE_KB=$1
 TEST_COUNT=$2
+K=${3:-8}  # 如果第3个参数为空，默认k=8
 
 # 计算 buffer size
-BUFFER_SIZE=$((CHUNK_SIZE_KB * 8 * 1024))
+BUFFER_SIZE=$((CHUNK_SIZE_KB * K * 1024))
 
 current_dir=$(pwd)
 
@@ -35,8 +36,9 @@ fi
 # 测试命令
 echo "-------------------------------------------"
 echo "Chunk size: ${CHUNK_SIZE_KB}KB"
-echo "Buffer size: $((CHUNK_SIZE_KB * 8))KB"
+echo "Buffer size: $((CHUNK_SIZE_KB * K))KB"
 echo "Test count: $TEST_COUNT"
+echo "K: $K"
 
 run_test() {
     local description=$1
@@ -64,23 +66,23 @@ warmup_test() {
     $command > /dev/null 2>&1
 }
 
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=$K -P m=3 -s $BUFFER_SIZE -i 2"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=$K -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=$K -P m=3 -s $BUFFER_SIZE -i 2"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=$K -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=$K -P m=3 -s $BUFFER_SIZE -i 2"
+warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=$K -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
 
 # 恢复正常测试部分
 echo "-------------------------------------------"
-run_test "TSX encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "TSX decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 10 "
+run_test "TSX encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "TSX decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 4 --erased 7 "
 echo "-------------------------------------------"
-run_test "ISA encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "ISA decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 10 "
+run_test "ISA encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "ISA decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 4 --erased 7 "
 echo "-------------------------------------------"
-run_test "TSXSE encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "TSXSE decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=8 -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 10 "
+run_test "TSXSE encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+run_test "TSXSE decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT --erased 4 --erased 7 "
 echo "-------------------------------------------"
 
 cd $current_dir
