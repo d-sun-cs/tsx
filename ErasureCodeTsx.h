@@ -63,7 +63,7 @@ public:
 
   int decode_one_data_chunk(uint8_t **data, uint8_t *coding, int blocksize, int erasure_idx);
 
-  int reencode_one_coding_chunk();
+  int reencode_one_coding_chunk(uint8_t **data, uint8_t *coding, int blocksize, int slice_delta);
 
 private:
   std::string directory;

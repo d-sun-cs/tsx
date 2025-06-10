@@ -39,6 +39,7 @@
 #define SLICE 32
 #define SLICE_EXP 5
 #define EXTRA_DATA_SIZE 224 // (Kval - 1) * SLICE
+#define EXTRA_SLICE_CNT 7
 #define PARITY_CHUNKS 3
 #define ENABLE_ENCODE 1
 #define ENABLE_DECODE 1
@@ -117,6 +118,8 @@ public:
   PadChunkPtr(int blocksize, uint8_t *chunk_ptr)
       : blocksize(blocksize), chunk_ptr(chunk_ptr)
   {
+    unimportant = (uint8_t *)aligned_alloc(SLICE, SLICE);
+    _mm256_store_si256((__m256i *)unimportant, _mm256_setzero_si256());
   }
 
   uint8_t *operator[](int idx)
@@ -133,7 +136,7 @@ public:
   }
 
 private:
-  uint8_t *unimportant = (uint8_t *)aligned_alloc(SLICE, SLICE);
+  uint8_t *unimportant;
 };
 
 int ErasureCodeTsx::init(ErasureCodeProfile &profile, ostream *ss)
@@ -380,6 +383,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   int retension_coding_count = 0;
   uint8_t *data[kval];
   uint8_t *coding[Mval];
+  int last_erasure_coding_idx = -1; // for specilized erasure
 
   uint8_t *maperasure_ptr[Mval] = {nullptr, nullptr, nullptr};
   uint8_t *parity_ptr[Mval] = {nullptr, nullptr, nullptr};
@@ -418,6 +422,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       else
       {
         maperasure_ptr[parity_idx] = coding[parity_idx];
+        last_erasure_coding_idx = parity_idx;
       }
     }
   }
@@ -428,7 +433,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   }
   else if (erasure_data_count == 0 && retension_coding_count == Mval - 1)
   {
-    return reencode_one_coding_chunk();
+    return reencode_one_coding_chunk(data, coding[last_erasure_coding_idx], blocksize, last_erasure_coding_idx - 1);
   }
 
 #if ENABLE_DECODE
@@ -765,71 +770,6 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 #endif
 }
 
-// int ErasureCodeTsx::decode_one_data_chunk(uint8_t **data, uint8_t *coding, int *retension_data, int blocksize, int erasure_idx)
-// {
-//   const int TOTAL_SLICE_NUM = blocksize / SLICE;
-//   const int kval = k;
-
-//   __m256i sum;
-//   __m256i tmp;
-
-//   // #pragma omp parallel for
-//   for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; ++slice_id)
-//   {
-//     int slice_offset = slice_id * SLICE;
-
-//     // init by parity
-//     sum = _mm256_load_si256((__m256i *)&coding[slice_offset]);
-
-//     // XOR data together
-//     for (int retension_data_idx = 0; retension_data_idx < kval - 1; retension_data_idx++)
-//     {
-//       int retension_data_chunk_idx = retension_data[retension_data_idx];
-//       tmp = _mm256_load_si256((__m256i *)&data[retension_data_chunk_idx][slice_offset]);
-//       sum = _mm256_xor_si256(sum, tmp);
-//     }
-
-//     // decode
-//     _mm256_store_si256((__m256i *)&data[erasure_idx][slice_offset], sum);
-//   }
-
-//   return 0;
-// }
-
-// int ErasureCodeTsx::decode_one_data_chunk(uint8_t **data, uint8_t *coding, int *retension_data, int blocksize, int erasure_idx)
-// {
-//   const int TOTAL_SLICE_NUM = blocksize / SLICE;
-//   const int UNROLL = 4;
-//   const int kval = k - 1;
-//   __m256i sum[UNROLL];
-//   __m256i tmp[UNROLL];
-//   int slice_offset[UNROLL];
-//   for (int slice_id = 0; slice_id + UNROLL - 1 < TOTAL_SLICE_NUM; slice_id += UNROLL)
-//   {
-//     for (int u = 0; u < UNROLL; ++u) {
-//       slice_offset[u] = (slice_id + u) << SLICE_EXP;
-//       // init by parity
-//       sum[u] = _mm256_load_si256((__m256i *)&coding[slice_offset[u]]);
-//     }
-//     // XOR data together, unroll the inner loop
-//     for (int retension_data_idx = 0; retension_data_idx < kval; retension_data_idx++)
-//     {
-//       int retension_data_chunk_idx = retension_data[retension_data_idx];
-//       for (int u = 0; u < UNROLL; ++u) {
-//         tmp[u] = _mm256_load_si256((__m256i *)&data[retension_data_chunk_idx][slice_offset[u]]);
-//       }
-//       for (int u = 0; u < UNROLL; ++u) {
-//         sum[u] = _mm256_xor_si256(sum[u], tmp[u]);
-//       }
-//     }
-//     // decode
-//     for (int u = 0; u < UNROLL; ++u)
-//       // _mm256_store_si256((__m256i *)&data[erasure_idx][slice_offset[u]], sum[u]);
-//       _mm256_stream_si256((__m256i *)&data[erasure_idx][slice_offset[u]], sum[u]);
-//   }
-//   return 0;
-// }
-
 int ErasureCodeTsx::decode_one_data_chunk(uint8_t **data, uint8_t *coding, int blocksize, int erasure_idx)
 {
   const int TOTAL_SLICE_NUM = blocksize / SLICE;
@@ -875,12 +815,128 @@ int ErasureCodeTsx::decode_one_data_chunk(uint8_t **data, uint8_t *coding, int b
     }
   }
 
+  // Handle remaining slices
+  for (; slice_id < TOTAL_SLICE_NUM; ++slice_id)
+  {
+    int offset = slice_id << SLICE_EXP;
+    __m256i sum1 = _mm256_load_si256((__m256i *)&data[0][offset]);
+    for (int data_idx = 1; data_idx < kval; data_idx++)
+    {
+      __m256i tmp1 = _mm256_load_si256((__m256i *)&data[data_idx][offset]);
+      sum1 = _mm256_xor_si256(sum1, tmp1);
+    }
+    _mm256_stream_si256((__m256i *)&coding[offset], sum1);
+  }
+
   return 0;
 }
 
-
-
-int ErasureCodeTsx::reencode_one_coding_chunk()
+int ErasureCodeTsx::reencode_one_coding_chunk(uint8_t **data, uint8_t *coding, int blocksize, int slice_delta)
 {
+  if (slice_delta == 0)
+  {
+    uint8_t *tmp_ptr = data[0];
+    data[0] = coding;
+    coding = tmp_ptr;
+    return decode_one_data_chunk(data, coding, blocksize, 0);
+  }
+  else if (slice_delta == -1)
+  {
+    const int kval = k;
+    __m256i sum, tmp;
+    for (int slice_id = 0; slice_id < kval - 1; slice_id++)
+    {
+      sum = _mm256_load_si256((__m256i *)data[0]);
+      data[0] += SLICE;
+      for (int data_idx = 1; data_idx <= slice_id; data_idx++)
+      {
+        tmp = _mm256_load_si256((__m256i *)data[data_idx]);
+        data[data_idx] += SLICE;
+        sum = _mm256_xor_si256(sum, tmp);
+      }
+      _mm256_stream_si256((__m256i *)coding, sum);
+      coding += SLICE;
+    }
+
+    uint8_t *tmp_ptr = data[0];
+    data[0] = coding;
+    coding = tmp_ptr;
+    return decode_one_data_chunk(data, coding, blocksize - ((kval - 1) << SLICE_EXP), 0);
+  }
+  else if (slice_delta == 1)
+  {
+    const int kval = k;
+    __m256i sum, tmp;
+    for (int slice_id = 0; slice_id < kval - 1; slice_id++)
+    {
+      sum = _mm256_load_si256((__m256i *)data[kval - 1]);
+      data[kval - 1] += SLICE;
+      for (int data_idx = kval - 2; data_idx >= kval - 1 - slice_id; data_idx--)
+      {
+        tmp = _mm256_load_si256((__m256i *)data[data_idx]);
+        data[data_idx] += SLICE;
+        sum = _mm256_xor_si256(sum, tmp);
+      }
+      _mm256_stream_si256((__m256i *)coding, sum);
+      coding += SLICE;
+    }
+
+    uint8_t *tmp_ptr = data[0];
+    data[0] = coding;
+    coding = tmp_ptr;
+    return decode_one_data_chunk(data, coding, blocksize - ((kval - 1) << SLICE_EXP), 0);
+  }
+  return 0;
+  // const int TOTAL_SLICE_NUM = blocksize / SLICE;
+  // const int kval = k;
+  // const int data_slice_start = (slice_delta == 1) ? (1 - kval) : 0;
+  // const int UNROLL = 4;
+  // __m256i sum[UNROLL], tmp[UNROLL];
+
+  // std::vector<PadChunkPtr> pad_data;
+  // pad_data.reserve(kval);
+  // for (int i = 0; i < kval; ++i) {
+  //   pad_data.emplace_back(blocksize, data[i]);
+  // }
+
+  // int slice_id = 0;
+  // int slice_offset[UNROLL];
+  // int slice_cur[UNROLL];
+
+  // // Unrolled loop
+  // for (; slice_id + UNROLL - 1 < TOTAL_SLICE_NUM; slice_id += UNROLL)
+  // {
+  //   for (int u = 0; u < UNROLL; ++u) {
+  //     slice_offset[u] = (slice_id + u) << SLICE_EXP;
+  //     sum[u] = _mm256_setzero_si256();
+  //   }
+
+  //   for (int data_idx = 0; data_idx < kval; data_idx++)
+  //   {
+  //     for (int u = 0; u < UNROLL; ++u) {
+  //       slice_cur[u] = data_slice_start + (slice_id + u) + data_idx * slice_delta;
+  //       tmp[u] = _mm256_load_si256((__m256i *)pad_data[data_idx][slice_cur[u] << SLICE_EXP]);
+  //       sum[u] = _mm256_xor_si256(sum[u], tmp[u]);
+  //     }
+  //   }
+
+  //   for (int u = 0; u < UNROLL; ++u) {
+  //     _mm256_stream_si256((__m256i *)&coding[slice_offset[u]], sum[u]);
+  //   }
+  // }
+
+  // Handle remaining slices
+  // for (; slice_id < TOTAL_SLICE_NUM; ++slice_id)
+  // {
+  //   __m256i sum1 = _mm256_setzero_si256();
+  //   int slice_cur1 = data_slice_start + slice_id;
+  //   for (int data_idx = 0, cur = slice_cur1; data_idx < kval; data_idx++, cur += slice_delta)
+  //   {
+  //     __m256i tmp1 = _mm256_load_si256((__m256i *)pad_data[data_idx][cur << SLICE_EXP]);
+  //     sum1 = _mm256_xor_si256(sum1, tmp1);
+  //   }
+  //   _mm256_stream_si256((__m256i *)&coding[slice_id << SLICE_EXP], sum1);
+  // }
+
   return 0;
 }
