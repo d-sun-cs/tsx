@@ -1,0 +1,44 @@
+sudo docker start cephtest
+sudo docker exec -it -w /workspace/ceph/src/erasure-code/tsx/ cephtest /bin/bash
+
+docker start ceph_build
+docker exec -it -w /ceph/src/erasure-code/tsx/ ceph_build /bin/bash
+
+docker update --cpu-period=100000 --cpu-quota=30000 ceph_build
+docker update --cpus=0 --cpu-period=0 --cpu-quota=0 ceph_build
+docker update --cpus=16 ceph_build
+docker inspect ceph_build | grep NanoCpus
+
+rm ../../../build/*.log
+cd ../../../build
+./bin/init-ceph stop osd.4
+./bin/init-ceph start osd.4
+cd -
+
+dd if=/dev/urandom of=./largefile bs=32MiB count=64 oflag=direct
+./bin/rados put largefile ./largefile -p tsx-2m-pool
+./bin/rados get largefile ./my_largefile -p tsx-2m-pool
+./bin/rados rm largefile -p tsx-2m-pool
+
+./bin/rados bench -p tsx-2m-pool 30 write -O 2147483648 --no-cleanup -t 4
+./bin/rados bench -p tsx-2m-pool 30 write -O 2147483648 --no-cleanup
+./bin/rados bench -p isa-2m-pool 30 write -O 2147483648 --no-cleanup
+./bin/rados bench -p tsx-2m-pool 30 seq
+./bin/rados bench -p isa-2m-pool 30 seq --io-flags direct=1,nocache=1
+./bin/rados cleanup -p tsx-2m-pool
+./bin/rados cleanup -p isa-2m-pool
+
+./bin/ceph osd map tsx-2m-pool benchmark*
+./bin/ceph osd map isa-2m-pool benchmark*
+./bin/init-ceph stop osd.8
+./bin/init-ceph stop osd.3
+./bin/init-ceph stop osd.1
+./bin/init-ceph start osd.8
+./bin/init-ceph start osd.3
+./bin/init-ceph start osd.1
+./bin/init-ceph stop osd.10
+./bin/init-ceph stop osd.9
+./bin/init-ceph stop osd.1
+./bin/init-ceph start osd.10
+./bin/init-ceph start osd.9
+./bin/init-ceph start osd.1

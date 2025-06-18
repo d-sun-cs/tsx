@@ -29,6 +29,9 @@ if $CEPH_BUILD/bin/ceph osd tree  | grep -q "down"; then
     exit 1
 fi
 
+# dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=32MiB count=64 oflag=direct
+dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=32MiB count=64 
+
 file_size=$(stat -c%s $CEPH_BUILD/largefile)
 total_put_time=0
 total_get_time=0
@@ -36,6 +39,9 @@ total_get_time=0
 # 写测试
 for ((i = 1; i <= TEST_COUNT; i++)); do
     $CEPH_BUILD/bin/rados rm largefile -p $POOL_NAME  # 删除之前的测试大文件
+    rm -f $CEPH_BUILD/largefile # 删除本地大文件
+    # dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=32MiB count=64 oflag=direct # 新建大文件
+    dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=32MiB count=64
     start_time=$(date +%s.%N)
     $CEPH_BUILD/bin/rados put largefile $CEPH_BUILD/largefile -p $POOL_NAME
     end_time=$(date +%s.%N)
