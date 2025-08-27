@@ -45,6 +45,8 @@
 #define ENABLE_DECODE 1
 #define ENABLE_LOG 0
 // !important: window_size >= k - 1 = 7
+#define ENCODE_WINDOW_SIZE 16
+#define DECODE_WINDOW_SIZE 16
 
 #if ENABLE_LOG
 #include <fstream>
@@ -451,26 +453,55 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
         }
 
         // solve the second subsystem
-        if (retension_coding[erasure_data_count - 1] == 2) {
+        for (int retension_coding_idx = erasure_data_count - 1; retension_coding_idx >= erasure_data_count / 2; retension_coding_idx--) {
 
-          int erasure_data_chunk_idx = erasure_data[erasure_data_count - 1];
+          int retension_coding_chunk_idx = retension_coding[retension_coding_idx];
+          int erasure_data_chunk_idx = erasure_data[retension_coding_idx];
+
           slice_offset[2] = (slice_id + kval - 1 - erasure_data_chunk_idx) * SLICE;
-
-          mxx1 = _mm256_load_si256((__m256i *)parity[2][slice_offset[2]]);
+          slice_offset[0] = (slice_id + erasure_data_chunk_idx) * SLICE;
+          
+          mxx1 = _mm256_load_si256((__m256i *)parity[retension_coding_chunk_idx][slice_offset[retension_coding_chunk_idx]]);
           _mm256_store_si256((__m256i *)(data[erasure_data_chunk_idx])[slice_offset[1]], mxx1);
 
           // substitute
-
-          if (erasure_data_count >= 2 && retension_coding[erasure_data_count - 2] == 0) {
+          for (int substitute_coding_idx = 0; substitute_coding_idx < erasure_data_count; substitute_coding_idx++) { 
+            if (substitute_coding_idx == retension_coding_idx) {
+              continue;
+            }
+            int substitute_coding_chunk_idx = retension_coding[substitute_coding_idx];
+            tmp = _mm256_load_si256((__m256i *)(parity[substitute_coding_chunk_idx])[slice_offset[substitute_coding_chunk_idx]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(parity[substitute_coding_chunk_idx])[slice_offset[substitute_coding_chunk_idx]], mxx2);
 
           }
-        } else { // retension_coding[erasure_data_count - 1] == 0
 
         }
+
       }
     }
 
+    if (window_id == 1)
+    {
+      mxx1 = _mm256_setzero_si256();
+      char *parity_key = (char *)aligned_alloc(32, SLICE);
+      for (int i = 0; i < kval; i++)
+      {
+        tmp = _mm256_load_si256((__m256i *)&data[i][0]);
+        mxx1 = _mm256_xor_si256(mxx1, tmp);
+      }
+      _mm256_store_si256((__m256i *)parity_key, mxx1);
 
+      redisReply *reply = (redisReply *)redisCommand(
+          rctx, "GET %b", parity_key, SLICE);
+      memcpy(parity_buffer, reply->str, reply->len);
+
+      parity[0].set_extradata((uint8_t *)(parity_buffer));
+
+      parity[2].set_extradata((uint8_t *)(parity_buffer + EXTRA_DATA_SIZE));
+
+      freeReplyObject(reply);
+    }
   }
   
   // re-encode

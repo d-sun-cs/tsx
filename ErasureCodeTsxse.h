@@ -28,7 +28,7 @@ class ErasureCodeTsxse final : public ceph::ErasureCode
 {
 public:
   explicit ErasureCodeTsxse(const std::string &dir)
-      : directory(dir), chunk_count(11), data_chunk_count(8) {}
+      : directory(dir), k(8), m(3) {}
 
   ~ErasureCodeTsxse() override
   {
@@ -44,12 +44,12 @@ public:
 
   unsigned int get_chunk_count() const override
   {
-    return chunk_count;
+    return k + m;
   }
 
   unsigned int get_data_chunk_count() const override
   {
-    return data_chunk_count;
+    return k;
   }
 
   unsigned int get_chunk_size(unsigned int object_size) const override;
@@ -61,14 +61,12 @@ public:
                     const std::map<int, ceph::buffer::list> &chunks,
                     std::map<int, ceph::buffer::list> *decoded) override;
 
-  int decode_one_data_chunk(uint8_t **data, uint8_t *coding, int *retension_data, int blocksize, int erasure_idx);
-
-  int reencode_one_coding_chunk();
-
 private:
   std::string directory;
-  unsigned int chunk_count;
-  unsigned int data_chunk_count;
+  // int chunk_count;
+  // int data_chunk_count;
+  int k;
+  int m;
   redisContext *rctx;
   // redisAsyncContext *rctx;
 };
