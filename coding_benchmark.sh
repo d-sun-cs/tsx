@@ -76,7 +76,7 @@ warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse
 
 # 恢复正常测试部分
 # 指定要擦除的块索引
-ERASED_IDX=(2 9)
+ERASED_IDX=(2 5 7)
 # 拼接 --erased 参数
 ERASED_ARGS=""
 for idx in "${ERASED_IDX[@]}"; do

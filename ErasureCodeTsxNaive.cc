@@ -414,6 +414,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
         }
 
       }
+
     }
 
     // elimination
@@ -425,8 +426,46 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 
       for (int slice_id = solve_slice_id_start; slice_id < solve_slice_id_end; slice_id++)
       {
-        for (int erasure_data_idx = 0; erasure_data_idx < erasure_data_count; erasure_data_idx++) {
-          
+        slice_offset[1] = slice_id * SLICE;
+
+        // solve the first subsystem
+        if (retension_coding[0] == 0) {
+
+          int erasure_data_chunk_idx = erasure_data[0];
+          slice_offset[0] = (slice_id + erasure_data_chunk_idx) * SLICE;
+
+          mxx1 = _mm256_load_si256((__m256i *)parity[0][slice_offset[0]]);
+          _mm256_store_si256((__m256i *)(data[erasure_data_chunk_idx])[slice_offset[1]], mxx1);
+
+          // substitute
+          slice_offset[2] = (slice_id + kval - 1 - erasure_data_chunk_idx) * SLICE;
+          for (int retension_coding_idx = 1; retension_coding_idx < erasure_data_count; retension_coding_idx++) { 
+            
+            int retension_coding_chunk_idx = retension_coding[retension_coding_idx];
+            tmp = _mm256_load_si256((__m256i *)(parity[retension_coding_chunk_idx])[slice_offset[retension_coding_chunk_idx]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(parity[retension_coding_chunk_idx])[slice_offset[retension_coding_chunk_idx]], mxx2);
+
+          }
+
+        }
+
+        // solve the second subsystem
+        if (retension_coding[erasure_data_count - 1] == 2) {
+
+          int erasure_data_chunk_idx = erasure_data[erasure_data_count - 1];
+          slice_offset[2] = (slice_id + kval - 1 - erasure_data_chunk_idx) * SLICE;
+
+          mxx1 = _mm256_load_si256((__m256i *)parity[2][slice_offset[2]]);
+          _mm256_store_si256((__m256i *)(data[erasure_data_chunk_idx])[slice_offset[1]], mxx1);
+
+          // substitute
+
+          if (erasure_data_count >= 2 && retension_coding[erasure_data_count - 2] == 0) {
+
+          }
+        } else { // retension_coding[erasure_data_count - 1] == 0
+
         }
       }
     }
