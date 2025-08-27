@@ -3,6 +3,8 @@ sudo docker exec -it -w /workspace/ceph/src/erasure-code/tsx/ cephtest /bin/bash
 
 docker start ceph_build
 docker exec -it -w /ceph/src/erasure-code/tsx/ ceph_build /bin/bash
+docker exec -it -w /ceph/build ceph_build /bin/bash
+
 
 docker update --cpu-period=100000 --cpu-quota=30000 ceph_build
 docker update --cpus=0 --cpu-period=0 --cpu-quota=0 ceph_build
@@ -18,27 +20,54 @@ cd -
 dd if=/dev/urandom of=./largefile bs=32MiB count=64 oflag=direct
 ./bin/rados put largefile ./largefile -p tsx-2m-pool
 ./bin/rados get largefile ./my_largefile -p tsx-2m-pool
+fio --name=randwrite --ioengine=libaio --rw=randwrite --bs=4k --size=1G --numjobs=4 --runtime=60 --group_reporting --direct=1 --filename=./fio_testfile
 ./bin/rados rm largefile -p tsx-2m-pool
 
-./bin/rados bench -p tsx-2m-pool 30 write -O 2147483648 --no-cleanup -t 4
+./bin/rados bench -p tsx-2m-pool 30 write -O 1G -t 4 
+
+./bin/rados bench -p tsx-2m-pool 30 write -O 2GB -b 64MB -t 1 --no-cleanup
+./bin/rados bench -p tsx-2m-pool 30 write -b 64MB -t 1
+./bin/rados bench -p tsx-2m-pool 30 write -O 2GB -b 64MB -t 1
+./bin/rados bench -p tsx-2m-pool 30 rand -t 1
+
+./bin/rados bench -p tsx-2m-pool 5 write -t 4
 ./bin/rados bench -p tsx-2m-pool 30 write -O 2147483648 --no-cleanup
 ./bin/rados bench -p isa-2m-pool 30 write -O 2147483648 --no-cleanup
 ./bin/rados bench -p tsx-2m-pool 30 seq
 ./bin/rados bench -p isa-2m-pool 30 seq --io-flags direct=1,nocache=1
-./bin/rados cleanup -p tsx-2m-pool
-./bin/rados cleanup -p isa-2m-pool
 
+./bin/rados cleanup -p tsx-2m-pool
+./bin/rados ls -p tsx-2m-pool
+./bin/rados ls -p isa-2m-pool
+./bin/ceph osd map isa-2m-pool ec_rados*
+
+./bin/rados bench -p tsx-2m-pool 30 write --no-cleanup
+./bin/rados bench -p isa-2m-pool 30 write --no-cleanup
 ./bin/ceph osd map tsx-2m-pool benchmark*
 ./bin/ceph osd map isa-2m-pool benchmark*
 ./bin/init-ceph stop osd.8
 ./bin/init-ceph stop osd.3
 ./bin/init-ceph stop osd.1
+./bin/rados bench -p tsx-2m-pool 30 rand
 ./bin/init-ceph start osd.8
 ./bin/init-ceph start osd.3
 ./bin/init-ceph start osd.1
-./bin/init-ceph stop osd.10
+./bin/init-ceph stop osd.0
 ./bin/init-ceph stop osd.9
 ./bin/init-ceph stop osd.1
-./bin/init-ceph start osd.10
+./bin/rados bench -p isa-2m-pool 30 seq
+./bin/init-ceph start osd.0
 ./bin/init-ceph start osd.9
 ./bin/init-ceph start osd.1
+./bin/rados cleanup -p tsx-2m-pool
+./bin/rados cleanup -p isa-2m-pool
+
+
+
+
+
+
+fio --name=ec-write-test  --ioengine=rados  --pool=tsx-2m-pool  --rw=randwrite  --bs=128M  --size=32G --numjobs=8 --runtime=60 
+fio --name=ec-write-test  --ioengine=rados  --pool=tsx-2m-pool  --rw=randread  --bs=128M  --size=32G --numjobs=8 --runtime=60 
+
+fio --conf=/ceph/build/ceph.conf --name=rand-read --direct=1 --iodepth=32 --rw=read --ioengine=rados --pool=tsx-2m-pool --clientname=admin --bs=4m --size=1G --numjobs=1 --runtime=1000 --nrfiles=32 --group_reporting
