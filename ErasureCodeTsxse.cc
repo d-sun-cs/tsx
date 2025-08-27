@@ -196,10 +196,13 @@ int ErasureCodeTsxse::encode_chunks(const set<int> &want_to_encode,
   ParityChunkPtr parity3(blocksize, chunks[kval + 2], parity_buffer + EXTRA_DATA_SIZE);
 
   __m256i zero = _mm256_setzero_si256(); // Clear 256-bit register
-  for (int i = 0; i < blocksize + EXTRA_DATA_SIZE; i += 32)
+  // init where chunk 0 not overwrite
+  for (int i = blocksize; i < blocksize + EXTRA_DATA_SIZE; i += SLICE)
   {
-    _mm256_storeu_si256((__m256i *)parity1[i], zero);  // Clear parity1
-    _mm256_storeu_si256((__m256i *)parity2[i], zero); // Clear parity2
+    _mm256_storeu_si256((__m256i *)parity1[i], zero); // Clear parity1
+  }
+  for (int i = 0; i < EXTRA_DATA_SIZE; i += SLICE)
+  {
     _mm256_storeu_si256((__m256i *)parity3[i], zero); // Clear parity3
   }
 
@@ -217,10 +220,12 @@ int ErasureCodeTsxse::encode_chunks(const set<int> &want_to_encode,
 
     mxx1 = _mm256_loadu_si256((__m256i *)&chunks[0][slice_offset_2]);
     _mm256_storeu_si256((__m256i *)parity1[slice_offset_1], mxx1);
+    _mm256_storeu_si256((__m256i *)parity2[slice_offset_2], mxx1);
+    _mm256_storeu_si256((__m256i *)parity3[slice_offset_3], mxx1);
   }
 
   // chunk 1 ~ (k - 1)
-  for (int chunk_idx = 1; chunk_idx < kval; chunk_idx += 2)
+  for (int chunk_idx = 1; chunk_idx < kval; chunk_idx++)
   {
     for (int slice_id = 0; slice_id < TOTAL_SLICE_NUM; slice_id++)
     {
@@ -507,6 +512,7 @@ int ErasureCodeTsxse::decode_chunks(const set<int> &want_to_read,
   }
   
   // re-encode
+  
 
   free(parity_buffer);
 
@@ -517,6 +523,7 @@ int ErasureCodeTsxse::decode_chunks(const set<int> &want_to_read,
   return 0;
 
 #endif
+
 }
 
 
