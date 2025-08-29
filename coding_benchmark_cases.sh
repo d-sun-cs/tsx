@@ -28,9 +28,10 @@ cd $CEPH_BUILD || exit
 # Build required components
 ninja_output_ec_tsx=$(ninja ec_tsx)
 ninja_output_ec_tsxse=$(ninja ec_tsxse)
+ninja_output_ec_tsxnaive=$(ninja ec_tsxnaive)
 ninja_output_benchmark=$(ninja ceph_erasure_code_benchmark)
 
-if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" != *"no work to do."* || "$ninja_output_ec_tsxse" != *"no work to do."* ]]; then
+if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" != *"no work to do."* || "$ninja_output_ec_tsxse" != *"no work to do."* || "$ninja_output_ec_tsxnaive" != *"no work to do."* ]]; then
     sudo ninja install
 fi
 
@@ -79,6 +80,10 @@ for case in "${!TEST_CASES[@]}"; do
     IFS=':' read -r d p <<< "${TEST_CASES[$case]}"
     echo "  $case - Missing: ${d} data chunk(s) + ${p} parity chunk(s)"
 done
+
+# Define plugin names and their technique parameters
+PLUGINS=("tsx" "isa" "tsxnaive" "jerasure")
+TECHNIQUES=("null" "cauchy" "null" "cauchy_good")
 
 # Test execution function
 run_test() {
@@ -144,40 +149,55 @@ select_erased_indexes() {
 warmup_test() {
     local erased_args=$(select_erased_indexes 1 2)  # Fixed pattern for warmup
     echo "Running warmup tests..."
-    $CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 > /dev/null
-    $CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 $erased_args > /dev/null
-    $CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 > /dev/null
-    $CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 $erased_args > /dev/null
-    $CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 > /dev/null
-    $CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 $erased_args > /dev/null
+    for i in "${!PLUGINS[@]}"; do
+        plugin="${PLUGINS[$i]}"
+        technique="${TECHNIQUES[$i]}"
+        cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p $plugin"
+        if [ "$technique" != "null" ]; then
+            cmd+=" -P technique=$technique"
+        fi
+        cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i 2"
+        $cmd > /dev/null
+        cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p $plugin"
+        if [ "$technique" != "null" ]; then
+            cmd+=" -P technique=$technique"
+        fi
+        cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 $erased_args"
+        $cmd > /dev/null
+    done
 }
 
 warmup_test
 
 # 初始化编码性能变量
-tsx_encode=0
-isa_encode=0
-# tsxse_encode=0
-jerasure_encode=0
+declare -A encode_results
+declare -A decode_total
+
+for plugin in "${PLUGINS[@]}"; do
+    encode_results[$plugin]=0
+    decode_total[$plugin]=0
+done
 
 # Encoding performance tests
 echo -e "\n----------------------------------------------------------"
 echo "ENCODING PERFORMANCE TESTS"
-run_test "TSX" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=$K -P m=$M -s $BUFFER_SIZE -i $TEST_COUNT" 0 tsx_encode
-run_test "ISA" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=$K -P m=$M -s $BUFFER_SIZE -i $TEST_COUNT" 0 isa_encode
-# run_test "TSXSE" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=$K -P m=$M -s $BUFFER_SIZE -i $TEST_COUNT" 0 tsxse_encode
-run_test "Jerasure" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P technique=reed_sol_van -P k=$K -P m=$M -s $BUFFER_SIZE -i $TEST_COUNT" 0 jerasure_encode
+for i in "${!PLUGINS[@]}"; do
+    plugin="${PLUGINS[$i]}"
+    technique="${TECHNIQUES[$i]}"
+    desc="$plugin"
+    cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p $plugin"
+    if [ "$technique" != "null" ]; then
+        cmd+=" -P technique=$technique"
+    fi
+    cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i $TEST_COUNT"
+    run_test "$desc" "$cmd" 0 "encode_results[$plugin]"
+done
 
 # Decoding performance tests
 echo -e "\n----------------------------------------------------------"
 echo "DECODING PERFORMANCE TESTS"
 echo "Running all test cases for each decoder..."
 
-# Initialize accumulators for decode
-tsx_decode_total=0
-isa_decode_total=0
-# tsxse_decode_total=0
-jerasure_decode_total=0
 tested_cases=0
 
 for case in "${ORDERED_CASES[@]}"; do
@@ -185,50 +205,43 @@ for case in "${ORDERED_CASES[@]}"; do
     IFS=':' read -r data_chunks parity_chunks <<< "${TEST_CASES[$case]}"
     total_erased=$((data_chunks + parity_chunks))
     erased_args=$(select_erased_indexes $data_chunks $parity_chunks)
-    
-    # Run all decoders for this case
-    tsx_thpt=0
-    isa_thpt=0
-    # tsxse_thpt=0
-    jerasure_thpt=0
-    
-    run_test "TSX" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e $total_erased -w decode -p tsx -P k=$K -P m=$M -s $BUFFER_SIZE -i $PER_CASE_COUNT $erased_args" 1 tsx_thpt
-    run_test "ISA" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e $total_erased -w decode -p isa -P k=$K -P m=$M -s $BUFFER_SIZE -i $PER_CASE_COUNT $erased_args" 1 isa_thpt
-    # run_test "TSXSE" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e $total_erased -w decode -p tsxse -P k=$K -P m=$M -s $BUFFER_SIZE -i $PER_CASE_COUNT $erased_args" 1 tsxse_thpt
-    run_test "Jerasure" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e $total_erased -w decode -p jerasure -P technique=reed_sol_van -P k=$K -P m=$M -s $BUFFER_SIZE -i $PER_CASE_COUNT $erased_args" 1 jerasure_thpt
-    
-    # Add to accumulators
-    tsx_decode_total=$(python3 -c "print($tsx_decode_total + $tsx_thpt)")
-    isa_decode_total=$(python3 -c "print($isa_decode_total + $isa_thpt)")
-    # tsxse_decode_total=$(python3 -c "print($tsxse_decode_total + $tsxse_thpt)")
-    jerasure_decode_total=$(python3 -c "print($jerasure_decode_total + $jerasure_thpt)")
+    for i in "${!PLUGINS[@]}"; do
+        plugin="${PLUGINS[$i]}"
+        technique="${TECHNIQUES[$i]}"
+        thpt=0
+        desc="$plugin"
+        cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e $total_erased -w decode -p $plugin"
+        if [ "$technique" != "null" ]; then
+            cmd+=" -P technique=$technique"
+        fi
+        cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i $PER_CASE_COUNT $erased_args"
+        run_test "$desc" "$cmd" 1 thpt
+        decode_total[$plugin]=$(python3 -c "print(${decode_total[$plugin]} + $thpt)")
+    done
     ((tested_cases++))
-    
     echo "Completed '$case' case"
 done
 
 # Calculate decode averages
+declare -A decode_avg
 if [ $tested_cases -gt 0 ]; then
-    tsx_decode_avg=$(python3 -c "print(round($tsx_decode_total / $tested_cases, 2))")
-    isa_decode_avg=$(python3 -c "print(round($isa_decode_total / $tested_cases, 2))")
-    # tsxse_decode_avg=$(python3 -c "print(round($tsxse_decode_total / $tested_cases, 2))")
-    jerasure_decode_avg=$(python3 -c "print(round($jerasure_decode_total / $tested_cases, 2))")
+    for plugin in "${PLUGINS[@]}"; do
+        decode_avg[$plugin]=$(python3 -c "print(round(${decode_total[$plugin]} / $tested_cases, 2))")
+    done
 fi
 
 # Display performance summary
 echo "----------------------------------------------------------"
 echo -e "\nPERFORMANCE SUMMARY"
 echo "ENCODING RESULTS:"
-echo "  TSX:      $tsx_encode MB/s"
-echo "  ISA:      $isa_encode MB/s"
-# echo "  TSXSE:    $tsxse_encode MB/s"
-echo "  Jerasure: $jerasure_encode MB/s"
+for plugin in "${PLUGINS[@]}"; do
+    echo "  $plugin: ${encode_results[$plugin]} MB/s"
+done
 echo ""
 echo "DECODING RESULTS (Average of $tested_cases cases):"
-echo "  TSX:      $tsx_decode_avg MB/s"
-echo "  ISA:      $isa_decode_avg MB/s"
-# echo "  TSXSE:    $tsxse_decode_avg MB/s"
-echo "  Jerasure: $jerasure_decode_avg MB/s"
+for plugin in "${PLUGINS[@]}"; do
+    echo "  $plugin: ${decode_avg[$plugin]} MB/s"
+done
 
 # Return to original directory
 cd "$current_dir" || exit

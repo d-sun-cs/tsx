@@ -28,9 +28,10 @@ cd $CEPH_BUILD
 
 ninja_output_ec_tsx=$(ninja ec_tsx)
 ninja_output_ec_tsxse=$(ninja ec_tsxse)
+ninja_output_ec_tsxnaive=$(ninja ec_tsxnaive)
 ninja_output_benchmark=$(ninja ceph_erasure_code_benchmark)
 
-if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" != *"no work to do."* || "$ninja_output_ec_tsxse" != *"no work to do."* ]]; then
+if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" != *"no work to do."* || "$ninja_output_ec_tsxse" != *"no work to do."* || "$ninja_output_ec_tsxnaive" != *"no work to do."* ]]; then
     sudo ninja install
 fi
 
@@ -61,18 +62,31 @@ run_test() {
     fi
 }
 
+# Define plugin names and their technique parameters
+PLUGINS=("tsx" "isa" "tsxse" "jerasure")
+TECHNIQUES=("null" "cauchy" "null" "cauchy_good")
+
 # 在正式测试前进行预热
 warmup_test() {
-    local command=$1
-    $command > /dev/null 2>&1
+    local plugin=$1
+    local technique=$2
+    local cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p $plugin"
+    if [ "$technique" != "null" ]; then
+        cmd+=" -P technique=$technique"
+    fi
+    cmd+=" -P k=$K -P m=3 -s $BUFFER_SIZE -i 2"
+    $cmd > /dev/null 2>&1
+    cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p $plugin"
+    if [ "$technique" != "null" ]; then
+        cmd+=" -P technique=$technique"
+    fi
+    cmd+=" -P k=$K -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+    $cmd > /dev/null 2>&1
 }
 
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=$K -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p isa -P k=$K -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=$K -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsx -P k=$K -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=$K -P m=3 -s $BUFFER_SIZE -i 2"
-warmup_test "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p tsxse -P k=$K -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+for i in "${!PLUGINS[@]}"; do
+    warmup_test "${PLUGINS[$i]}" "${TECHNIQUES[$i]}"
+done
 
 # 恢复正常测试部分
 # 指定要擦除的块索引
@@ -82,19 +96,29 @@ ERASED_ARGS=""
 for idx in "${ERASED_IDX[@]}"; do
     ERASED_ARGS+=" --erased $idx"
 done
+
 echo "-------------------------------------------"
-run_test "TSX encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsx -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "TSX decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e ${#ERASED_IDX[@]} -w decode -p tsx -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT $ERASED_ARGS"
-echo "-------------------------------------------"
-run_test "ISA encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p isa -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "ISA decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e ${#ERASED_IDX[@]} -w decode -p isa -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT $ERASED_ARGS"
-echo "-------------------------------------------"
-run_test "TSXSE encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p tsxse -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "TSXSE decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e ${#ERASED_IDX[@]} -w decode -p tsxse -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT $ERASED_ARGS"
-echo "-------------------------------------------"
-run_test "jerasure encode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p jerasure -P technique=reed_sol_van -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
-run_test "jerasure decode" "$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e ${#ERASED_IDX[@]} -w decode -p jerasure -P technique=reed_sol_van -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT $ERASED_ARGS"
-echo "-------------------------------------------"
+for i in "${!PLUGINS[@]}"; do
+    plugin="${PLUGINS[$i]}"
+    technique="${TECHNIQUES[$i]}"
+    # encode
+    desc="$plugin encode"
+    cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -p $plugin"
+    if [ "$technique" != "null" ]; then
+        cmd+=" -P technique=$technique"
+    fi
+    cmd+=" -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+    run_test "$desc" "$cmd"
+    # decode
+    desc="$plugin decode"
+    cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e ${#ERASED_IDX[@]} -w decode -p $plugin"
+    if [ "$technique" != "null" ]; then
+        cmd+=" -P technique=$technique"
+    fi
+    cmd+=" -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT $ERASED_ARGS"
+    run_test "$desc" "$cmd"
+    echo "-------------------------------------------"
+done
 
 cd $current_dir
 
