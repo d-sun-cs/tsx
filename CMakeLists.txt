@@ -34,3 +34,20 @@ set_target_properties(ec_tsxse PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsxse json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsxse DESTINATION ${erasure_plugin_dir})
+
+# tsxnaive plugin
+
+set(tsxnaive_srcs
+  ErasureCodePluginTsxNaive.cc
+  ErasureCodeTsxNaive.cc
+  $<TARGET_OBJECTS:erasure_code_objs>
+  $<TARGET_OBJECTS:crush_objs>
+  ${CMAKE_SOURCE_DIR}/src/common/str_map.cc
+)   
+
+add_library(ec_tsxnaive SHARED ${tsxnaive_srcs})
+target_compile_options(ec_tsxnaive PRIVATE -mavx2 -O3)
+set_target_properties(ec_tsxnaive PROPERTIES
+  INSTALL_RPATH "")
+target_link_libraries(ec_tsxnaive json_spirit ${HIREDIS_LIB})
+install(TARGETS ec_tsxnaive DESTINATION ${erasure_plugin_dir})

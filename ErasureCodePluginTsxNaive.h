@@ -15,12 +15,12 @@
  * 
  */
 
-#ifndef CEPH_ERASURE_CODE_PLUGIN_TSXSE_H
-#define CEPH_ERASURE_CODE_PLUGIN_TSXSE_H
+#ifndef CEPH_ERASURE_CODE_PLUGIN_TSXNAIVE_H
+#define CEPH_ERASURE_CODE_PLUGIN_TSXNAIVE_H
 
 #include "erasure-code/ErasureCodePlugin.h"
 
-class ErasureCodePluginTsxse : public ceph::ErasureCodePlugin {
+class ErasureCodePluginTsxNaive : public ceph::ErasureCodePlugin {
 public:
   int factory(const std::string &directory,
 	      ceph::ErasureCodeProfile &profile,

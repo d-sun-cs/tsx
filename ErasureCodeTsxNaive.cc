@@ -50,7 +50,7 @@ using namespace ceph;
 
 static ostream &_prefix(std::ostream *_dout)
 {
-  return *_dout << "ErasureCodeTsx: ";
+  return *_dout << "ErasureCodeTsxNaive: ";
 }
 
 class ParityChunkPtr
@@ -240,7 +240,7 @@ int ErasureCodeTsxNaive::encode_chunks(const set<int> &want_to_encode,
 #endif
 }
 
-int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
+int ErasureCodeTsxNaive::decode_chunks(const set<int> &want_to_read,
                                   const map<int, bufferlist> &chunks,
                                   map<int, bufferlist> *decoded)
 {
@@ -315,9 +315,9 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 
   char *parity_buffer = (char *)aligned_alloc(32, 2 * EXTRA_DATA_SIZE);
   ParityChunkPtr parity[3]{
-      {blocksize, parity_ptr[0], parity_buffer},
+      {blocksize, parity_ptr[0], (uint8_t *)(parity_buffer)},
       {blocksize, parity_ptr[1]},
-      {blocksize, parity_ptr[2], parity_buffer + EXTRA_DATA_SIZE},
+      {blocksize, parity_ptr[2], (uint8_t *)(parity_buffer + EXTRA_DATA_SIZE)},
   };
 
   const int TOTAL_SLICE_NUM = blocksize / SLICE;
