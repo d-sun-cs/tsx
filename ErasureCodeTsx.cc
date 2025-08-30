@@ -536,7 +536,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       // compute fusion init by parity
       if (maperasure_ptr[0] != nullptr)
       {
-        for (int slice_id = slice_id_start + kval; slice_id < slice_id_end + k; slice_id++)
+        for (int slice_id = slice_id_start + kval; slice_id < slice_id_end + kval; slice_id++)
         {
 
           tmp = _mm256_load_si256((__m256i *)parity[0][slice_id * SLICE]);
@@ -554,7 +554,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       }
       if (maperasure_ptr[2] != nullptr)
       {
-        for (int slice_id = slice_id_start + kval; slice_id < slice_id_end + k; slice_id++)
+        for (int slice_id = slice_id_start + kval; slice_id < slice_id_end + kval; slice_id++)
         {
 
           tmp = _mm256_load_si256((__m256i *)parity[2][slice_id * SLICE]);
