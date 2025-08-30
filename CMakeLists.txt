@@ -54,7 +54,7 @@ install(TARGETS ec_tsxnaive DESTINATION ${erasure_plugin_dir})
 
 # tsxmap plugin
 
-set(tsxwin_srcs
+set(tsxmap_srcs
   ErasureCodePluginTsxMap.cc
   ErasureCodeTsxMap.cc
   $<TARGET_OBJECTS:erasure_code_objs>
@@ -62,7 +62,7 @@ set(tsxwin_srcs
   ${CMAKE_SOURCE_DIR}/src/common/str_map.cc
 )   
 
-add_library(ec_tsxmap SHARED ${tsxwin_srcs})
+add_library(ec_tsxmap SHARED ${tsxmap_srcs})
 target_compile_options(ec_tsxmap PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsxmap PROPERTIES
   INSTALL_RPATH "")
@@ -86,3 +86,20 @@ set_target_properties(ec_tsxwin PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsxwin json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsxwin DESTINATION ${erasure_plugin_dir})
+
+# tsxmerge plugin
+
+set(tsxmerge_srcs
+  ErasureCodePluginTsxMerge.cc
+  ErasureCodeTsxMerge.cc
+  $<TARGET_OBJECTS:erasure_code_objs>
+  $<TARGET_OBJECTS:crush_objs>
+  ${CMAKE_SOURCE_DIR}/src/common/str_map.cc
+)   
+
+add_library(ec_tsxmerge SHARED ${tsxmerge_srcs})
+target_compile_options(ec_tsxmerge PRIVATE -mavx2 -O3)
+set_target_properties(ec_tsxmerge PROPERTIES
+  INSTALL_RPATH "")
+target_link_libraries(ec_tsxmerge json_spirit ${HIREDIS_LIB})
+install(TARGETS ec_tsxmerge DESTINATION ${erasure_plugin_dir})

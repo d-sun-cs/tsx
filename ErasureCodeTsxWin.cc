@@ -516,6 +516,7 @@ int ErasureCodeTsxWin::decode_chunks(const set<int> &want_to_read,
       memcpy(parity_buffer, reply->str, reply->len);
 
       parity[0].set_extradata((uint8_t *)(parity_buffer));
+      // avoid out of bounds of parity[1]
       parity[1].set_extradata((uint8_t *)(parity_buffer));
       parity[2].set_extradata((uint8_t *)(parity_buffer + EXTRA_DATA_SIZE));
 

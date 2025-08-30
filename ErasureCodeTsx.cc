@@ -574,38 +574,38 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
           slice_offset[0] = (slice_id + retension_data_chunk_idx - coding_data_map[0]) * SLICE;
           slice_offset[2] = (slice_id + coding_data_map[2] - retension_data_chunk_idx) * SLICE;
 
-          for (int i = 0; i < 3; i++) {
-            if (maperasure_ptr[i] != nullptr)
-            {
-              tmp = _mm256_load_si256((__m256i *)(maperasure[i])[slice_offset[i]]);
-              mxx2 = _mm256_xor_si256(mxx1, tmp);
-              _mm256_store_si256((__m256i *)(maperasure[i])[slice_offset[i]], mxx2);
-            }
-          }
+          // for (int i = 0; i < 3; i++) {
+          //   if (maperasure_ptr[i] != nullptr)
+          //   {
+          //     tmp = _mm256_load_si256((__m256i *)(maperasure[i])[slice_offset[i]]);
+          //     mxx2 = _mm256_xor_si256(mxx1, tmp);
+          //     _mm256_store_si256((__m256i *)(maperasure[i])[slice_offset[i]], mxx2);
+          //   }
+          // }
 
-          // // i == 0
-          // if (maperasure_ptr[0] != nullptr)
-          // {
-          //   slice_offset[0] = (slice_id + retension_data_chunk_idx - coding_data_map[0]) * SLICE;
-          //   tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
-          //   mxx2 = _mm256_xor_si256(mxx1, tmp);
-          //   _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
-          // }
-          // // i == 1
-          // if (maperasure_ptr[1] != nullptr)
-          // {
-          //   tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
-          //   mxx2 = _mm256_xor_si256(mxx1, tmp);
-          //   _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
-          // }
-          // // i == 2
-          // if (maperasure_ptr[2] != nullptr)
-          // {
-          //   slice_offset[2] = (slice_id + coding_data_map[2] - retension_data_chunk_idx) * SLICE;
-          //   tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
-          //   mxx2 = _mm256_xor_si256(mxx1, tmp);
-          //   _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
-          // }
+          // i == 0
+          if (maperasure_ptr[0] != nullptr)
+          {
+            slice_offset[0] = (slice_id + retension_data_chunk_idx - coding_data_map[0]) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
+          }
+          // i == 1
+          if (maperasure_ptr[1] != nullptr)
+          {
+            tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
+          }
+          // i == 2
+          if (maperasure_ptr[2] != nullptr)
+          {
+            slice_offset[2] = (slice_id + coding_data_map[2] - retension_data_chunk_idx) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
+          }
      
         }
       }
@@ -619,93 +619,93 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
       for (int slice_id = solve_slice_id_start; slice_id < solve_slice_id_end; slice_id++)
       {
 
-        constexpr int two_tone_idx[5] = {0, 2, 1, 0, 2};
+        // constexpr int two_tone_idx[5] = {0, 2, 1, 0, 2};
 
-        for (int i = 0; i < 3; i++) {
+        // for (int i = 0; i < 3; i++) {
 
-          int maperasure_idx = two_tone_idx[i];
-          if (need_decoded[maperasure_idx] != -1) {
+        //   int maperasure_idx = two_tone_idx[i];
+        //   if (need_decoded[maperasure_idx] != -1) {
 
-            slice_offset[1] = slice_id * SLICE;
-            mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[maperasure_idx]][slice_offset[1]]);
+        //     slice_offset[1] = slice_id * SLICE;
+        //     mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[maperasure_idx]][slice_offset[1]]);
 
-            slice_offset[0] = (slice_id + need_decoded[maperasure_idx] - coding_data_map[0]) * SLICE;
-            slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[maperasure_idx]) * SLICE;
+        //     slice_offset[0] = (slice_id + need_decoded[maperasure_idx] - coding_data_map[0]) * SLICE;
+        //     slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[maperasure_idx]) * SLICE;
             
-            for (int j = 1; j < 3; j++) {
+        //     for (int j = 1; j < 3; j++) {
 
-              int other_idx = two_tone_idx[i + j];
-              if (maperasure_ptr[other_idx] != nullptr) {
+        //       int other_idx = two_tone_idx[i + j];
+        //       if (maperasure_ptr[other_idx] != nullptr) {
 
-                tmp = _mm256_load_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]]);
-                mxx2 = _mm256_xor_si256(mxx1, tmp);
-                _mm256_store_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]], mxx2);
+        //         tmp = _mm256_load_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]]);
+        //         mxx2 = _mm256_xor_si256(mxx1, tmp);
+        //         _mm256_store_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]], mxx2);
 
-              }
+        //       }
 
-            }
+        //     }
             
+        //   }
+
+        // }
+
+        if (need_decoded[0] != -1)
+        {
+          slice_offset[1] = slice_id * SLICE;
+          mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[0]][slice_offset[1]]);
+          if (maperasure_ptr[1] != nullptr)
+          {
+            tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
           }
-
+          if (maperasure_ptr[2] != nullptr)
+          {
+            slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[0]) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
+          }
         }
+        if (need_decoded[2] != -1)
+        {
+          slice_offset[1] = slice_id * SLICE;
 
-        // if (need_decoded[0] != -1)
-        // {
-        //   slice_offset[1] = slice_id * SLICE;
-        //   mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[0]][slice_offset[1]]);
-        //   if (maperasure_ptr[1] != nullptr)
-        //   {
-        //     tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
-        //     mxx2 = _mm256_xor_si256(mxx1, tmp);
-        //     _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
-        //   }
-        //   if (maperasure_ptr[2] != nullptr)
-        //   {
-        //     slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[0]) * SLICE;
-        //     tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
-        //     mxx2 = _mm256_xor_si256(mxx1, tmp);
-        //     _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
-        //   }
-        // }
-        // if (need_decoded[2] != -1)
-        // {
-        //   slice_offset[1] = slice_id * SLICE;
+          mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[2]][slice_offset[1]]);
+          if (maperasure_ptr[0] != nullptr)
+          {
+            slice_offset[0] = (slice_id + need_decoded[2] - coding_data_map[0]) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
+          }
+          if (maperasure_ptr[1] != nullptr)
+          {
+            tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
+          }
+        }
+        if (need_decoded[1] != -1)
+        {
+          slice_offset[1] = slice_id * SLICE;
 
-        //   mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[2]][slice_offset[1]]);
-        //   if (maperasure_ptr[0] != nullptr)
-        //   {
-        //     slice_offset[0] = (slice_id + need_decoded[2] - coding_data_map[0]) * SLICE;
-        //     tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
-        //     mxx2 = _mm256_xor_si256(mxx1, tmp);
-        //     _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
-        //   }
-        //   if (maperasure_ptr[1] != nullptr)
-        //   {
-        //     tmp = _mm256_load_si256((__m256i *)(maperasure[1])[slice_offset[1]]);
-        //     mxx2 = _mm256_xor_si256(mxx1, tmp);
-        //     _mm256_store_si256((__m256i *)(maperasure[1])[slice_offset[1]], mxx2);
-        //   }
-        // }
-        // if (need_decoded[1] != -1)
-        // {
-        //   slice_offset[1] = slice_id * SLICE;
-
-        //   mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[1]][slice_offset[1]]);
-        //   if (maperasure_ptr[0] != nullptr)
-        //   {
-        //     slice_offset[0] = (slice_id + need_decoded[1] - coding_data_map[0]) * SLICE;
-        //     tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
-        //     mxx2 = _mm256_xor_si256(mxx1, tmp);
-        //     _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
-        //   }
-        //   if (maperasure_ptr[2] != nullptr)
-        //   {
-        //     slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[1]) * SLICE;
-        //     tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
-        //     mxx2 = _mm256_xor_si256(mxx1, tmp);
-        //     _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
-        //   }
-        // }
+          mxx1 = _mm256_load_si256((__m256i *)&data[need_decoded[1]][slice_offset[1]]);
+          if (maperasure_ptr[0] != nullptr)
+          {
+            slice_offset[0] = (slice_id + need_decoded[1] - coding_data_map[0]) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[0])[slice_offset[0]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[0])[slice_offset[0]], mxx2);
+          }
+          if (maperasure_ptr[2] != nullptr)
+          {
+            slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[1]) * SLICE;
+            tmp = _mm256_load_si256((__m256i *)(maperasure[2])[slice_offset[2]]);
+            mxx2 = _mm256_xor_si256(mxx1, tmp);
+            _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
+          }
+        }
       }
     }
 

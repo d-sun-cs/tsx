@@ -65,8 +65,8 @@ run_test() {
 # Define plugin names and their technique parameters
 # PLUGINS=("tsx" "isa" "tsxse" "tsxnaive" "tsxmap" "jerasure")
 # TECHNIQUES=("null" "cauchy" "null" "null" "null" "cauchy_good")
-PLUGINS=("tsx"  "tsxse" "tsxwin"  )
-TECHNIQUES=("null"  "null" "null"  )
+PLUGINS=("tsx"  "tsxmap" "tsxwin"  "isa")
+TECHNIQUES=("null"  "null" "null"  "cauchy")
 
 # 在正式测试前进行预热
 warmup_test() {
