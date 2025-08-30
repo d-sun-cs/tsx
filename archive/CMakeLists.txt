@@ -47,4 +47,5 @@ add_custom_target(erasure_code_plugins DEPENDS
     ec_tsx
     ec_tsxse
     ec_tsxnaive
+    ec_tsxmap
 )

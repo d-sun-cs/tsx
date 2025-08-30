@@ -82,8 +82,8 @@ for case in "${!TEST_CASES[@]}"; do
 done
 
 # Define plugin names and their technique parameters
-PLUGINS=("tsx" "isa" "tsxnaive" "jerasure")
-TECHNIQUES=("null" "cauchy" "null" "cauchy_good")
+PLUGINS=("tsx" "isa" "tsxnaive" "tsxmap" "jerasure")
+TECHNIQUES=("null" "cauchy" "null" "null" "cauchy_good")
 
 # Test execution function
 run_test() {
