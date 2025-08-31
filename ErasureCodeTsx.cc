@@ -338,7 +338,6 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
              << ", blocksize: " << blocksize
              << ", total_time_ms: " << total_encode_time_ms << "\n";
 
-  // 输出chunks[0]数据到文件（十六进制编码）
   // encode_log << "chunks[0][i] after encoding at: " << encode_call_count << "\n";
   // for (unsigned i = 0; i < blocksize; ++i)
   // {
@@ -346,14 +345,14 @@ int ErasureCodeTsx::encode_chunks(const set<int> &want_to_encode,
   // }
   // encode_log << "\n";
   // encode_log << std::dec << "blocksize: " << blocksize << std::endl;
-  // encode_log << std::dec << "parity1 after encoding at: " << encode_call_count << "\n";
-  // for (int i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
-  // {
-  //   encode_log << std::hex
-  //              << std::setw(2) << std::setfill('0')
-  //              << static_cast<int>(*(parity1[i])) << " ";
-  // }
-  // encode_log << "\n";
+  encode_log << std::dec << "parity1 after encoding at: " << encode_call_count << "\n";
+  for (int i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
+  {
+    encode_log << std::hex
+               << std::setw(2) << std::setfill('0')
+               << static_cast<int>(*(parity1[i])) << " ";
+  }
+  encode_log << "\n";
 
   encode_log.close();
 

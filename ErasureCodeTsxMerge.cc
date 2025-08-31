@@ -163,16 +163,21 @@ unsigned int ErasureCodeTsxMerge::get_chunk_size(unsigned int object_size) const
 }
 
 int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
-                                     map<int, bufferlist> *encoded)
+                                       map<int, bufferlist> *encoded)
 {
   const int kval = k; // member -> local var
   uint8_t *chunks[kval + Mval];
+  vector<PadChunkPtr> data;
+  int blocksize = (*encoded)[0].length();
   for (int i = 0; i < kval + Mval; ++i)
   {
     chunks[i] = (uint8_t *)(*encoded)[i].c_str();
+    if (i < kval) {
+      data.emplace_back(blocksize, chunks[i]);
+    }
   }
 
-  int blocksize = (*encoded)[0].length();
+  
 
 #if ENABLE_ENCODE
 
@@ -193,21 +198,21 @@ int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
   PadChunkPtr parity2(blocksize, chunks[kval + 1]);
   ParityChunkPtr parity3(blocksize, chunks[kval + 2], parity_buffer + EXTRA_DATA_SIZE);
 
-  PadChunkPtr data0(blocksize, chunks[0]);
-  PadChunkPtr data1(blocksize, chunks[1]);
+  // PadChunkPtr data0(blocksize, chunks[0]);
+  // PadChunkPtr data1(blocksize, chunks[1]);
 
   uint64_t slice_offset_1;
   uint64_t slice_offset_2;
   uint64_t slice_offset_3;
   __m256i mxx1, mxx2, mxx3, mxx4, res1, res3, tmp;
 
-  for (int window_id = -1; window_id <= windows_num; window_id++)
+  for (int window_id = -1; window_id <= windows_num + 1; window_id++)
   {
     // chunk 0 and 1
     const int slice_id_start = window_id * window_size;
     const int slice_id_end = slice_id_start + window_size;
-    mxx3 = _mm256_load_si256((__m256i *)data0[(slice_id_start - 1) * SLICE]);
-    mxx4 = _mm256_load_si256((__m256i *)data1[(slice_id_start - 1) * SLICE]);
+    mxx3 = _mm256_load_si256((__m256i *)data[0][(slice_id_start - 1) * SLICE]);
+    mxx4 = _mm256_load_si256((__m256i *)data[1][(slice_id_start - 1) * SLICE]);
     for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
     {
       slice_offset_1 = slice_id * SLICE;
@@ -215,8 +220,8 @@ int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
       slice_offset_3 = (slice_id + kval - 2) * SLICE;
 
       // Load two data chunks into registers and XOR them
-      mxx1 = _mm256_load_si256((__m256i *)data0[slice_offset_2]);
-      mxx2 = _mm256_load_si256((__m256i *)data1[slice_offset_2]);
+      mxx1 = _mm256_load_si256((__m256i *)data[0][slice_offset_2]);
+      mxx2 = _mm256_load_si256((__m256i *)data[1][slice_offset_2]);
       res1 = _mm256_xor_si256(mxx1, mxx2);
 
       // Store the result into parity chunks
@@ -237,27 +242,39 @@ int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
     {
       const int slice_id_start = (window_id - 1) * window_size;
       const int slice_id_end = slice_id_start + window_size;
-      for (int chunk_idx = 2; chunk_idx < kval; chunk_idx++)
+      for (int chunk_idx = 2; chunk_idx < kval; chunk_idx += 2)
       {
+        mxx3 = _mm256_load_si256((__m256i *)data[chunk_idx][(slice_id_start - 1) * SLICE]);
+        mxx4 = _mm256_load_si256((__m256i *)data[chunk_idx + 1][(slice_id_start - 1) * SLICE]);
         for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
         {
           slice_offset_2 = slice_id * SLICE;
           slice_offset_1 = (slice_id + chunk_idx) * SLICE;
-          slice_offset_3 = (slice_id + (kval - 1 - chunk_idx)) * SLICE;
+          slice_offset_3 = (slice_id + (kval - 2 - chunk_idx)) * SLICE;
 
-          mxx1 = _mm256_loadu_si256((__m256i *)&chunks[chunk_idx][slice_offset_2]);
+          // Load two data chunks into registers and XOR them
+          mxx1 = _mm256_load_si256((__m256i *)data[chunk_idx][slice_offset_2]);
+          mxx2 = _mm256_load_si256((__m256i *)data[chunk_idx + 1][slice_offset_2]);
+          res1 = _mm256_xor_si256(mxx1, mxx2);
 
-          mxx2 = _mm256_loadu_si256((__m256i *)parity1[slice_offset_1]);
-          mxx2 = _mm256_xor_si256(mxx1, mxx2);
-          _mm256_storeu_si256((__m256i *)parity1[slice_offset_1], mxx2);
+          // Store the result into parity chunks
+          tmp = _mm256_load_si256((__m256i *)parity2[slice_offset_2]);
+          res1 = _mm256_xor_si256(res1, tmp);
+          _mm256_store_si256((__m256i *)parity2[slice_offset_2], res1);
 
-          mxx2 = _mm256_loadu_si256((__m256i *)parity2[slice_offset_2]);
-          mxx2 = _mm256_xor_si256(mxx1, mxx2);
-          _mm256_storeu_si256((__m256i *)parity2[slice_offset_2], mxx2);
+          res1 = _mm256_xor_si256(mxx1, mxx4);
+          res3 = _mm256_xor_si256(mxx2, mxx3);
 
-          mxx2 = _mm256_loadu_si256((__m256i *)parity3[slice_offset_3]);
-          mxx2 = _mm256_xor_si256(mxx1, mxx2);
-          _mm256_storeu_si256((__m256i *)parity3[slice_offset_3], mxx2);
+          tmp = _mm256_loadu_si256((__m256i *)parity1[slice_offset_1]);
+          res1 = _mm256_xor_si256(res1, tmp);
+          _mm256_storeu_si256((__m256i *)parity1[slice_offset_1], res1);
+
+          tmp = _mm256_loadu_si256((__m256i *)parity3[slice_offset_3]);
+          res3 = _mm256_xor_si256(res3, tmp);
+          _mm256_storeu_si256((__m256i *)parity3[slice_offset_3], res3);
+
+          mxx3 = mxx1;
+          mxx4 = mxx2;
         }
       }
     }
@@ -277,7 +294,18 @@ int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
              << ", blocksize: " << blocksize
              << ", total_time_ms: " << total_encode_time_ms << "\n";
 
+  encode_log << std::dec << "parity1 after encoding at: " << encode_call_count << "\n";
+  for (int i = 0; i < blocksize + EXTRA_DATA_SIZE; ++i)
+  {
+    encode_log << std::hex
+               << std::setw(2) << std::setfill('0')
+               << static_cast<int>(*(parity1[i])) << " ";
+  }
+  encode_log << "\n";
+
   encode_log.close();
+
+
 
 #endif
 
@@ -291,8 +319,8 @@ int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
 }
 
 int ErasureCodeTsxMerge::decode_chunks(const set<int> &want_to_read,
-                                     const map<int, bufferlist> &chunks,
-                                     map<int, bufferlist> *decoded)
+                                       const map<int, bufferlist> &chunks,
+                                       map<int, bufferlist> *decoded)
 {
 
 #if ENABLE_LOG
