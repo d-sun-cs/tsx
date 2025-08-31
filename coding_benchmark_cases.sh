@@ -25,13 +25,19 @@ CEPH_BUILD=$(cd ../../../build && pwd)
 export LD_LIBRARY_PATH=$CEPH_BUILD/lib:$LD_LIBRARY_PATH
 cd $CEPH_BUILD || exit
 
-# Build required components
-ninja_output_ec_tsx=$(ninja ec_tsx)
-ninja_output_ec_tsxse=$(ninja ec_tsxse)
-ninja_output_ec_tsxnaive=$(ninja ec_tsxnaive)
-ninja_output_benchmark=$(ninja ceph_erasure_code_benchmark)
+# 定义需要编译的目标数组
+NINJA_TARGETS=("ec_tsx" "ec_tsxse" "ec_tsxnaive" "ec_tsxmap" "ec_tsxwin" "ec_tsxmerge" "ceph_erasure_code_benchmark")
 
-if [[ "$ninja_output_ec_tsx" != *"no work to do."* || "$ninja_output_benchmark" != *"no work to do."* || "$ninja_output_ec_tsxse" != *"no work to do."* || "$ninja_output_ec_tsxnaive" != *"no work to do."* ]]; then
+needs_install=false
+
+for target in "${NINJA_TARGETS[@]}"; do
+    ninja_output=$(ninja "$target")
+    if [[ "$ninja_output" != *"no work to do."* ]]; then
+        needs_install=true
+    fi
+done
+
+if $needs_install; then
     sudo ninja install
 fi
 
@@ -82,8 +88,11 @@ for case in "${!TEST_CASES[@]}"; do
 done
 
 # Define plugin names and their technique parameters
-PLUGINS=("tsx" "isa" "tsxnaive" "tsxmap" "jerasure")
-TECHNIQUES=("null" "cauchy" "null" "null" "cauchy_good")
+# PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
+# TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
+PLUGINS=("tsx" "tsxmerge")
+TECHNIQUES=("null" "null")
+
 
 # Test execution function
 run_test() {

@@ -172,12 +172,11 @@ int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
   for (int i = 0; i < kval + Mval; ++i)
   {
     chunks[i] = (uint8_t *)(*encoded)[i].c_str();
-    if (i < kval) {
+    if (i < kval)
+    {
       data.emplace_back(blocksize, chunks[i]);
     }
   }
-
-  
 
 #if ENABLE_ENCODE
 
@@ -209,32 +208,35 @@ int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
   for (int window_id = -1; window_id <= windows_num + 1; window_id++)
   {
     // chunk 0 and 1
-    const int slice_id_start = window_id * window_size;
-    const int slice_id_end = slice_id_start + window_size;
-    mxx3 = _mm256_load_si256((__m256i *)data[0][(slice_id_start - 1) * SLICE]);
-    mxx4 = _mm256_load_si256((__m256i *)data[1][(slice_id_start - 1) * SLICE]);
-    for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
+    if (window_id < windows_num + 1)
     {
-      slice_offset_1 = slice_id * SLICE;
-      slice_offset_2 = slice_id * SLICE;
-      slice_offset_3 = (slice_id + kval - 2) * SLICE;
+      const int slice_id_start = window_id * window_size;
+      const int slice_id_end = slice_id_start + window_size;
+      mxx3 = _mm256_load_si256((__m256i *)data[0][(slice_id_start - 1) * SLICE]);
+      mxx4 = _mm256_load_si256((__m256i *)data[1][(slice_id_start - 1) * SLICE]);
+      for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
+      {
+        slice_offset_1 = slice_id * SLICE;
+        slice_offset_2 = slice_id * SLICE;
+        slice_offset_3 = (slice_id + kval - 2) * SLICE;
 
-      // Load two data chunks into registers and XOR them
-      mxx1 = _mm256_load_si256((__m256i *)data[0][slice_offset_2]);
-      mxx2 = _mm256_load_si256((__m256i *)data[1][slice_offset_2]);
-      res1 = _mm256_xor_si256(mxx1, mxx2);
+        // Load two data chunks into registers and XOR them
+        mxx1 = _mm256_load_si256((__m256i *)data[0][slice_offset_2]);
+        mxx2 = _mm256_load_si256((__m256i *)data[1][slice_offset_2]);
+        res1 = _mm256_xor_si256(mxx1, mxx2);
 
-      // Store the result into parity chunks
-      _mm256_store_si256((__m256i *)parity2[slice_offset_2], res1);
+        // Store the result into parity chunks
+        _mm256_store_si256((__m256i *)parity2[slice_offset_2], res1);
 
-      res1 = _mm256_xor_si256(mxx1, mxx4);
-      res3 = _mm256_xor_si256(mxx2, mxx3);
+        res1 = _mm256_xor_si256(mxx1, mxx4);
+        res3 = _mm256_xor_si256(mxx2, mxx3);
 
-      _mm256_storeu_si256((__m256i *)parity1[slice_offset_1], res1);
-      _mm256_storeu_si256((__m256i *)parity3[slice_offset_3], res3);
+        _mm256_storeu_si256((__m256i *)parity1[slice_offset_1], res1);
+        _mm256_storeu_si256((__m256i *)parity3[slice_offset_3], res3);
 
-      mxx3 = mxx1;
-      mxx4 = mxx2;
+        mxx3 = mxx1;
+        mxx4 = mxx2;
+      }
     }
 
     // chunk 2 ~ (k - 1)
@@ -305,8 +307,6 @@ int ErasureCodeTsxMerge::encode_chunks(const set<int> &want_to_encode,
 
   encode_log.close();
 
-
-
 #endif
 
   return 0;
@@ -344,7 +344,7 @@ int ErasureCodeTsxMerge::decode_chunks(const set<int> &want_to_read,
   uint8_t *coding[Mval];
 
   int coding_data_map[Mval] = {0, 0, kval - 1};
-  int need_decoded[Mval] = {-1, -1, -1}; // distinguish erased data or coding
+  // int need_decoded[Mval] = {-1, -1, -1}; // distinguish erased data or coding
   uint8_t *maperasure_ptr[Mval] = {nullptr, nullptr, nullptr};
   uint8_t *parity_ptr[Mval] = {nullptr, nullptr, nullptr}; // used to decode erased data
 
@@ -376,7 +376,8 @@ int ErasureCodeTsxMerge::decode_chunks(const set<int> &want_to_read,
       {
         if (retension_coding_count < erasure_data_count)
         {
-          need_decoded[parity_idx] = (coding_data_map[parity_idx] = erasure_data[retension_coding_count]);
+          // need_decoded[parity_idx] = (coding_data_map[parity_idx] = erasure_data[retension_coding_count]);
+          coding_data_map[parity_idx] = erasure_data[retension_coding_count];
           maperasure_ptr[parity_idx] = data[coding_data_map[parity_idx]];
           parity_ptr[parity_idx] = coding[parity_idx];
         }
