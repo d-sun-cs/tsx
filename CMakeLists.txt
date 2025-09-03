@@ -103,3 +103,20 @@ set_target_properties(ec_tsxmerge PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsxmerge json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsxmerge DESTINATION ${erasure_plugin_dir})
+
+# cerasure plugin
+
+set(cerasure_srcs
+  ErasureCodePluginCerasure.cc
+  ErasureCodeCerasure.cc
+  $<TARGET_OBJECTS:erasure_code_objs>
+  $<TARGET_OBJECTS:crush_objs>
+  ${CMAKE_SOURCE_DIR}/src/common/str_map.cc
+)   
+
+add_library(ec_cerasure SHARED ${cerasure_srcs})
+target_compile_options(ec_cerasure PRIVATE -mavx2 -O3)
+set_target_properties(ec_cerasure PROPERTIES
+  INSTALL_RPATH "")
+target_link_libraries(ec_cerasure json_spirit ${HIREDIS_LIB})
+install(TARGETS ec_cerasure DESTINATION ${erasure_plugin_dir})

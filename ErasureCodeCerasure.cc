@@ -108,7 +108,6 @@ int ErasureCodeCerasure::encode_chunks(const set<int> &want_to_encode,
   int alignlen = (*encoded)[0].length();
   int packetsize = alignlen/w;
   int i, j, m, a;
-  int alignlen;
   // Fragment buffer pointers
   uint8_t *frag_ptrs[MMAX];
   uint8_t *copy_ptrs[MMAX];
@@ -140,7 +139,7 @@ int ErasureCodeCerasure::decode_chunks(const set<int> &want_to_read,
 
   int w = 8;
   int m = k + p;
-  int alignlen = (*encoded)[0].length();
+  int alignlen = (*decoded)[0].length();
   int packetsize = alignlen / w;
   uint8_t **ptrs;
   int *decode_bitmatrix;
@@ -149,7 +148,9 @@ int ErasureCodeCerasure::decode_chunks(const set<int> &want_to_read,
   int *survives;
   int *recover;
   int *de_recover;
-  int erro_num = 0;
+  int *encode_bitmatrix;
+  uint8_t *frag_ptrs[MMAX];
+  int **schedule;
 
   eraseds = (int *)malloc(sizeof(int) * (m));
   survives = (int *)malloc(sizeof(int) * (m));
@@ -158,8 +159,9 @@ int ErasureCodeCerasure::decode_chunks(const set<int> &want_to_read,
   int erro_num = 0;
   int survive_num = 0;
 
-  for (int i = 0; i < kval + Mval; i++)
+  for (int i = 0; i < m; i++)
   {
+    frag_ptrs[i] = (uint8_t *)(*decoded)[i].c_str();
     if (chunks.find(i) == chunks.end())
     {
       eraseds[erro_num] = i;
@@ -173,6 +175,9 @@ int ErasureCodeCerasure::decode_chunks(const set<int> &want_to_read,
     }
   }
   eraseds[erro_num] = -1;
+
+  
+
 
   decode_bitmatrix = generate_decoding_bitmatrix(k, p, w, encode_bitmatrix, eraseds, de_recover);
   ptrs = set_up_ptrs_for_opertaions(k, erro_num, eraseds, frag_ptrs, &frag_ptrs[k], de_recover);
