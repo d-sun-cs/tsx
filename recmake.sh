@@ -18,6 +18,9 @@ sudo rm -rf build
 ./do_cmake.sh -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_FLAGS="-mavx2" -DCMAKE_C_FLAGS="-mavx2"
 
 cd $CEPH_BUILD
-ninja vstart
+
+# ninja vstart
+# this command need to be executed one more time if error (in /ceph/build dir)
+ninja
 
 cd $current_dir

@@ -443,6 +443,12 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   {
     return reencode_one_coding_chunk(data, coding[last_erasure_coding_idx], blocksize, last_erasure_coding_idx - 1);
   }
+  else if (erasure_data_count == 0 && retension_coding_count == 0) {
+    // reencode_one_coding_chunk(data, coding[0], blocksize, -1);
+    // reencode_one_coding_chunk(data, coding[1], blocksize, 0);
+    // return reencode_one_coding_chunk(data, coding[2], blocksize, 1);
+    return encode_chunks(want_to_read, decoded);
+  }
 
 #if ENABLE_DECODE
 

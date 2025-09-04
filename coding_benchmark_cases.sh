@@ -74,7 +74,7 @@ PER_CASE_COUNT=$(( (TEST_COUNT + NUM_CASES - 1) / NUM_CASES ))
 
 # Print test configuration
 echo ""
-echo -n "----------------------------------------------------------"
+echo "----------------------------------------------------------"
 echo "Test Configuration:"
 echo "  Chunk size:      ${CHUNK_SIZE_KB}KB"
 echo "  Buffer size:     $((CHUNK_SIZE_KB * K))KB"
@@ -90,8 +90,8 @@ done
 # Define plugin names and their technique parameters
 # PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
 # TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
-PLUGINS=("tsx" "tsxmerge")
-TECHNIQUES=("null" "null")
+PLUGINS=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx")
+TECHNIQUES=("null" "null" "null" "null" "null")
 
 
 # Test execution function
@@ -240,16 +240,34 @@ if [ $tested_cases -gt 0 ]; then
 fi
 
 # Display performance summary
+# echo "----------------------------------------------------------"
+# echo -e "\nPERFORMANCE SUMMARY"
+# echo "ENCODING RESULTS:"
+# for plugin in "${PLUGINS[@]}"; do
+#     echo "  $plugin: ${encode_results[$plugin]} MB/s"
+# done
+# echo ""
+# echo "DECODING RESULTS (Average of $tested_cases cases):"
+# for plugin in "${PLUGINS[@]}"; do
+#     echo "  $plugin: ${decode_avg[$plugin]} MB/s"
+# done
+# Display performance summary
 echo "----------------------------------------------------------"
 echo -e "\nPERFORMANCE SUMMARY"
 echo "ENCODING RESULTS:"
 for plugin in "${PLUGINS[@]}"; do
-    echo "  $plugin: ${encode_results[$plugin]} MB/s"
+    mbps=${encode_results[$plugin]}
+    # 使用 Python3 计算 GB/s (1024进制)
+    gbps=$(python3 -c "print('{:.2f}'.format($mbps / 1024))")
+    echo -e "$plugin: ${mbps} MB/s (${gbps} GB/s)"
 done
 echo ""
 echo "DECODING RESULTS (Average of $tested_cases cases):"
 for plugin in "${PLUGINS[@]}"; do
-    echo "  $plugin: ${decode_avg[$plugin]} MB/s"
+    mbps=${decode_avg[$plugin]}
+    # 使用 Python3 计算 GB/s (1024进制)
+    gbps=$(python3 -c "print('{:.2f}'.format($mbps / 1024))")
+    echo -e "$plugin: ${mbps} MB/s (${gbps} GB/s)"
 done
 
 # Return to original directory

@@ -16,18 +16,23 @@
  */
 
 #include <cerrno>
-// #include <algorithm>
-// #include <unordered_map>
 #include <immintrin.h>
-// #include <array>
-// #include <optional>
-// #include <vector>
+
 
 #include "common/debug.h"
 #include "include/stringify.h"
 #include "erasure-code/ErasureCodePlugin.h"
-
 #include "ErasureCodeCerasure.h"
+
+// extern "C" {
+//   // #include "gf_vect_mul.h"
+//   // #include "erasure_code.h"
+//   // #include "galois.h"
+//   #include "vandermonde.h"
+//   #include "slp.h"
+//   // #include "raid.h"
+//   #include "xorMatchCode.h"
+// }
 
 #define dout_context g_ceph_context
 #define dout_subsys ceph_subsys_osd
@@ -92,17 +97,30 @@ unsigned int ErasureCodeCerasure::get_chunk_size(unsigned int object_size) const
 
 
 #define MMAX 255
+typedef unsigned char u8;
+
+extern "C"  {
+  unsigned int *gen_best_matrix_from_any_element_lowtime(int k, int m, int w);
+  int *matrix_to_bitmatrix(int k, int m, int w, int *matrix);
+  int **bitmatrix_to_smart_schedule(int k, int p, int w, int *bitmatrix);
+  void slp_encode_best_finally(int k, int p, int w, int **schedule, u8 **src, u8 **dest, int len, int packetsize);
+  uint8_t **set_up_ptrs_for_opertaions(int k, int p, int *eraseds, char **data_ptrs, char **coding_ptrs, int *recover);
+  int *generate_decoding_bitmatrix(int k, int p, int w, int *bitmatrix, int *eraseds, int *recover);
+  void slp_encode_best_finally(int k, int p, int w, int **schedule, u8 **src, u8 **dest, int len, int packetsize);
+}
+
+
 
 int ErasureCodeCerasure::encode_chunks(const set<int> &want_to_encode,
                                   map<int, bufferlist> *encoded)
 {
 
   // int kval = k;
-  uint8_t *chunks[k + p];
-  for (int i = 0; i < k + p; ++i)
-  {
-    chunks[i] = (uint8_t *)(*encoded)[i].c_str();
-  }
+  // uint8_t *chunks[k + p];
+  // for (int i = 0; i < k + p; ++i)
+  // {
+  //   chunks[i] = (uint8_t *)(*encoded)[i].c_str();
+  // }
 
   int w = 8;
   int alignlen = (*encoded)[0].length();
@@ -125,12 +143,14 @@ int ErasureCodeCerasure::encode_chunks(const set<int> &want_to_encode,
   {
     frag_ptrs[i] = (uint8_t *)(*encoded)[i].c_str();
   }
-
+  
   encode_matrix = gen_best_matrix_from_any_element_lowtime(k, p, w);
+  encode_bitmatrix = matrix_to_bitmatrix(k, p, w, (int *)encode_matrix);
   schedule = bitmatrix_to_smart_schedule(k, p, w, encode_bitmatrix);
   slp_encode_best_finally(k, p, w, schedule, frag_ptrs, &frag_ptrs[k], alignlen, packetsize);
   return 0;
 }
+
 
 int ErasureCodeCerasure::decode_chunks(const set<int> &want_to_read,
                                   const map<int, bufferlist> &chunks,
@@ -151,6 +171,7 @@ int ErasureCodeCerasure::decode_chunks(const set<int> &want_to_read,
   int *encode_bitmatrix;
   uint8_t *frag_ptrs[MMAX];
   int **schedule;
+  unsigned int *encode_matrix;
 
   eraseds = (int *)malloc(sizeof(int) * (m));
   survives = (int *)malloc(sizeof(int) * (m));
@@ -176,11 +197,12 @@ int ErasureCodeCerasure::decode_chunks(const set<int> &want_to_read,
   }
   eraseds[erro_num] = -1;
 
-  
-
+  encode_matrix = gen_best_matrix_from_any_element_lowtime(k, p, w);
+  encode_bitmatrix = matrix_to_bitmatrix(k, p, w, (int *)encode_matrix);
 
   decode_bitmatrix = generate_decoding_bitmatrix(k, p, w, encode_bitmatrix, eraseds, de_recover);
-  ptrs = set_up_ptrs_for_opertaions(k, erro_num, eraseds, frag_ptrs, &frag_ptrs[k], de_recover);
+  ptrs = set_up_ptrs_for_opertaions(k, erro_num, eraseds, (char **)frag_ptrs, (char **)&frag_ptrs[k], de_recover);
+  schedule = bitmatrix_to_smart_schedule(k, erro_num, w, decode_bitmatrix);
   slp_encode_best_finally(k, erro_num, w, schedule, ptrs, &ptrs[k], alignlen, packetsize);
 
   return 0;

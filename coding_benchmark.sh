@@ -72,8 +72,8 @@ run_test() {
 # Define plugin names and their technique parameters
 # PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
 # TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
-PLUGINS=("tsx" "tsxmerge" "isa")
-TECHNIQUES=("null" "null" "cauchy")
+PLUGINS=("tsx"  "isa")
+TECHNIQUES=("null"  "cauchy")
 
 
 # 在正式测试前进行预热
@@ -100,7 +100,7 @@ done
 
 # 恢复正常测试部分
 # 指定要擦除的块索引
-ERASED_IDX=(2 5 7)
+ERASED_IDX=(8 9 10)
 # 拼接 --erased 参数
 ERASED_ARGS=""
 for idx in "${ERASED_IDX[@]}"; do
