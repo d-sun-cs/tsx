@@ -47,25 +47,28 @@ declare -A TEST_CASES=(
     ["1data-0parity"]="1:0"
     ["0data-1parity"]="0:1"
     # 2块丢失
-    ["2data-0parity"]="2:0"
-    ["1data-1parity"]="1:1"
-    ["0data-2parity"]="0:2"
+    # ["2data-0parity"]="2:0"
+    # ["1data-1parity"]="1:1"
+    # ["0data-2parity"]="0:2"
     # 3块丢失
-    ["3data-0parity"]="3:0"
-    ["2data-1parity"]="2:1"
-    ["1data-2parity"]="1:2"
-    ["0data-3parity"]="0:3"
+    # ["3data-0parity"]="3:0"
+    # ["2data-1parity"]="2:1"
+    # ["1data-2parity"]="1:2"
+    # ["0data-3parity"]="0:3"
 )
 ORDERED_CASES=(
+    # 1块丢失
     "1data-0parity"
     "0data-1parity"
-    "2data-0parity"
-    "1data-1parity"
-    "0data-2parity"
-    "3data-0parity"
-    "2data-1parity"
-    "1data-2parity"
-    "0data-3parity"
+    # 2块丢失
+    # "2data-0parity"
+    # "1data-1parity"
+    # "0data-2parity"
+    # 3块丢失
+    # "3data-0parity"
+    # "2data-1parity"
+    # "1data-2parity"
+    # "0data-3parity"
 )
 
 # Calculate test distribution
@@ -90,8 +93,12 @@ done
 # Define plugin names and their technique parameters
 # PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
 # TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
-PLUGINS=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx")
-TECHNIQUES=("null" "null" "null" "null" "null")
+# PLUGINS=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx")
+# TECHNIQUES=("null" "null" "null" "null" "null")
+# PLUGINS=("tsx" "isa" "jerasure" "tsxmerge")
+# TECHNIQUES=("null" "cauchy" "cauchy_good" "null")
+PLUGINS=("tsx" "isa" "tsxmerge")
+TECHNIQUES=("null" "cauchy" "null")
 
 
 # Test execution function
