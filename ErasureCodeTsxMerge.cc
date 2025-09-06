@@ -401,7 +401,7 @@ int ErasureCodeTsxMerge::decode_chunks(const set<int> &want_to_read,
   char *parity_buffer = (char *)aligned_alloc(32, 2 * EXTRA_DATA_SIZE);
   // ParityChunkPtr parity[3]{
   //     {blocksize, parity_ptr[0], (uint8_t *)(parity_buffer)},
-  //     {blocksize, parity_ptr[1]},
+  //     {blocksize, parity_ptr[1], (uint8_t *)(parity_buffer)},
   //     {blocksize, parity_ptr[2], (uint8_t *)(parity_buffer + EXTRA_DATA_SIZE)},
   // };
 
@@ -447,28 +447,28 @@ int ErasureCodeTsxMerge::decode_chunks(const set<int> &want_to_read,
     // const int slice_id_end = solve_key == 1 ? kval : TOTAL_SLICE_NUM;
 
     // init maperasure by parity
-    // if (window_id < windows_num)
-    // {
-    //   const int slice_id_start = (window_id + 1) * window_size;
-    //   const int slice_id_end = slice_id_start + window_size;
+    if (window_id < windows_num)
+    {
+      const int slice_id_start = (window_id + 1) * window_size;
+      const int slice_id_end = slice_id_start + window_size;
 
-    //   // slice_id = slice_id_start
-    //   slice_offset[0] = (slice_id_start - coding_data_map[0]) * SLICE;
-    //   slice_offset[1] = slice_id_start * SLICE;
-    //   slice_offset[2] = (slice_id_start - (kval - 1) + coding_data_map[2]) * SLICE;
-    //   for (int i = 0; i < 3; i++)
-    //   {
-    //     if (maperasure_ptr[i] != nullptr)
-    //     {
-    //       for (int slice_id = slice_id_start; slice_id < slice_id_end; slice_id++)
-    //       {
-    //         tmp = _mm256_load_si256((__m256i *)parity[i][slice_id * SLICE]);
-    //         _mm256_store_si256((__m256i *)(maperasure[i])[slice_offset[i]], tmp);
-    //         slice_offset[i] += SLICE;
-    //       }
-    //     }
-    //   }
-    // }
+      // slice_id = slice_id_start
+      slice_offset[0] = (slice_id_start - coding_data_map[0]) * SLICE;
+      slice_offset[1] = slice_id_start * SLICE;
+      slice_offset[2] = (slice_id_start - (kval - 1) + coding_data_map[2]) * SLICE;
+      for (int i = 0; i < 3; i++)
+      {
+        if (maperasure_ptr[i] != nullptr)
+        {
+          for (int slice_id = slice_id_start; (slice_id < slice_id_end); slice_id++)
+          {
+            tmp = _mm256_load_si256((__m256i *)parity[i][slice_id * SLICE]);
+            _mm256_store_si256((__m256i *)maperasure[i][slice_offset[i]], tmp);
+            slice_offset[i] += SLICE;
+          }
+        }
+      }
+    }
 
     // substitute
     if (0 <= window_id && window_id < windows_num)
@@ -505,43 +505,43 @@ int ErasureCodeTsxMerge::decode_chunks(const set<int> &want_to_read,
     }
 
     // elimination
-    // if (window_id > 0)
-    // {
-    //   const int solve_slice_id_start = (window_id - 1) * window_size;
-    //   const int solve_slice_id_end = solve_slice_id_start + window_size;
+    if (window_id > 0)
+    {
+      const int solve_slice_id_start = (window_id - 1) * window_size;
+      const int solve_slice_id_end = solve_slice_id_start + window_size;
 
-    //   for (int slice_id = solve_slice_id_start; slice_id < solve_slice_id_end; slice_id++)
-    //   {
-    //     slice_offset[1] = slice_id * SLICE;
-    //     constexpr int two_tone_idx[5] = {0, 2, 1, 0, 2};
-    //     for (int i = 0; i < 3; i++)
-    //     {
+      for (int slice_id = solve_slice_id_start; slice_id < solve_slice_id_end; slice_id++)
+      {
+        slice_offset[1] = slice_id * SLICE;
+        constexpr int two_tone_idx[5] = {0, 2, 1, 0, 2};
+        for (int i = 0; i < 3; i++)
+        {
 
-    //       int maperasure_idx = two_tone_idx[i];
-    //       if (parity_ptr[maperasure_idx] != nullptr)
-    //       {
+          int maperasure_idx = two_tone_idx[i];
+          if (parity_ptr[maperasure_idx] != nullptr)
+          {
 
-    //         mxx1 = _mm256_load_si256((__m256i *)&data[coding_data_map[maperasure_idx]][slice_offset[1]]);
+            mxx1 = _mm256_load_si256((__m256i *)&data[coding_data_map[maperasure_idx]][slice_offset[1]]);
 
-    //         slice_offset[0] = (slice_id + coding_data_map[maperasure_idx] - coding_data_map[0]) * SLICE;
-    //         slice_offset[2] = (slice_id + coding_data_map[2] - coding_data_map[maperasure_idx]) * SLICE;
+            slice_offset[0] = (slice_id + coding_data_map[maperasure_idx] - coding_data_map[0]) * SLICE;
+            slice_offset[2] = (slice_id + coding_data_map[2] - coding_data_map[maperasure_idx]) * SLICE;
 
-    //         for (int j = 1; j < 3; j++)
-    //         {
+            for (int j = 1; j < 3; j++)
+            {
 
-    //           int other_idx = two_tone_idx[i + j];
-    //           if (maperasure_ptr[other_idx] != nullptr)
-    //           {
+              int other_idx = two_tone_idx[i + j];
+              if (maperasure_ptr[other_idx] != nullptr)
+              {
 
-    //             tmp = _mm256_load_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]]);
-    //             mxx2 = _mm256_xor_si256(mxx1, tmp);
-    //             _mm256_store_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]], mxx2);
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
+                tmp = _mm256_load_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]]);
+                mxx2 = _mm256_xor_si256(mxx1, tmp);
+                _mm256_store_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]], mxx2);
+              }
+            }
+          }
+        }
+      }
+    }
 
     if (window_id == 1)
     {
@@ -567,45 +567,6 @@ int ErasureCodeTsxMerge::decode_chunks(const set<int> &want_to_read,
 
       freeReplyObject(reply);
     }
-
-    // if (solve_key == 1)
-    // {
-    //   mxx1 = _mm256_load_si256((__m256i *)&data[0][0]);
-    //   char *parity_key = (char *)aligned_alloc(32, SLICE);
-    //   for (int i = 1; i < kval; i++)
-    //   {
-    //     tmp = _mm256_load_si256((__m256i *)&data[i][0]);
-    //     mxx1 = _mm256_xor_si256(mxx1, tmp);
-    //   }
-    //   _mm256_store_si256((__m256i *)parity_key, mxx1);
-
-    //   redisReply *reply = (redisReply *)redisCommand(
-    //       rctx, "GET %b", parity_key, SLICE);
-    //   memcpy(parity_buffer, reply->str, reply->len);
-
-    //   parity[0].set_extradata((uint8_t *)(parity_buffer));
-
-    //   parity[2].set_extradata((uint8_t *)(parity_buffer + EXTRA_DATA_SIZE));
-
-    //   freeReplyObject(reply);
-
-    //   // init maperasure extra part
-    //   slice_offset[0] = (TOTAL_SLICE_NUM - coding_data_map[0]) * SLICE;
-    //   slice_offset[2] = (TOTAL_SLICE_NUM - (kval - 1) + coding_data_map[2]) * SLICE;
-    //   for (int i = 0; i < 3; i += 2)
-    //   {
-    //     if (maperasure_ptr[i] == nullptr)
-    //     {
-    //       continue;
-    //     }
-    //     for (int slice_id = TOTAL_SLICE_NUM; slice_id < TOTAL_SLICE_NUM + kval - 1; slice_id++)
-    //     {
-    //       tmp = _mm256_load_si256((__m256i *)parity[i][slice_id * SLICE]);
-    //       _mm256_store_si256((__m256i *)maperasure[i][slice_offset[i]], tmp);
-    //       slice_offset[i] += SLICE;
-    //     }
-    //   }
-    // }
   }
 
   free(parity_buffer);

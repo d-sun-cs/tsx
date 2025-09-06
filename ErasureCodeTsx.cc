@@ -45,8 +45,8 @@
 #define ENABLE_DECODE 1
 #define ENABLE_LOG 0
 // !important: window_size >= k - 1 = 7
-#define ENCODE_WINDOW_SIZE 64
-#define DECODE_WINDOW_SIZE 64
+#define ENCODE_WINDOW_SIZE 16
+#define DECODE_WINDOW_SIZE 16
 
 #if ENABLE_LOG
 #include <fstream>
@@ -372,7 +372,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
                                   map<int, bufferlist> *decoded)
 {
 
- #if ENABLE_LOG
+#if ENABLE_LOG
   std::ofstream decode_log("tsx-decode.log", std::ios::app);
   static int decode_call_count = -1;
   decode_call_count++;
@@ -443,7 +443,8 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   {
     return reencode_one_coding_chunk(data, coding[last_erasure_coding_idx], blocksize, last_erasure_coding_idx - 1);
   }
-  else if (erasure_data_count == 0 && retension_coding_count == 0) {
+  else if (erasure_data_count == 0 && retension_coding_count == 0)
+  {
     // reencode_one_coding_chunk(data, coding[0], blocksize, -1);
     // reencode_one_coding_chunk(data, coding[1], blocksize, 0);
     // return reencode_one_coding_chunk(data, coding[2], blocksize, 1);
@@ -451,8 +452,6 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
   }
 
 #if ENABLE_DECODE
-
-
 
   PadChunkPtr maperasure[3] = {
       PadChunkPtr(blocksize, maperasure_ptr[0]),
@@ -611,7 +610,6 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
             mxx2 = _mm256_xor_si256(mxx1, tmp);
             _mm256_store_si256((__m256i *)(maperasure[2])[slice_offset[2]], mxx2);
           }
-     
         }
       }
     }
@@ -636,7 +634,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 
         //     slice_offset[0] = (slice_id + need_decoded[maperasure_idx] - coding_data_map[0]) * SLICE;
         //     slice_offset[2] = (slice_id + coding_data_map[2] - need_decoded[maperasure_idx]) * SLICE;
-            
+
         //     for (int j = 1; j < 3; j++) {
 
         //       int other_idx = two_tone_idx[i + j];
@@ -649,7 +647,7 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
         //       }
 
         //     }
-            
+
         //   }
 
         // }
@@ -716,17 +714,19 @@ int ErasureCodeTsx::decode_chunks(const set<int> &want_to_read,
 
     if (window_id == 1)
     {
-      mxx1 = _mm256_setzero_si256();
-      char *parity_key = (char *)aligned_alloc(32, SLICE);
-      for (int i = 0; i < k; i++)
-      {
-        tmp = _mm256_load_si256((__m256i *)&data[i][0]);
-        mxx1 = _mm256_xor_si256(mxx1, tmp);
-      }
-      _mm256_store_si256((__m256i *)parity_key, mxx1);
+      // mxx1 = _mm256_setzero_si256();
+      // char *parity_key = (char *)aligned_alloc(32, SLICE);
+      // for (int i = 0; i < k; i++)
+      // {
+      //   tmp = _mm256_load_si256((__m256i *)&data[i][0]);
+      //   mxx1 = _mm256_xor_si256(mxx1, tmp);
+      // }
+      // _mm256_store_si256((__m256i *)parity_key, mxx1);
 
+      // redisReply *reply = (redisReply *)redisCommand(
+      //     rctx, "GET %b", parity_key, SLICE);
       redisReply *reply = (redisReply *)redisCommand(
-          rctx, "GET %b", parity_key, SLICE);
+          rctx, "GET %b", &coding[1][0], SLICE);
       memcpy(parity_buffer, reply->str, reply->len);
 
       parity[0].set_extradata((uint8_t *)(parity_buffer));
