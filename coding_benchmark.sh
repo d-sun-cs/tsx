@@ -101,7 +101,7 @@ done
 
 # 恢复正常测试部分
 # 指定要擦除的块索引
-ERASED_IDX=(1)
+ERASED_IDX=(0 9)
 # 拼接 --erased 参数
 ERASED_ARGS=""
 for idx in "${ERASED_IDX[@]}"; do

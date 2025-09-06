@@ -30,7 +30,7 @@ k=8
 m=3
 s=$((k * 2 * 1024 * 1024))  # 根据公式计算s值
 error_modes=(1 2 3)
-algorithms=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx")
+algorithms=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx" "tsxse")
 
 # 初始化测试结果跟踪
 all_tests_passed=true
