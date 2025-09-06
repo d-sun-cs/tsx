@@ -45,8 +45,8 @@
 #define ENABLE_DECODE 1
 #define ENABLE_LOG 0
 // !important: window_size >= k - 1 = 7
-#define ENCODE_WINDOW_SIZE 16
-#define DECODE_WINDOW_SIZE 16
+#define ENCODE_WINDOW_SIZE 64
+#define DECODE_WINDOW_SIZE 64
 
 #if ENABLE_LOG
 #include <fstream>

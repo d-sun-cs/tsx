@@ -11,6 +11,7 @@ set(tsx_srcs
 )   
 
 add_library(ec_tsx SHARED ${tsx_srcs})
+# target_compile_options(ec_tsx PRIVATE -mavx2)
 target_compile_options(ec_tsx PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsx PROPERTIES
   INSTALL_RPATH "")
