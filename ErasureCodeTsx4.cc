@@ -654,8 +654,6 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
           }
         }
       }
-    
-      
     }
 
     // elimination
@@ -667,20 +665,25 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
       for (int slice_id = solve_slice_id_start; slice_id < solve_slice_id_end; slice_id++)
       {
         slice_offset[1] = slice_id * SLICE;
-        constexpr int two_tone_idx[5] = {0, 2, 1, 0, 2};
-        for (int i = 0; i < 3; i++)
+        // constexpr int two_tone_idx[5] = {0, 2, 1, 0, 2};
+        constexpr int two_tone_idx[7] = {0, 3, 2, 1, 0, 3, 2};
+        for (int i = 0; i < 4; i++)
         {
 
           int maperasure_idx = two_tone_idx[i];
           if (parity_ptr[maperasure_idx] != nullptr)
           {
-
+            if (maperasure_idx == 3)
+            {
+              slice_id++;
+            }
             mxx1 = _mm256_load_si256((__m256i *)&pad_data[coding_data_map[maperasure_idx]][slice_offset[1]]);
 
             slice_offset[0] = (slice_id + coding_data_map[maperasure_idx] - coding_data_map[0]) * SLICE;
             slice_offset[2] = (slice_id + coding_data_map[2] - coding_data_map[maperasure_idx]) * SLICE;
+            slice_offset[3] = (slice_id + coding_data_map[3] - coding_data_map[maperasure_idx]) * 2 * SLICE;
 
-            for (int j = 1; j < 3; j++)
+            for (int j = 1; j < 4; j++)
             {
 
               int other_idx = two_tone_idx[i + j];
@@ -691,6 +694,11 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
                 mxx2 = _mm256_xor_si256(mxx1, tmp);
                 _mm256_store_si256((__m256i *)(maperasure[other_idx])[slice_offset[other_idx]], mxx2);
               }
+            }
+
+            if (maperasure_idx == 3)
+            {
+              slice_id--;
             }
           }
         }
