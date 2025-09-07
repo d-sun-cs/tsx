@@ -46,7 +46,7 @@
 // !important: window_size >= k - 1 = 9
 // window_size <= (k - 1) * 2 = 18
 #define ENCODE_WINDOW_SIZE 16
-#define DECODE_WINDOW_SIZE 16
+#define DECODE_WINDOW_SIZE 24
 
 #if ENABLE_LOG
 #include <fstream>
@@ -118,7 +118,9 @@ public:
   PadChunkPtr(int blocksize, uint8_t *chunk_ptr)
       : blocksize(blocksize), chunk_ptr(chunk_ptr)
   {
+    // unimportant for maperasure
     unimportant = (uint8_t *)aligned_alloc(SLICE, SLICE);
+    // while for pad_data, it must be zeros
     _mm256_store_si256((__m256i *)unimportant, _mm256_setzero_si256());
   }
 
@@ -288,8 +290,8 @@ int ErasureCodeTsx4::encode_chunks(const set<int> &want_to_encode,
       {
         slice_offset_2 = slice_id * SLICE;
         slice_offset_1 = (slice_id + chunk_idx) * SLICE;
-        slice_offset_3 = (slice_id + (kval - 2 - chunk_idx)) * SLICE; // kval - 2
-        slice_offset_4 = (slice_id + (kval - 1 - chunk_idx)) * 2 * SLICE;  // kval - 1
+        slice_offset_3 = (slice_id + (kval - 2 - chunk_idx)) * SLICE;     // kval - 2
+        slice_offset_4 = (slice_id + (kval - 1 - chunk_idx)) * 2 * SLICE; // kval - 1
 
         // Load two data chunks into registers and XOR them
         mxx1 = _mm256_load_si256((__m256i *)&chunks[chunk_idx][slice_offset_2]);
@@ -348,7 +350,6 @@ int ErasureCodeTsx4::encode_chunks(const set<int> &want_to_encode,
         // store chunk01 to pairty4
         _mm256_store_si256((__m256i *)parity4[slice_offset_4], mxx1);
         _mm256_store_si256((__m256i *)parity4[slice_offset_4 - 2 * SLICE], mxx2);
-
       }
     }
 
@@ -454,7 +455,7 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
   vector<PadChunkPtr> pad_data;
   uint8_t *coding[Mval];
 
-  int coding_data_map[Mval] = {0, 0, kval - 1, 0};
+  int coding_data_map[Mval] = {0, 0, kval - 1, kval - 1};
   // int need_decoded[Mval] = {-1, -1, -1, -1}; // distinguish erased data or coding
   uint8_t *maperasure_ptr[Mval] = {nullptr, nullptr, nullptr, nullptr};
   uint8_t *parity_ptr[Mval] = {nullptr, nullptr, nullptr, nullptr}; // used to decode erased data
@@ -505,14 +506,17 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
   PadChunkPtr maperasure[3] = {
       PadChunkPtr(blocksize, maperasure_ptr[0]),
       PadChunkPtr(blocksize, maperasure_ptr[1]),
-      PadChunkPtr(blocksize, maperasure_ptr[2])};
+      PadChunkPtr(blocksize, maperasure_ptr[2]),
+      PadChunkPtr(blocksize, maperasure_ptr[3]),
+  };
   ParityChunkPtr parity[3]{
       {blocksize, parity_ptr[0]},
       {blocksize, parity_ptr[1]},
       {blocksize, parity_ptr[2]},
+      {blocksize, parity_ptr[3]},
   };
 
-  char *parity_buffer = (char *)aligned_alloc(32, 2 * EXTRA_DATA_SIZE);
+  char *parity_buffer = (char *)aligned_alloc(32, 3 * EXTRA_DATA_SIZE);
   // ParityChunkPtr parity[3]{
   //     {blocksize, parity_ptr[0], (uint8_t *)(parity_buffer)},
   //     {blocksize, parity_ptr[1], (uint8_t *)(parity_buffer)},
@@ -523,7 +527,7 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
   const int window_size = DECODE_WINDOW_SIZE;
   const int windows_num = TOTAL_SLICE_NUM / window_size;
 
-  long slice_offset[3];
+  long slice_offset[4];
   __m256i mxx0, mxx1, mxx2, mxx3, tmp, res;
 
   // solve the key -> use first kval slices to solve erased first slice
@@ -541,7 +545,9 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
       slice_offset[0] = (slice_id_start - coding_data_map[0]) * SLICE;
       slice_offset[1] = slice_id_start * SLICE;
       slice_offset[2] = (slice_id_start - (kval - 1) + coding_data_map[2]) * SLICE;
-      for (int i = 0; i < 3; i++)
+      slice_offset[3] = (slice_id_start - (kval - 1) + coding_data_map[3]) * 2 * SLICE;
+
+      for (int i = 0; i < 4; i++)
       {
         if (maperasure_ptr[i] != nullptr)
         {
@@ -575,6 +581,7 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
             slice_offset[1] = slice_id * SLICE;
             slice_offset[0] = (slice_id + retension_data_chunk_idx - coding_data_map[0]) * SLICE;
             slice_offset[2] = (slice_id + coding_data_map[2] - retension_data_chunk_idx - 1) * SLICE; // for retension_data_chunk_idx + 1
+            slice_offset[3] = (slice_id + coding_data_map[3] - retension_data_chunk_idx) * 2 * SLICE; // for retension_data_chunk_idx
 
             mxx0 = _mm256_load_si256((__m256i *)pad_data[retension_data_chunk_idx][slice_offset[1]]);
             mxx1 = _mm256_load_si256((__m256i *)pad_data[retension_data_chunk_idx + 1][slice_offset[1]]);
@@ -605,6 +612,16 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
               res = _mm256_xor_si256(res, tmp);
               _mm256_store_si256((__m256i *)maperasure[2][slice_offset[2]], res);
             }
+            if (maperasure_ptr[3] != nullptr)
+            {
+              tmp = _mm256_load_si256((__m256i *)maperasure[3][slice_offset[3]]);
+              res = _mm256_xor_si256(mxx0, tmp);
+              _mm256_store_si256((__m256i *)maperasure[3][slice_offset[3]], res);
+
+              tmp = _mm256_load_si256((__m256i *)maperasure[3][slice_offset[3] - 2 * SLICE]);
+              res = _mm256_xor_si256(mxx1, tmp);
+              _mm256_store_si256((__m256i *)maperasure[3][slice_offset[3] - 2 * SLICE], res);
+            }
 
             mxx2 = mxx0;
             mxx3 = mxx1;
@@ -623,8 +640,9 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
 
             slice_offset[0] = (slice_id + retension_data_chunk_idx - coding_data_map[0]) * SLICE;
             slice_offset[2] = (slice_id + coding_data_map[2] - retension_data_chunk_idx) * SLICE;
+            slice_offset[3] = (slice_id + coding_data_map[3] - retension_data_chunk_idx) * 2 * SLICE;
 
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 4; i++)
             {
               if (maperasure_ptr[i] != nullptr)
               {
@@ -636,6 +654,8 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
           }
         }
       }
+    
+      
     }
 
     // elimination
@@ -655,7 +675,7 @@ int ErasureCodeTsx4::decode_chunks(const set<int> &want_to_read,
           if (parity_ptr[maperasure_idx] != nullptr)
           {
 
-            mxx1 = _mm256_load_si256((__m256i *)&data[coding_data_map[maperasure_idx]][slice_offset[1]]);
+            mxx1 = _mm256_load_si256((__m256i *)&pad_data[coding_data_map[maperasure_idx]][slice_offset[1]]);
 
             slice_offset[0] = (slice_id + coding_data_map[maperasure_idx] - coding_data_map[0]) * SLICE;
             slice_offset[2] = (slice_id + coding_data_map[2] - coding_data_map[maperasure_idx]) * SLICE;
