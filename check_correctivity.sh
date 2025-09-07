@@ -26,10 +26,10 @@ if $needs_install; then
 fi
 
 # 定义测试参数
-k=8
-m=3
+k=10
+m=4
 s=$((k * 2 * 1024 * 1024))  # 根据公式计算s值
-error_modes=(1 2 3)
+error_modes=(1 2 3 4)
 # algorithms=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx" "tsxse")
 algorithms=("tsx4")
 
@@ -46,13 +46,28 @@ for algo in "${algorithms[@]}"; do
         # 运行测试并捕获输出
         output=$(./bin/ceph_erasure_code_benchmark -w decode -p "$algo" -P k=$k -P m=$m -s $s -i 1 -v -E exhaustive -e $e 2>&1)
         
-        # 检查输出中是否包含"different"
-        if grep -q "different" <<< "$output"; then
-            echo -e "\033[31mFAILURE: Data mismatch detected in $algo (e=$e)\033[0m"
-            all_tests_passed=false
-        else
-            echo -e "\033[32mSUCCESS: $algo passed verification (e=$e)\033[0m"
+        # 检查输出中是否包含"fault"，如果all_tests_passed仍为true才有必要检查，否则跳过
+        if $all_tests_passed; then
+            if grep -q "fault" <<< "$output"; then
+                echo -e "\033[31mFAILURE: Fault detected during $algo test (e=$e)\033[0m"
+                all_tests_passed=false
+            else
+                echo -e "\033[32mNo faults detected in $algo (e=$e)\033[0m"
+            fi
         fi
+
+
+        # 检查输出中是否包含"different"，如果all_tests_passed仍为true才有必要检查，否则跳过
+        if $all_tests_passed; then
+            if grep -q "different" <<< "$output"; then
+                echo -e "\033[31mFAILURE: Data mismatch detected in $algo (e=$e)\033[0m"
+                all_tests_passed=false
+            else
+                echo -e "\033[32mSUCCESS: $algo passed verification (e=$e)\033[0m"
+            fi
+        fi
+
+        
         
         # 输出分隔线
         echo "================================================"
