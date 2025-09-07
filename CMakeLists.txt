@@ -118,3 +118,16 @@ target_link_libraries(ec_cerasure ${CERASURE_LIB})
 set_target_properties(ec_cerasure PROPERTIES
   INSTALL_RPATH "")
 install(TARGETS ec_cerasure DESTINATION ${erasure_plugin_dir})
+
+# tsx4 plugin
+set(tsx4_srcs
+  ErasureCodePluginTsx4.cc
+  ErasureCodeTsx4.cc
+)   
+
+add_library(ec_tsx4 SHARED ${tsx4_srcs} )
+target_compile_options(ec_tsx4 PRIVATE -mavx2 -O3)
+set_target_properties(ec_tsx4 PROPERTIES
+  INSTALL_RPATH "")
+target_link_libraries(ec_tsx4 json_spirit ${HIREDIS_LIB})
+install(TARGETS ec_tsx4 DESTINATION ${erasure_plugin_dir})

@@ -10,7 +10,7 @@ CEPH_BUILD=$(cd ../../../build && pwd)
 
 cd $CEPH_BUILD || exit
 
-NINJA_TARGETS=("ec_tsx" "ec_tsxse" "ec_tsxnaive" "ec_tsxmap" "ec_tsxwin" "ec_tsxmerge" "ceph_erasure_code_benchmark")
+NINJA_TARGETS=("ec_tsx" "ec_tsxse" "ec_tsxnaive" "ec_tsxmap" "ec_tsxwin" "ec_tsxmerge" "ec_tsx4" "ceph_erasure_code_benchmark")
 
 needs_install=false
 
@@ -30,7 +30,8 @@ k=8
 m=3
 s=$((k * 2 * 1024 * 1024))  # 根据公式计算s值
 error_modes=(1 2 3)
-algorithms=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx" "tsxse")
+# algorithms=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx" "tsxse")
+algorithms=("tsx4")
 
 # 初始化测试结果跟踪
 all_tests_passed=true
