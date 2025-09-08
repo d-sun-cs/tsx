@@ -14,13 +14,15 @@ M=2        # 新增变量 M 替代固定值 3
 # Define plugin names and their technique parameters
 # PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
 # TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
-# PLUGINS=("tsx" "tsxmerge"  "isa")
-# TECHNIQUES=("null" "null" "cauchy")
-PLUGINS=("tsx2" "isa" )
-TECHNIQUES=("tsx2" "cauchy")
+# PLUGINS=("tsx" "tsxmerge"  "isa" "jerasure")
+# TECHNIQUES=("null" "tsxmerge" "cauchy" "cauchy_good")
+# PLUGINS=("tsx4"   "isa" "jerasure")
+# TECHNIQUES=("null"  "cauchy" "cauchy_good")
+PLUGINS=("tsx2" "isa" "jerasure")
+TECHNIQUES=("tsx2" "cauchy" "cauchy_good")
 
 # 指定要擦除的块索引
-ERASED_IDX=(0 1) # better for (10, 4) 3 erased
+ERASED_IDX=(0)
 
 # 计算 buffer size
 BUFFER_SIZE=$((CHUNK_SIZE_KB * K * 1024))
