@@ -9,6 +9,18 @@ fi
 CHUNK_SIZE_KB=$1
 TEST_COUNT=$2
 K=${3:-8}  # 如果第3个参数为空，默认k=8
+M=4        # 新增变量 M 替代固定值 3
+
+# Define plugin names and their technique parameters
+# PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
+# TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
+# PLUGINS=("tsx" "tsxmerge"  "isa")
+# TECHNIQUES=("null" "null" "cauchy")
+PLUGINS=("tsx4"  "isa")
+TECHNIQUES=("null" "cauchy")
+
+# 指定要擦除的块索引
+ERASED_IDX=(0) # better for (10, 4) 3 erased
 
 # 计算 buffer size
 BUFFER_SIZE=$((CHUNK_SIZE_KB * K * 1024))
@@ -27,7 +39,7 @@ export LD_LIBRARY_PATH=$CEPH_BUILD/lib:$LD_LIBRARY_PATH
 cd $CEPH_BUILD
 
 # 定义需要编译的目标数组
-NINJA_TARGETS=("ec_tsx" "ec_tsxse" "ec_tsxnaive" "ec_tsxmap" "ec_tsxwin" "ec_tsxmerge" "ceph_erasure_code_benchmark")
+NINJA_TARGETS=("ec_tsx" "ec_tsxse" "ec_tsxnaive" "ec_tsxmap" "ec_tsxwin" "ec_tsxmerge" "ec_tsx4" "ceph_erasure_code_benchmark")
 
 needs_install=false
 
@@ -48,6 +60,7 @@ echo "Chunk size: ${CHUNK_SIZE_KB}KB"
 echo "Buffer size: $((CHUNK_SIZE_KB * K))KB"
 echo "Test count: $TEST_COUNT"
 echo "K: $K"
+echo "M: $M"  # 新增 M 值输出
 
 run_test() {
     local description=$1
@@ -70,13 +83,6 @@ run_test() {
     fi
 }
 
-# Define plugin names and their technique parameters
-# PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
-# TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
-PLUGINS=("tsx" "tsxmerge"  "isa")
-TECHNIQUES=("null" "null" "cauchy")
-
-
 # 在正式测试前进行预热
 warmup_test() {
     local plugin=$1
@@ -85,13 +91,13 @@ warmup_test() {
     if [ "$technique" != "null" ]; then
         cmd+=" -P technique=$technique"
     fi
-    cmd+=" -P k=$K -P m=3 -s $BUFFER_SIZE -i 2"
+    cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i 2"  # 修改 m=3 -> m=$M
     $cmd > /dev/null 2>&1
     cmd="$CEPH_BUILD/bin/ceph_erasure_code_benchmark -e 3 -w decode -p $plugin"
     if [ "$technique" != "null" ]; then
         cmd+=" -P technique=$technique"
     fi
-    cmd+=" -P k=$K -P m=3 -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"
+    cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"  # 修改 m=3 -> m=$M
     $cmd > /dev/null 2>&1
 }
 
@@ -100,8 +106,7 @@ for i in "${!PLUGINS[@]}"; do
 done
 
 # 恢复正常测试部分
-# 指定要擦除的块索引
-ERASED_IDX=(0 9)
+
 # 拼接 --erased 参数
 ERASED_ARGS=""
 for idx in "${ERASED_IDX[@]}"; do
@@ -118,7 +123,7 @@ for i in "${!PLUGINS[@]}"; do
     if [ "$technique" != "null" ]; then
         cmd+=" -P technique=$technique"
     fi
-    cmd+=" -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT"
+    cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i $TEST_COUNT"  # 修改 m=3 -> m=$M
     run_test "$desc" "$cmd"
     # decode
     desc="$plugin decode"
@@ -126,7 +131,7 @@ for i in "${!PLUGINS[@]}"; do
     if [ "$technique" != "null" ]; then
         cmd+=" -P technique=$technique"
     fi
-    cmd+=" -P k=$K -P m=3 -s $BUFFER_SIZE -i $TEST_COUNT $ERASED_ARGS"
+    cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i $TEST_COUNT $ERASED_ARGS"  # 修改 m=3 -> m=$M
     run_test "$desc" "$cmd"
     echo "-------------------------------------------"
 done
