@@ -131,3 +131,16 @@ set_target_properties(ec_tsx4 PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsx4 json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsx4 DESTINATION ${erasure_plugin_dir})
+
+# tsx2 plugin
+set(tsx2_srcs
+  ErasureCodePluginTsx2.cc
+  ErasureCodeTsx2.cc
+)   
+
+add_library(ec_tsx2 SHARED ${tsx2_srcs} )
+target_compile_options(ec_tsx2 PRIVATE -mavx2 -O3)
+set_target_properties(ec_tsx2 PROPERTIES
+  INSTALL_RPATH "")
+target_link_libraries(ec_tsx2 json_spirit ${HIREDIS_LIB})
+install(TARGETS ec_tsx2 DESTINATION ${erasure_plugin_dir})
