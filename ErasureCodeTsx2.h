@@ -28,7 +28,7 @@ class ErasureCodeTsx2 final : public ceph::ErasureCode
 {
 public:
   explicit ErasureCodeTsx2(const std::string &dir)
-      : directory(dir), k(8), m(3) {}
+      : directory(dir), k(6), m(2) {}
 
   ~ErasureCodeTsx2() override
   {

@@ -18,7 +18,7 @@
 #include "ceph_ver.h"
 #include "common/debug.h"
 #include "ErasureCodePluginTsx2.h"
-#include "ErasureCodeTsx.h"
+#include "ErasureCodeTsx2.h"
 
 #define dout_subsys ceph_subsys_osd
 #undef dout_prefix
@@ -28,8 +28,8 @@ int ErasureCodePluginTsx2::factory(const std::string &directory,
 				  ceph::ErasureCodeProfile &profile,
 				  ceph::ErasureCodeInterfaceRef *erasure_code,
 				  std::ostream *ss) {
-    ErasureCodeTsx *interface;
-    interface = new ErasureCodeTsx(directory);
+    ErasureCodeTsx2 *interface;
+    interface = new ErasureCodeTsx2(directory);
     int r = interface->init(profile, ss);
     if (r) {
       delete interface;

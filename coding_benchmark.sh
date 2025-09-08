@@ -9,18 +9,18 @@ fi
 CHUNK_SIZE_KB=$1
 TEST_COUNT=$2
 K=${3:-8}  # 如果第3个参数为空，默认k=8
-M=4        # 新增变量 M 替代固定值 3
+M=2        # 新增变量 M 替代固定值 3
 
 # Define plugin names and their technique parameters
 # PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
 # TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
 # PLUGINS=("tsx" "tsxmerge"  "isa")
 # TECHNIQUES=("null" "null" "cauchy")
-PLUGINS=("tsx4"  "isa")
-TECHNIQUES=("null" "cauchy")
+PLUGINS=("tsx2" "isa" )
+TECHNIQUES=("tsx2" "cauchy")
 
 # 指定要擦除的块索引
-ERASED_IDX=(0) # better for (10, 4) 3 erased
+ERASED_IDX=(0 1) # better for (10, 4) 3 erased
 
 # 计算 buffer size
 BUFFER_SIZE=$((CHUNK_SIZE_KB * K * 1024))
@@ -39,7 +39,7 @@ export LD_LIBRARY_PATH=$CEPH_BUILD/lib:$LD_LIBRARY_PATH
 cd $CEPH_BUILD
 
 # 定义需要编译的目标数组
-NINJA_TARGETS=("ec_tsx" "ec_tsxse" "ec_tsxnaive" "ec_tsxmap" "ec_tsxwin" "ec_tsxmerge" "ec_tsx4" "ceph_erasure_code_benchmark")
+NINJA_TARGETS=("ec_tsx" "ec_tsxse" "ec_tsxnaive" "ec_tsxmap" "ec_tsxwin" "ec_tsxmerge" "ec_tsx4" "ec_tsx2" "ceph_erasure_code_benchmark")
 
 needs_install=false
 
@@ -97,7 +97,7 @@ warmup_test() {
     if [ "$technique" != "null" ]; then
         cmd+=" -P technique=$technique"
     fi
-    cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 --erased 5 --erased 6 --erased 7"  # 修改 m=3 -> m=$M
+    cmd+=" -P k=$K -P m=$M -s $BUFFER_SIZE -i 2 --erased 5"  # 修改 m=3 -> m=$M
     $cmd > /dev/null 2>&1
 }
 
