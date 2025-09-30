@@ -258,6 +258,7 @@ int ErasureCodeTsx4::encode_chunks(const set<int> &want_to_encode,
   uint64_t slice_offset_2;
   uint64_t slice_offset_3;
   uint64_t slice_offset_4;
+  
   __m256i mxx1, mxx2, mxx3, mxx4, res1, res3, tmp;
 
   for (int window_id = 0; window_id < windows_num; window_id++)

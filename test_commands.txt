@@ -5,6 +5,14 @@ docker start ceph_build
 docker exec -it -w /ceph/src/erasure-code/tsx/ ceph_build /bin/bash
 docker exec -it -w /ceph/build ceph_build /bin/bash
 
+docker run -it --cap-add CAP_SYS_ADMIN --privileged \
+  -v /mnt/cephtest/ceph/:/ceph \
+  -v /usr/bin/perf:/usr/bin/perf \
+  --name ceph_build \
+  ceph-build-perf \
+  /bin/bash
+
+valgrind --tool=cachegrind ./bin/ceph_erasure_code_benchmark -p tsxmerge -e 3 -w decode -P k=8 -P m=3 -S 16777216 -i 2000 --erased 5 --erased 6 --erased 7
 
 docker update --cpu-period=100000 --cpu-quota=30000 ceph_build
 docker update --cpus=0 --cpu-period=0 --cpu-quota=0 ceph_build

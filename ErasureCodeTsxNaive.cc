@@ -306,7 +306,7 @@ int ErasureCodeTsxNaive::decode_chunks(const set<int> &want_to_read,
 
   // copy to new space to avoid overwrite for retention coding
   uint8_t *parity_ptr[3];
-  for (int retention_coding_idx = 0; retention_coding_idx < retension_coding_count; retention_coding_idx++)
+  for (int retention_coding_idx = 0; retention_coding_idx < erasure_data_count; retention_coding_idx++)
   {
     int retention_coding_chunk_idx = retension_coding[retention_coding_idx];
     parity_ptr[retention_coding_chunk_idx] = (uint8_t *)aligned_alloc(SLICE, blocksize);
@@ -447,6 +447,13 @@ int ErasureCodeTsxNaive::decode_chunks(const set<int> &want_to_read,
     }
   }
 
+  // free copied parity_ptrs
+  for (int retention_coding_idx = 0; retention_coding_idx < erasure_data_count; retention_coding_idx++)
+  {
+    int retention_coding_chunk_idx = retension_coding[retention_coding_idx];
+    free(parity_ptr[retention_coding_chunk_idx]);
+  }
+
 DECODE_REENCODE:
   // re-encode
   __m256i zero = _mm256_setzero_si256(); // Clear 256-bit register
@@ -511,6 +518,8 @@ DECODE_REENCODE:
       }
     }
   }
+
+
 
 DECODE_END:
 

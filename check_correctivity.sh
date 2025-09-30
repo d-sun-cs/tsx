@@ -2,7 +2,7 @@
 
 current_dir=$(pwd)
 if [[ ! $current_dir =~ /ceph/src/erasure-code/tsx$ ]]; then
-    echo "Error: Please run this script from ceph/src/erasure-code/tsx directory"
+    echo "Error: Please run this script from /ceph/src/erasure-code/tsx directory"
     exit 1
 fi
 
