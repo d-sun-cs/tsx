@@ -72,7 +72,7 @@ for ((pool_idx=0; pool_idx<pool_cnt; pool_idx++)); do
     osd_map_output=$($CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile)
     osd_ids=($(echo "$osd_map_output" | grep -oP '\[.*?\]' | tr -d '[]' | tr ',' ' '))
     # osd_to_stop=(${osd_ids[2]} ${osd_ids[9]})
-    osd_to_stop=(${osd_ids[1]} ${osd_ids[5]} ${osd_ids[9]})
+    osd_to_stop=(${osd_ids[5]} ${osd_ids[6]} ${osd_ids[7]})
     # osd_to_stop_arr[pool_idx]="${osd_to_stop[@]}"
 
     # 停止对应osd

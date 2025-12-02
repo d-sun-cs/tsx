@@ -9,31 +9,36 @@ fi
 BLOCKSIZE=$1
 TEST_COUNT=$2
 
+# 定义纠删码参数
+K=10
+M=4
+
 # 存储池配置
 pool_cnt=3
-pool_prefix_arr=(jerasure isa tsx)
+pool_prefix_arr=(jerasure isa tsx4)
+# pool_prefix_arr=(isa tsx)
 # 定义9种OSD丢失情况 (数据块:校验块)
 declare -A ERASURE_CASES=(
-    ["1data-0parity"]="1:0"
-    ["0data-1parity"]="0:1"
+    # ["1data-0parity"]="1:0"
+    # ["0data-1parity"]="0:1"
     ["2data-0parity"]="2:0"
     ["1data-1parity"]="1:1"
     ["0data-2parity"]="0:2"
-    ["3data-0parity"]="3:0"
-    ["2data-1parity"]="2:1"
-    ["1data-2parity"]="1:2"
-    ["0data-3parity"]="0:3"
+    # ["3data-0parity"]="3:0"
+    # ["2data-1parity"]="2:1"
+    # ["1data-2parity"]="1:2"
+    # ["0data-3parity"]="0:3"
 )
 ORDERED_CASES=(
-    "3data-0parity"
+    # "1data-0parity"
+    # "0data-1parity"
     "2data-0parity"
     "1data-1parity"
     "0data-2parity"
-    "1data-0parity"
-    "0data-1parity"
-    "2data-1parity"
-    "1data-2parity"
-    "0data-3parity"
+    # "3data-0parity"
+    # "2data-1parity"
+    # "1data-2parity"
+    # "0data-3parity"
 )
 NUM_CASES=${#ORDERED_CASES[@]}
 PER_CASE_COUNT=$(( (TEST_COUNT + NUM_CASES - 1) / NUM_CASES ))  # 向上取整
@@ -63,7 +68,7 @@ if $CEPH_BUILD/bin/ceph osd tree  | grep -q "down"; then
 fi
 
 # 创建测试文件
-dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=32MiB count=96
+dd if=/dev/urandom of=$CEPH_BUILD/largefile bs=32MiB count=64
 file_size=$(stat -c%s $CEPH_BUILD/largefile)
 
 # 初始化计时数组
@@ -73,9 +78,11 @@ for ((i=0; i<pool_cnt; i++)); do
     # declare -a "get_time_${i}=()"
 done
 
+
+
 # 函数：随机选择OSD停止
 select_erased_osds() {
-    local k=8 m=3
+    local k=$K m=$M
     local data_to_erase=$1
     local parity_to_erase=$2
     local osd_list=("${@:3}")
@@ -124,7 +131,7 @@ for ((pool_idx=0; pool_idx<pool_cnt; pool_idx++)); do
     osd_map_output=$($CEPH_BUILD/bin/ceph osd map $POOL_NAME largefile)
     echo "$osd_map_output"
     osd_ids=($(echo "$osd_map_output" | grep -oP '\[.*?\]' | tr -d '[]' | tr ',' ' '))
-    osd_ids=("${osd_ids[@]:0:11}")
+    osd_ids=("${osd_ids[@]:0:$((K + M))}")
     echo "${osd_ids[@]}"
     
     # ===== 读测试 (扩展为9种情况) =====
@@ -187,7 +194,7 @@ for ((pool_idx=0; pool_idx<pool_cnt; pool_idx++)); do
     echo "  Time: ${avg_put_time_arr[pool_idx]:0:6}s"
     echo "  Speed: ${put_speed_arr[pool_idx]:0:6} MB/s"
     
-    echo -e "\nGET Statistics (avg of 9 cases x $PER_CASE_COUNT runs):"
+    echo -e "\nGET Statistics (avg of $NUM_CASES cases x $PER_CASE_COUNT runs):"
     echo "  Time: ${avg_get_time_arr[pool_idx]:0:6}s"
     echo "  Speed: ${get_speed_arr[pool_idx]:0:6} MB/s"
     

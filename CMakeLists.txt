@@ -123,6 +123,9 @@ install(TARGETS ec_cerasure DESTINATION ${erasure_plugin_dir})
 set(tsx4_srcs
   ErasureCodePluginTsx4.cc
   ErasureCodeTsx4.cc
+  $<TARGET_OBJECTS:erasure_code_objs>
+  $<TARGET_OBJECTS:crush_objs>
+  ${CMAKE_SOURCE_DIR}/src/common/str_map.cc
 )   
 
 add_library(ec_tsx4 SHARED ${tsx4_srcs} )
@@ -136,6 +139,9 @@ install(TARGETS ec_tsx4 DESTINATION ${erasure_plugin_dir})
 set(tsx2_srcs
   ErasureCodePluginTsx2.cc
   ErasureCodeTsx2.cc
+  $<TARGET_OBJECTS:erasure_code_objs>
+  $<TARGET_OBJECTS:crush_objs>
+  ${CMAKE_SOURCE_DIR}/src/common/str_map.cc
 )   
 
 add_library(ec_tsx2 SHARED ${tsx2_srcs} )

@@ -6,16 +6,19 @@ trap "rm -fr $TMPDIR" 0
 
 cd /ceph/build/
 
-PLUGINS=("tsx" "isa")
+PLUGINS=("tsx" "isa" "jerasure")
+TECHNIQUES=("" "cauchy" "cauchy_good")
+# PLUGINS=("tsx" "isa")
+# TECHNIQUES=("" "cauchy")
 K=8
 M=3
 CHUNK_SIZE=$((2*1024*1024)) # 2MB
 DATA_SIZE=$((1024*1024*1024)) # 模拟大文件
-ENCODE_ROUNDS=1
-DECODE_ROUNDS=1
+ENCODE_ROUNDS=10
+DECODE_ROUNDS=10
 
 echo "准备测试数据..."
-dd if=/dev/urandom of=$TMPDIR/data bs=$DATA_SIZE count=3
+dd if=/dev/urandom of=$TMPDIR/data bs=$DATA_SIZE count=2
 cp $TMPDIR/data $TMPDIR/data.orig
 
 
@@ -27,10 +30,12 @@ declare -A DECODE_TPUT_MAP
 declare -A VERIFY_MAP
 
 FILE_SIZE=$(stat -c '%s' $TMPDIR/data.orig)
-for PLUGIN in "${PLUGINS[@]}"; do
+for ((idx=0; idx<${#PLUGINS[@]}; idx++)); do
+    PLUGIN=${PLUGINS[$idx]}
+    TECH=${TECHNIQUES[$idx]}
     ./bin/ceph-erasure-code-tool test-plugin-exists $PLUGIN
     ceph-erasure-code-tool validate-profile \
-        plugin=$PLUGIN,technique=reed_sol_van,k=$K,m=$M
+        plugin=$PLUGIN${TECH:+,technique=$TECH},k=$K,m=$M
 
     ENCODE_TOTAL=0
     for ((i=0; i<$ENCODE_ROUNDS; i++)); do
@@ -38,7 +43,7 @@ for PLUGIN in "${PLUGINS[@]}"; do
         rm -f $TMPDIR/data.{0..20}
         START=$(date +%s.%N)
         ./bin/ceph-erasure-code-tool encode \
-            plugin=$PLUGIN,technique=reed_sol_van,k=$K,m=$M \
+            plugin=$PLUGIN${TECH:+,technique=$TECH},k=$K,m=$M \
             $CHUNK_SIZE \
             $(seq -s, 0 $((K+M-1))) \
             $TMPDIR/data
@@ -55,7 +60,7 @@ for PLUGIN in "${PLUGINS[@]}"; do
     DECODE_TOTAL=0
     for ((i=0; i<$DECODE_ROUNDS; i++)); do
         # 可选：丢失块索引方案，支持1~3个丢失
-        LOST_IDX=(1 4 8)
+        LOST_IDX=(5 6 7)
         # 构造输入块索引（去掉丢失的块）
         INPUT_IDX=()
         for ((j=0; j<K+M; j++)); do
@@ -74,7 +79,7 @@ for PLUGIN in "${PLUGINS[@]}"; do
         INPUT_IDX_STR=$(IFS=,; echo "${INPUT_IDX[*]}")
         START=$(date +%s.%N)
         ./bin/ceph-erasure-code-tool decode \
-            plugin=$PLUGIN,technique=reed_sol_van,k=$K,m=$M \
+            plugin=$PLUGIN${TECH:+,technique=$TECH},k=$K,m=$M \
             $CHUNK_SIZE \
             $INPUT_IDX_STR \
             $TMPDIR/data
@@ -108,6 +113,4 @@ for PLUGIN in "${PLUGINS[@]}"; do
     echo "${VERIFY_MAP[$PLUGIN]}"
     echo "----------------------------------------------"
 done
-echo "所有测试完成。"
-
 echo "所有测试完成。"

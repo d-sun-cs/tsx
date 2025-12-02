@@ -13,6 +13,11 @@ if [ "$#" -lt 1 ]; then
     exit 1
 fi
 
+# 定义纠删码池配置
+ERASURE_CODE_POOLS=("tsx" "isa" "jerasure")
+K=8
+M=3
+
 CEPH_BUILD=$(cd ../../../build && pwd)
 CEPH_SRC=$(cd ../.. && pwd)
 
@@ -24,13 +29,13 @@ ninja vstart
 $CEPH_SRC/stop.sh 
 rm -rf out dev
 # env OSD=11 $CEPH_SRC/vstart.sh -d -n 
-env OSD=11 $CEPH_SRC/vstart.sh -n -X --memstore
+env OSD=$((K + M)) $CEPH_SRC/vstart.sh -n -X --memstore
 # env OSD=11 $CEPH_SRC/vstart.sh -n -X
 
 # 从命令行读取块大小参数
 BLOCK_SIZES=("$@")
 
-# 循环创建 isa 和 tsx 纠删码配置
+# 循环创建纠删码配置
 for BLOCK_SIZE in "${BLOCK_SIZES[@]}"; do
     STRIPE_UNIT=$(echo $BLOCK_SIZE | tr -d 'kKmM')  # 提取数值部分
     if [[ $BLOCK_SIZE == *k* ]]; then
@@ -39,25 +44,11 @@ for BLOCK_SIZE in "${BLOCK_SIZES[@]}"; do
         STRIPE_UNIT="${STRIPE_UNIT}M"
     fi
 
-    # 创建 tsx 配置
-    $CEPH_BUILD/bin/ceph osd erasure-code-profile set tsx-${BLOCK_SIZE}-profile plugin=tsx k=8 m=3 crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
-    $CEPH_BUILD/bin/ceph osd pool create tsx-${BLOCK_SIZE}-pool erasure tsx-${BLOCK_SIZE}-profile 
-    $CEPH_BUILD/bin/ceph osd pool set tsx-${BLOCK_SIZE}-pool min_size 8 
-
-    # 创建 tsxse 配置
-    $CEPH_BUILD/bin/ceph osd erasure-code-profile set tsxse-${BLOCK_SIZE}-profile plugin=tsxse k=8 m=3 crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
-    $CEPH_BUILD/bin/ceph osd pool create tsxse-${BLOCK_SIZE}-pool erasure tsxse-${BLOCK_SIZE}-profile 
-    $CEPH_BUILD/bin/ceph osd pool set tsxse-${BLOCK_SIZE}-pool min_size 8 
-
-    # 创建 isa 配置
-    $CEPH_BUILD/bin/ceph osd erasure-code-profile set isa-${BLOCK_SIZE}-profile plugin=isa k=8 m=3 crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
-    $CEPH_BUILD/bin/ceph osd pool create isa-${BLOCK_SIZE}-pool erasure isa-${BLOCK_SIZE}-profile 
-    $CEPH_BUILD/bin/ceph osd pool set isa-${BLOCK_SIZE}-pool min_size 8 
-
-    # 创建 jerasure 配置
-    $CEPH_BUILD/bin/ceph osd erasure-code-profile set jerasure-${BLOCK_SIZE}-profile plugin=jerasure k=8 m=3 crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
-    $CEPH_BUILD/bin/ceph osd pool create jerasure-${BLOCK_SIZE}-pool erasure jerasure-${BLOCK_SIZE}-profile 
-    $CEPH_BUILD/bin/ceph osd pool set jerasure-${BLOCK_SIZE}-pool min_size 8 
+    for POOL in "${ERASURE_CODE_POOLS[@]}"; do
+        $CEPH_BUILD/bin/ceph osd erasure-code-profile set ${POOL}-${BLOCK_SIZE}-profile plugin=${POOL} k=$K m=$M crush-failure-domain=osd stripe_unit=$STRIPE_UNIT 
+        $CEPH_BUILD/bin/ceph osd pool create ${POOL}-${BLOCK_SIZE}-pool erasure ${POOL}-${BLOCK_SIZE}-profile 
+        $CEPH_BUILD/bin/ceph osd pool set ${POOL}-${BLOCK_SIZE}-pool min_size $K 
+    done
 done
 
 $CEPH_BUILD/bin/ceph config set global osd_max_object_size 3G 
