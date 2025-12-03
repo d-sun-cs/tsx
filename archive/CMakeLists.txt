@@ -50,7 +50,7 @@ add_custom_target(erasure_code_plugins DEPENDS
     ec_tsxmap
     ec_tsxwin
     ec_tsxmerge
-    ec_cerasure
     ec_tsx4
     ec_tsx2
+#    ec_cerasure
 )

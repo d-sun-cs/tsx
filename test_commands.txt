@@ -1,9 +1,23 @@
-sudo docker start cephtest
-sudo docker exec -it -w /workspace/ceph/src/erasure-code/tsx/ cephtest /bin/bash
-
 docker start ceph_build
 docker exec -it -w /ceph/src/erasure-code/tsx/ ceph_build /bin/bash
 docker exec -it -w /ceph/build ceph_build /bin/bash
+
+# start redis
+redis-server &
+# unable disk persistence
+redis-cli CONFIG SET save ""
+redis-cli CONFIG SET appendonly no
+
+docker commit ceph_build ceph_build_image:v1
+
+docker run -d \
+    --name ceph_build \
+    -it \
+    --cap-add CAP_SYS_ADMIN \
+    --privileged \
+    -v /home/dsun/ceph/:/ceph \
+    --network host \
+    ceph_build_image:v1
 
 docker run -it --cap-add CAP_SYS_ADMIN --privileged \
   -v /mnt/cephtest/ceph/:/ceph \

@@ -11,8 +11,7 @@ set(tsx_srcs
 )   
 
 add_library(ec_tsx SHARED ${tsx_srcs})
-# target_compile_options(ec_tsx PRIVATE -mavx2)
-target_compile_options(ec_tsx PRIVATE -mavx2 -O3)
+target_compile_options(ec_tsx PRIVATE -mavx2 -mavx512f -O3)
 set_target_properties(ec_tsx PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsx json_spirit ${HIREDIS_LIB} OpenMP::OpenMP_CXX)
@@ -30,7 +29,7 @@ set(tsxse_srcs
 )   
 
 add_library(ec_tsxse SHARED ${tsxse_srcs})
-target_compile_options(ec_tsxse PRIVATE -mavx2 -O3)
+target_compile_options(ec_tsxse PRIVATE -mavx2 -mavx512f -O3)
 set_target_properties(ec_tsxse PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsxse json_spirit ${HIREDIS_LIB})
@@ -47,7 +46,7 @@ set(tsxnaive_srcs
 )   
 
 add_library(ec_tsxnaive SHARED ${tsxnaive_srcs})
-target_compile_options(ec_tsxnaive PRIVATE -mavx2 -O3)
+target_compile_options(ec_tsxnaive PRIVATE -mavx2 -mavx512f -O3)
 set_target_properties(ec_tsxnaive PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsxnaive json_spirit ${HIREDIS_LIB})
@@ -64,7 +63,7 @@ set(tsxmap_srcs
 )   
 
 add_library(ec_tsxmap SHARED ${tsxmap_srcs})
-target_compile_options(ec_tsxmap PRIVATE -mavx2 -O3)
+target_compile_options(ec_tsxmap PRIVATE -mavx2 -mavx512f -O3)
 set_target_properties(ec_tsxmap PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsxmap json_spirit ${HIREDIS_LIB})
@@ -82,7 +81,7 @@ set(tsxwin_srcs
 )   
 
 add_library(ec_tsxwin SHARED ${tsxwin_srcs})
-target_compile_options(ec_tsxwin PRIVATE -mavx2 -O3)
+target_compile_options(ec_tsxwin PRIVATE -mavx2 -mavx512f -O3)
 set_target_properties(ec_tsxwin PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsxwin json_spirit ${HIREDIS_LIB})
@@ -99,25 +98,25 @@ set(tsxmerge_srcs
 )   
 
 add_library(ec_tsxmerge SHARED ${tsxmerge_srcs})
-target_compile_options(ec_tsxmerge PRIVATE -mavx2 -O3)
+target_compile_options(ec_tsxmerge PRIVATE -mavx2 -mavx512f -O3)
 set_target_properties(ec_tsxmerge PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsxmerge json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsxmerge DESTINATION ${erasure_plugin_dir})
 
 # cerasure plugin
-find_library(CERASURE_LIB isal PATHS /usr/lib REQUIRED)
-set(cerasure_srcs
-  ErasureCodePluginCerasure.cc
-  ErasureCodeCerasure.cc
-)   
-
-add_library(ec_cerasure SHARED ${cerasure_srcs} )
-target_link_options(ec_cerasure PRIVATE)
-target_link_libraries(ec_cerasure ${CERASURE_LIB})
-set_target_properties(ec_cerasure PROPERTIES
-  INSTALL_RPATH "")
-install(TARGETS ec_cerasure DESTINATION ${erasure_plugin_dir})
+# find_library(CERASURE_LIB isal PATHS /usr/lib REQUIRED)
+# set(cerasure_srcs
+#   ErasureCodePluginCerasure.cc
+#   ErasureCodeCerasure.cc
+# )   
+# 
+# add_library(ec_cerasure SHARED ${cerasure_srcs} )
+# target_link_options(ec_cerasure PRIVATE)
+# target_link_libraries(ec_cerasure ${CERASURE_LIB})
+# set_target_properties(ec_cerasure PROPERTIES
+#   INSTALL_RPATH "")
+# install(TARGETS ec_cerasure DESTINATION ${erasure_plugin_dir})
 
 # tsx4 plugin
 set(tsx4_srcs
@@ -129,7 +128,7 @@ set(tsx4_srcs
 )   
 
 add_library(ec_tsx4 SHARED ${tsx4_srcs} )
-target_compile_options(ec_tsx4 PRIVATE -mavx2 -O3)
+target_compile_options(ec_tsx4 PRIVATE -mavx2 -mavx512f -O3)
 set_target_properties(ec_tsx4 PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsx4 json_spirit ${HIREDIS_LIB})
@@ -145,7 +144,7 @@ set(tsx2_srcs
 )   
 
 add_library(ec_tsx2 SHARED ${tsx2_srcs} )
-target_compile_options(ec_tsx2 PRIVATE -mavx2 -O3)
+target_compile_options(ec_tsx2 PRIVATE -mavx2 -mavx512f -O3)
 set_target_properties(ec_tsx2 PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsx2 json_spirit ${HIREDIS_LIB})

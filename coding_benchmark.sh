@@ -1,28 +1,36 @@
 #!/bin/bash
 
 # 参数校验
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-    echo "Usage: $0 <chunk-size-in-KB> <test-count> [k]"
+if [ "$#" -lt 2 ] || [ "$#" -gt 4 ]; then
+    echo "Usage: $0 <chunk-size-in-KB> <test-count> [k] [m]"
     exit 1
 fi
 
 CHUNK_SIZE_KB=$1
 TEST_COUNT=$2
 K=${3:-8}  # 如果第3个参数为空，默认k=8
-M=4        # 新增变量 M 替代固定值 3
+M=${4:-3}        # 新增变量 M 替代固定值 3
 
 # Define plugin names and their technique parameters
 # PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
 # TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
-# PLUGINS=("tsx" "tsxmerge"  "isa" "jerasure")
-# TECHNIQUES=("null" "tsxmerge" "cauchy" "cauchy_good")
-PLUGINS=("tsx4" "isa" "jerasure")
-TECHNIQUES=("null" "cauchy" "cauchy_good")
-# PLUGINS=("tsx2" "isa" "jerasure")
-# TECHNIQUES=("tsx2" "cauchy" "cauchy_good")
+case "$M" in
+    4)
+        PLUGINS=("tsx4" "isa" "jerasure")
+        TECHNIQUES=("null" "cauchy" "cauchy_good")
+        ;;
+    2)
+        PLUGINS=("tsx2" "isa" "jerasure")
+        TECHNIQUES=("null" "cauchy" "cauchy_good")
+        ;;
+    3|*)
+        PLUGINS=("tsx" "isa" "jerasure")
+        TECHNIQUES=("null" "cauchy" "cauchy_good")
+        ;;
+esac
 
 # 指定要擦除的块索引
-ERASED_IDX=(0 1 2 3)
+ERASED_IDX=(0)
 
 # 计算 buffer size
 BUFFER_SIZE=$((CHUNK_SIZE_KB * K * 1024))

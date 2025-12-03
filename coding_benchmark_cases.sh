@@ -1,14 +1,14 @@
 #!/bin/bash
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-    echo "Usage: $0 <chunk-size-in-KB> <test-count> [k]"
-    exit 1
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: $0 [chunk-size-in-KB] <test-count> [k] [m]"
+    exit 0
 fi
 
-CHUNK_SIZE_KB=$1
-TEST_COUNT=$2
+CHUNK_SIZE_KB=${1:-2048}
+TEST_COUNT=${2:-4000}
 K=${3:-8}  # Default k=8
-M=3        # Fixed m for Reed-Solomon
+M=${4:-3}  # Default m=3
 TOTAL_CHUNKS=$((K + M))
 
 BUFFER_SIZE=$((CHUNK_SIZE_KB * K * 1024))
@@ -47,28 +47,40 @@ declare -A TEST_CASES=(
     ["1data-0parity"]="1:0"
     ["0data-1parity"]="0:1"
     # 2块丢失
-    # ["2data-0parity"]="2:0"
-    # ["1data-1parity"]="1:1"
-    # ["0data-2parity"]="0:2"
+    ["2data-0parity"]="2:0"
+    ["1data-1parity"]="1:1"
+    ["0data-2parity"]="0:2"
     # 3块丢失
-    # ["3data-0parity"]="3:0"
-    # ["2data-1parity"]="2:1"
-    # ["1data-2parity"]="1:2"
-    # ["0data-3parity"]="0:3"
+    ["3data-0parity"]="3:0"
+    ["2data-1parity"]="2:1"
+    ["1data-2parity"]="1:2"
+    ["0data-3parity"]="0:3"
+    # 4块丢失
+    # ["4data-0parity"]="4:0"
+    # ["3data-1parity"]="3:1"
+    # ["2data-2parity"]="2:2"
+    # ["1data-3parity"]="1:3"
+    # ["0data-4parity"]="0:4"
 )
 ORDERED_CASES=(
     # 1块丢失
     "1data-0parity"
     "0data-1parity"
     # 2块丢失
-    # "2data-0parity"
-    # "1data-1parity"
-    # "0data-2parity"
+    "2data-0parity"
+    "1data-1parity"
+    "0data-2parity"
     # 3块丢失
-    # "3data-0parity"
-    # "2data-1parity"
-    # "1data-2parity"
-    # "0data-3parity"
+    "3data-0parity"
+    "2data-1parity"
+    "1data-2parity"
+    "0data-3parity"
+    # 4块丢失
+    # "4data-0parity"
+    # "3data-1parity"
+    # "2data-2parity"
+    # "1data-3parity"
+    # "0data-4parity"
 )
 
 # Calculate test distribution
@@ -97,9 +109,23 @@ done
 # TECHNIQUES=("null" "null" "null" "null" "null")
 # PLUGINS=("tsx" "isa" "jerasure" "tsxmerge")
 # TECHNIQUES=("null" "cauchy" "cauchy_good" "null")
-PLUGINS=("tsx" "isa" "tsxmerge")
-TECHNIQUES=("null" "cauchy" "null")
+# PLUGINS=("tsx4" "isa")
+# TECHNIQUES=("null" "cauchy")
 
+case "$M" in
+    4)
+        PLUGINS=("tsx4" "isa")
+        TECHNIQUES=("null" "cauchy")
+        ;;
+    2)
+        PLUGINS=("tsx2" "isa" )
+        TECHNIQUES=("null" "cauchy")
+        ;;
+    3|*)
+        PLUGINS=("tsx" "isa" )
+        TECHNIQUES=("null" "cauchy")
+        ;;
+esac
 
 # Test execution function
 run_test() {
