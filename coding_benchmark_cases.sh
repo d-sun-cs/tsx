@@ -1,14 +1,14 @@
 #!/bin/bash
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "Usage: $0 [chunk-size-in-KB] <test-count> [k] [m]"
+    echo "Usage: $0 [k] [m] [chunk-size-in-KB] [test-count] "
     exit 0
 fi
 
-CHUNK_SIZE_KB=${1:-2048}
-TEST_COUNT=${2:-4000}
-K=${3:-8}  # Default k=8
-M=${4:-3}  # Default m=3
+K=${1:-8}  # Default k=8
+M=${2:-3}  # Default m=3
+CHUNK_SIZE_KB=${3:-2048}
+TEST_COUNT=${3:-4000}
 TOTAL_CHUNKS=$((K + M))
 
 BUFFER_SIZE=$((CHUNK_SIZE_KB * K * 1024))
@@ -42,46 +42,56 @@ if $needs_install; then
 fi
 
 # Test cases configuration (data chunks : parity chunks)
-declare -A TEST_CASES=(
-    # 1块丢失
-    ["1data-0parity"]="1:0"
-    ["0data-1parity"]="0:1"
-    # 2块丢失
-    ["2data-0parity"]="2:0"
-    ["1data-1parity"]="1:1"
-    ["0data-2parity"]="0:2"
-    # 3块丢失
-    ["3data-0parity"]="3:0"
-    ["2data-1parity"]="2:1"
-    ["1data-2parity"]="1:2"
-    ["0data-3parity"]="0:3"
-    # 4块丢失
-    # ["4data-0parity"]="4:0"
-    # ["3data-1parity"]="3:1"
-    # ["2data-2parity"]="2:2"
-    # ["1data-3parity"]="1:3"
-    # ["0data-4parity"]="0:4"
-)
-ORDERED_CASES=(
-    # 1块丢失
+declare -A TEST_CASES=()
+ORDERED_CASES=()
+
+# 1块丢失
+TEST_CASES["1data-0parity"]="1:0"
+TEST_CASES["0data-1parity"]="0:1"
+ORDERED_CASES+=(
     "1data-0parity"
     "0data-1parity"
-    # 2块丢失
+)
+
+# 2块丢失
+TEST_CASES["2data-0parity"]="2:0"
+TEST_CASES["1data-1parity"]="1:1"
+TEST_CASES["0data-2parity"]="0:2"
+ORDERED_CASES+=(
     "2data-0parity"
     "1data-1parity"
     "0data-2parity"
-    # 3块丢失
-    "3data-0parity"
-    "2data-1parity"
-    "1data-2parity"
-    "0data-3parity"
-    # 4块丢失
-    # "4data-0parity"
-    # "3data-1parity"
-    # "2data-2parity"
-    # "1data-3parity"
-    # "0data-4parity"
 )
+
+if [ "$M" -ge 3 ]; then
+    # 3块丢失
+    TEST_CASES["3data-0parity"]="3:0"
+    TEST_CASES["2data-1parity"]="2:1"
+    TEST_CASES["1data-2parity"]="1:2"
+    TEST_CASES["0data-3parity"]="0:3"
+    ORDERED_CASES+=(
+        "3data-0parity"
+        "2data-1parity"
+        "1data-2parity"
+        "0data-3parity"
+    )
+fi
+
+if [ "$M" -ge 4 ]; then
+    # 4块丢失
+    TEST_CASES["4data-0parity"]="4:0"
+    TEST_CASES["3data-1parity"]="3:1"
+    TEST_CASES["2data-2parity"]="2:2"
+    TEST_CASES["1data-3parity"]="1:3"
+    TEST_CASES["0data-4parity"]="0:4"
+    ORDERED_CASES+=(
+        "4data-0parity"
+        "3data-1parity"
+        "2data-2parity"
+        "1data-3parity"
+        "0data-4parity"
+    )
+fi
 
 # Calculate test distribution
 NUM_CASES=${#TEST_CASES[@]}
@@ -114,18 +124,27 @@ done
 
 case "$M" in
     4)
-        PLUGINS=("tsx4" "isa")
-        TECHNIQUES=("null" "cauchy")
+        PLUGINS=("tsx4" "isa" "jerasure")
+        TECHNIQUES=("null" "cauchy" "cauchy_good")
         ;;
     2)
-        PLUGINS=("tsx2" "isa" )
-        TECHNIQUES=("null" "cauchy")
+        PLUGINS=("tsx2" "isa" "jerasure")
+        TECHNIQUES=("null" "cauchy" "cauchy_good")
         ;;
     3|*)
-        PLUGINS=("tsx" "isa" )
-        TECHNIQUES=("null" "cauchy")
+        PLUGINS=("tsx" "isa" "jerasure")
+        TECHNIQUES=("null" "cauchy" "cauchy_good")
         ;;
 esac
+
+if [ "$K" -eq 8 ] && [ "$M" -eq 3 ]; then
+    PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
+    TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
+fi
+
+# if K == 8 and M == 3:
+# PLUGINS=("tsx" "isa" "jerasure" "tsxnaive" "tsxmap" "tsxwin" "tsxmerge")
+# TECHNIQUES=("null" "cauchy" "cauchy_good" "null" "null" "null" "null")
 
 # Test execution function
 run_test() {

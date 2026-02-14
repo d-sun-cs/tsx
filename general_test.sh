@@ -1,13 +1,36 @@
 #!/bin/bash
 
-# 参数校验
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <pool-prefix> <test-count>"
-    exit 1
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: $0 [plugin] [k] [m] [block-size] [test-count]"
+    echo "  plugin: tsx, tsx2, tsx4, isa, jerasure (default: tsx)"
+    echo "  k: data chunks (default: 8)"
+    echo "  m: parity chunks (default: 3)"
+    echo "  block-size: e.g. 2m, 512k, 4096 (default: 2m; no unit => k)"
+    echo "  test-count: iterations (default: 10)"
+    exit 0
 fi
 
-POOL_PREFIX=$1
-TEST_COUNT=$2
+# 参数：plugin [k] [m] [block-size] [test-count]
+PLUGIN=${1:-tsx}
+K=${2:-8}
+M=${3:-3}
+BLOCK_SIZE_INPUT=${4:-2m}
+TEST_COUNT=${5:-10}
+
+normalize_block_size() {
+    local size_raw="$1"
+    local size_norm
+    if [[ "$size_raw" =~ [kKmM]$ ]]; then
+        size_norm=$(echo "$size_raw" | tr 'KM' 'km')
+    else
+        size_norm="${size_raw}k"
+    fi
+    echo "$size_norm"
+}
+
+BLOCK_SIZE=$(normalize_block_size "$BLOCK_SIZE_INPUT")
+
+POOL_PREFIX="${PLUGIN}-${BLOCK_SIZE}"
 POOL_NAME="${POOL_PREFIX}-pool"  # 自动拼接 -pool
 
 current_dir=$(pwd)

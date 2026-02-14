@@ -1,0 +1,1235 @@
+
+===========================================================
+Test Configuration: K=10 M=4 BLOCK_SIZE=2m TEST_COUNT=10
+===========================================================
+
+--- Testing tsx4 ---
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:46:16.288+0000 76d7315c1640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:16.294+0000 76d7315c1640 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.36589 s, 400 MB/s
+2026-02-14T14:46:21.823+0000 7f83a0ee6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:21.825+0000 7f83a0ee6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:21.825+0000 7f83a0ee6240 -1 WARNING: all dangerous and experimental features are enabled.
+error removing tsx4-2m-pool>largefile: (2) No such file or directory
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.32149 s, 404 MB/s
+2026-02-14T14:46:27.418+0000 7452534fc240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:27.434+0000 7452534fc240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:27.434+0000 7452534fc240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:33.836+0000 77fe3cc20240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:33.839+0000 77fe3cc20240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:33.840+0000 77fe3cc20240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.41298 s, 397 MB/s
+2026-02-14T14:46:39.515+0000 7ba6c53e9240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:39.517+0000 7ba6c53e9240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:39.517+0000 7ba6c53e9240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:44.969+0000 757d87fe3240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:44.971+0000 757d87fe3240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:44.971+0000 757d87fe3240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.37406 s, 400 MB/s
+2026-02-14T14:46:50.592+0000 7cac3c1c1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:50.595+0000 7cac3c1c1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:50.595+0000 7cac3c1c1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:56.184+0000 701e52a84240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:56.185+0000 701e52a84240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:46:56.185+0000 701e52a84240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.34135 s, 402 MB/s
+2026-02-14T14:47:04.587+0000 7b4e6a005240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:04.589+0000 7b4e6a005240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:04.589+0000 7b4e6a005240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:10.440+0000 71143eb2d240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:10.443+0000 71143eb2d240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:10.443+0000 71143eb2d240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.20517 s, 413 MB/s
+2026-02-14T14:47:15.880+0000 76532c1b6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:15.883+0000 76532c1b6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:15.883+0000 76532c1b6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:21.194+0000 7a4806112240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:21.196+0000 7a4806112240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:21.196+0000 7a4806112240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.25189 s, 409 MB/s
+2026-02-14T14:47:26.696+0000 7b33826a3240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:26.699+0000 7b33826a3240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:26.699+0000 7b33826a3240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:32.382+0000 72034fd04240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:32.385+0000 72034fd04240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:32.385+0000 72034fd04240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.37178 s, 400 MB/s
+2026-02-14T14:47:38.010+0000 7f704da56240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:38.013+0000 7f704da56240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:38.013+0000 7f704da56240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:43.477+0000 755fda458240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:43.480+0000 755fda458240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:43.480+0000 755fda458240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.3774 s, 399 MB/s
+2026-02-14T14:47:49.116+0000 795805801240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:49.119+0000 795805801240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:49.119+0000 795805801240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:54.153+0000 702fa612f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:54.156+0000 702fa612f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:54.156+0000 702fa612f240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 4.94753 s, 434 MB/s
+2026-02-14T14:47:59.359+0000 78ddcd7fd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:59.361+0000 78ddcd7fd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:47:59.361+0000 78ddcd7fd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:04.606+0000 71bf6398c240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:04.609+0000 71bf6398c240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:04.610+0000 71bf6398c240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.39988 s, 398 MB/s
+2026-02-14T14:48:10.256+0000 7397f7306240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:10.259+0000 7397f7306240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:10.259+0000 7397f7306240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:15.782+0000 769e7f475240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:15.785+0000 769e7f475240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:15.786+0000 769e7f475240 -1 WARNING: all dangerous and experimental features are enabled.
+largefile
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:48:15.900+0000 7dc2ff40c640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:15.908+0000 7dc2ff40c640 -1 WARNING: all dangerous and experimental features are enabled.
+osdmap e77 pool 'tsx4-2m-pool' (4) object 'largefile' -> pg 4.52ad55bb (4.1b) -> up ([4,3,8,9,10,5,0,12,2,13,1,11,6,7], p4) acting ([4,3,8,9,10,5,0,12,2,13,1,11,6,7], p4)
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:48:16.159+0000 7672ce74a640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.165+0000 7672ce74a640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.381+0000 74986d9e2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.381+0000 74986d9e2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.394+0000 7bbfa713a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.394+0000 7bbfa713a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.407+0000 721b39f3a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.407+0000 721b39f3a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.425+0000 7e14ee9ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.425+0000 7e14ee9ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.444+0000 7a1ce144a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.444+0000 7a1ce144a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.457+0000 7bd33723d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.457+0000 7bd33723d280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.12 === 
+2026-02-14T14:48:16.470+0000 785dd13d3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.470+0000 785dd13d3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.487+0000 7bd72e676280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.487+0000 7bd72e676280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.504+0000 702baf9c5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.504+0000 702baf9c5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.525+0000 7a16bba7c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.525+0000 7a16bba7c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.544+0000 7c6c6bf93280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.544+0000 7c6c6bf93280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.566+0000 7378bba91280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.566+0000 7378bba91280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.590+0000 7306aa253280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.590+0000 7306aa253280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.604+0000 7020b8a00280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.604+0000 7020b8a00280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.624+0000 796ca058e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.624+0000 796ca058e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.637+0000 782a8f9ea280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:16.637+0000 782a8f9ea280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.12 on ef8a650a8456...kill  24052...done
+2026-02-14T14:48:18.680+0000 7be9ad58c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.680+0000 7be9ad58c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.701+0000 79502c599280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.701+0000 79502c599280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.725+0000 7a519720c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.725+0000 7a519720c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.744+0000 7add179c9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.744+0000 7add179c9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.778+0000 71d5cbb02280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.778+0000 71d5cbb02280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.800+0000 7d87c1712280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.800+0000 7d87c1712280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.13 === 
+2026-02-14T14:48:18.820+0000 70e1c27c3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.820+0000 70e1c27c3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.840+0000 77ac69895280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.840+0000 77ac69895280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.861+0000 777918bf4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.861+0000 777918bf4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.881+0000 76aa34e7c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.881+0000 76aa34e7c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.901+0000 7982541fe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.902+0000 7982541fe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.919+0000 74f3ff9fc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.919+0000 74f3ff9fc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.941+0000 713828a14280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.941+0000 713828a14280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.964+0000 7be9ce400280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.964+0000 7be9ce400280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.988+0000 78fed18d4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:18.988+0000 78fed18d4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:19.011+0000 7bc21a9dd280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:19.011+0000 7bc21a9dd280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.13 on ef8a650a8456...kill  24152...done
+2026-02-14T14:48:21.058+0000 7b073584c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.059+0000 7b073584c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.078+0000 78b837ae8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.079+0000 78b837ae8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.092+0000 76c0556f4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.092+0000 76c0556f4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.118+0000 7f023d87c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.118+0000 7f023d87c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.148+0000 798a51b26280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.148+0000 798a51b26280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.169+0000 70d3ae347280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.169+0000 70d3ae347280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.2 === 
+2026-02-14T14:48:21.188+0000 7c1e55fb5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.188+0000 7c1e55fb5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.213+0000 75101f1fa280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.213+0000 75101f1fa280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.238+0000 79d563bb0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.238+0000 79d563bb0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.260+0000 720c5a330280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.260+0000 720c5a330280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.283+0000 7959b9dfe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.283+0000 7959b9dfe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.303+0000 74076e8fe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.303+0000 74076e8fe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.335+0000 71aa6f114280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.335+0000 71aa6f114280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.361+0000 727e5010c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.361+0000 727e5010c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.383+0000 7573eec46280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.384+0000 7573eec46280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.404+0000 7a56af912280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:21.404+0000 7a56af912280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.2 on ef8a650a8456...kill  22970...done
+2026-02-14T14:48:23.454+0000 7a8ef17a6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:23.456+0000 7a8ef17a6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:23.456+0000 7a8ef17a6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:32.408+0000 7e28c7297240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:32.411+0000 7e28c7297240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:32.411+0000 7e28c7297240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:41.474+0000 72b12b640240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:41.477+0000 72b12b640240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:41.477+0000 72b12b640240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:50.136+0000 767c19141240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:50.138+0000 767c19141240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:50.138+0000 767c19141240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:59.196+0000 78dd40a49240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:59.199+0000 78dd40a49240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:48:59.199+0000 78dd40a49240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:08.253+0000 7141d0afa240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:08.256+0000 7141d0afa240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:08.256+0000 7141d0afa240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:17.281+0000 795e7a9cd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:17.284+0000 795e7a9cd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:17.284+0000 795e7a9cd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:26.366+0000 7bb04d5c1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:26.369+0000 7bb04d5c1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:26.370+0000 7bb04d5c1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:35.462+0000 7c8b34cae240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:35.466+0000 7c8b34cae240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:35.466+0000 7c8b34cae240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:44.339+0000 727aab5d5240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:44.342+0000 727aab5d5240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:44.342+0000 727aab5d5240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.237+0000 7c6780388280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.237+0000 7c6780388280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.255+0000 7f1d695c3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.256+0000 7f1d695c3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.274+0000 76a222851280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.275+0000 76a222851280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.293+0000 7c0a55eab280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.293+0000 7c0a55eab280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.319+0000 7fc3f0a1e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.319+0000 7fc3f0a1e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.339+0000 78e16427c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.339+0000 78e16427c280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.12 === 
+2026-02-14T14:49:53.362+0000 7fedced38280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.362+0000 7fedced38280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.385+0000 72bc9bebf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.385+0000 72bc9bebf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.406+0000 76c7e9784280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.407+0000 76c7e9784280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.427+0000 722500653280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.427+0000 722500653280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.454+0000 7af8ce3a0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.454+0000 7af8ce3a0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.478+0000 733c76ab1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.478+0000 733c76ab1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.502+0000 7d01d97bf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.502+0000 7d01d97bf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.525+0000 754fa904a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.525+0000 754fa904a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.545+0000 75184ee44280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.545+0000 75184ee44280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.566+0000 703101fc3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.566+0000 703101fc3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.591+0000 7820682b5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.591+0000 7820682b5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.614+0000 7b62e191c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.614+0000 7b62e191c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.634+0000 7c715b831280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.634+0000 7c715b831280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.654+0000 771eeeeba280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.654+0000 771eeeeba280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.12 on ef8a650a8456...
+2026-02-14T14:49:53.674+0000 72520c046280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.674+0000 72520c046280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.694+0000 7a0b62ce3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.694+0000 7a0b62ce3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.719+0000 7476caf53280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.719+0000 7476caf53280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.747+0000 7dc0ee68e940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.749+0000 7dc0ee68e940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.750+0000 7dc0ee68e940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:53.752+0000 7dc0ee68e940 -1 Falling back to public interface
+2026-02-14T14:49:53.869+0000 7dc0ee68e940 -1 osd.12 78 log_to_monitors true
+2026-02-14T14:49:54.976+0000 7573f8e13280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:54.976+0000 7573f8e13280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:54.994+0000 7f03511c7280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:54.994+0000 7f03511c7280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.017+0000 7e8a32a25280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.017+0000 7e8a32a25280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.037+0000 758bdc93f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.037+0000 758bdc93f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.063+0000 7ef4cb52a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.064+0000 7ef4cb52a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.086+0000 73f76669d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.086+0000 73f76669d280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.13 === 
+2026-02-14T14:49:55.106+0000 726a489c9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.106+0000 726a489c9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.126+0000 73c18fc7a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.126+0000 73c18fc7a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.146+0000 7ed8271ac280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.146+0000 7ed8271ac280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.158+0000 7229e9f0c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.159+0000 7229e9f0c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.180+0000 7a0616f62280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.180+0000 7a0616f62280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.200+0000 74a9f7b92280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.200+0000 74a9f7b92280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.219+0000 7805c9fe0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.219+0000 7805c9fe0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.241+0000 73428bf1e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.241+0000 73428bf1e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.260+0000 7e048a83d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.260+0000 7e048a83d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.280+0000 7999713fc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.280+0000 7999713fc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.300+0000 7a4bf11c5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.300+0000 7a4bf11c5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.320+0000 795af37c9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.320+0000 795af37c9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.339+0000 7adc86df2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.340+0000 7adc86df2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.359+0000 791bb0eec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.359+0000 791bb0eec280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.13 on ef8a650a8456...
+2026-02-14T14:49:55.378+0000 71b467f36280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.378+0000 71b467f36280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.398+0000 7d9cdcb38280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.398+0000 7d9cdcb38280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.418+0000 7b32f6036280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.418+0000 7b32f6036280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.443+0000 7518f63e6940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.446+0000 7518f63e6940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.448+0000 7518f63e6940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:55.450+0000 7518f63e6940 -1 Falling back to public interface
+2026-02-14T14:49:55.609+0000 7518f63e6940 -1 osd.13 80 log_to_monitors true
+2026-02-14T14:49:56.035+0000 7558cbe2d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.035+0000 7558cbe2d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.048+0000 7d8158883280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.048+0000 7d8158883280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.061+0000 76d83b7aa280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.061+0000 76d83b7aa280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.074+0000 7c7dad178280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.074+0000 7c7dad178280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.091+0000 724d141c7280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.091+0000 724d141c7280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.104+0000 7db642204280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.104+0000 7db642204280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.2 === 
+2026-02-14T14:49:56.116+0000 71f64849d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.116+0000 71f64849d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.128+0000 7cf858136280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.128+0000 7cf858136280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.140+0000 75d65f060280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.141+0000 75d65f060280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.153+0000 79914cb93280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.153+0000 79914cb93280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.166+0000 7a174b349280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.166+0000 7a174b349280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.179+0000 7ee4ad3f6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.179+0000 7ee4ad3f6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.198+0000 73607f134280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.198+0000 73607f134280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.210+0000 73bf51bf2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.211+0000 73bf51bf2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.229+0000 70815eb6d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.229+0000 70815eb6d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.243+0000 7378dc50c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.244+0000 7378dc50c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.266+0000 7ba727674280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.266+0000 7ba727674280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.279+0000 77ab9823b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.279+0000 77ab9823b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.300+0000 74664468d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.300+0000 74664468d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.320+0000 7a6d546cc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.320+0000 7a6d546cc280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.2 on ef8a650a8456...
+2026-02-14T14:49:56.342+0000 786e63a2b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.342+0000 786e63a2b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.362+0000 7c0c22912280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.362+0000 7c0c22912280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.381+0000 7cc76ec4f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.381+0000 7cc76ec4f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.405+0000 76ea8b808940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.408+0000 76ea8b808940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.409+0000 76ea8b808940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:56.412+0000 76ea8b808940 -1 Falling back to public interface
+2026-02-14T14:49:56.570+0000 76ea8b808940 -1 osd.2 82 log_to_monitors true
+2026-02-14T14:49:57.789+0000 7c5bc4fed240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:57.792+0000 7c5bc4fed240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:57.792+0000 7c5bc4fed240 -1 WARNING: all dangerous and experimental features are enabled.
+[tsx4-2m] Test passed! The files are identical!
+File Size: 2048.0 MB
+Write Time (avg of 10 runs): 5.5121747016906735 seconds
+Write Speed: 371.54119940571644 MB/s
+Read Time (avg of 10 runs): 8.753416728973388 seconds
+Read Speed: 233.96578312343095 MB/s
+
+--- Testing isa ---
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:49:59.371+0000 745e4ce63640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:49:59.375+0000 745e4ce63640 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.75623 s, 373 MB/s
+2026-02-14T14:50:05.526+0000 73f9e5b37240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:05.528+0000 73f9e5b37240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:05.529+0000 73f9e5b37240 -1 WARNING: all dangerous and experimental features are enabled.
+error removing isa-2m-pool>largefile: (2) No such file or directory
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.43892 s, 395 MB/s
+2026-02-14T14:50:11.201+0000 7644af0b6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:11.204+0000 7644af0b6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:11.204+0000 7644af0b6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:18.826+0000 76d4366c0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:18.829+0000 76d4366c0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:18.829+0000 76d4366c0240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.38335 s, 399 MB/s
+2026-02-14T14:50:24.467+0000 7eb946820240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:24.470+0000 7eb946820240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:24.470+0000 7eb946820240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:30.654+0000 7376af030240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:30.657+0000 7376af030240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:30.657+0000 7376af030240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.4098 s, 397 MB/s
+2026-02-14T14:50:36.306+0000 727391436240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:36.308+0000 727391436240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:36.308+0000 727391436240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:42.512+0000 73f5e309f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:42.515+0000 73f5e309f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:42.515+0000 73f5e309f240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.38389 s, 399 MB/s
+2026-02-14T14:50:48.151+0000 7e6006d84240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:48.154+0000 7e6006d84240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:48.154+0000 7e6006d84240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:53.825+0000 786edf700240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:53.829+0000 786edf700240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:53.829+0000 786edf700240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.41501 s, 397 MB/s
+2026-02-14T14:50:59.484+0000 7dc437b1c240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:59.487+0000 7dc437b1c240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:50:59.487+0000 7dc437b1c240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:05.365+0000 7263b40e6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:05.382+0000 7263b40e6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:05.382+0000 7263b40e6240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.35905 s, 401 MB/s
+2026-02-14T14:51:10.944+0000 78bb0164b240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:10.946+0000 78bb0164b240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:10.946+0000 78bb0164b240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:17.022+0000 7b007cadb240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:17.025+0000 7b007cadb240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:17.025+0000 7b007cadb240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.3597 s, 401 MB/s
+2026-02-14T14:51:22.635+0000 7710682a6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:22.637+0000 7710682a6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:22.637+0000 7710682a6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:28.448+0000 7189da543240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:28.452+0000 7189da543240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:28.452+0000 7189da543240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.46974 s, 393 MB/s
+2026-02-14T14:51:34.174+0000 7cc35ae1e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:34.176+0000 7cc35ae1e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:34.177+0000 7cc35ae1e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:40.054+0000 792c171d9240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:40.057+0000 792c171d9240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:40.057+0000 792c171d9240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.28614 s, 406 MB/s
+2026-02-14T14:51:45.597+0000 7f048a447240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:45.600+0000 7f048a447240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:45.601+0000 7f048a447240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:51.703+0000 78c8e398b240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:51.705+0000 78c8e398b240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:51.706+0000 78c8e398b240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.39018 s, 398 MB/s
+2026-02-14T14:51:57.342+0000 7cd788cd1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:57.344+0000 7cd788cd1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:51:57.345+0000 7cd788cd1240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:02.776+0000 7305969ae240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:02.778+0000 7305969ae240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:02.779+0000 7305969ae240 -1 WARNING: all dangerous and experimental features are enabled.
+largefile
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:52:02.885+0000 792142129640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:02.890+0000 792142129640 -1 WARNING: all dangerous and experimental features are enabled.
+osdmap e93 pool 'isa-2m-pool' (5) object 'largefile' -> pg 5.52ad55bb (5.1b) -> up ([2,7,3,13,4,8,0,11,1,9,12,5,6,10], p2) acting ([2,7,3,13,4,8,0,11,1,9,12,5,6,10], p2)
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:52:03.120+0000 769d675a4640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.128+0000 769d675a4640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.296+0000 70270c98c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.296+0000 70270c98c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.319+0000 733cbaf16280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.319+0000 733cbaf16280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.340+0000 7004a18fc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.340+0000 7004a18fc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.353+0000 77bc9d982280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.353+0000 77bc9d982280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.387+0000 7c0e90b26280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.387+0000 7c0e90b26280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.414+0000 7f7b4ef88280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.414+0000 7f7b4ef88280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.11 === 
+2026-02-14T14:52:03.437+0000 784e9d84c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.437+0000 784e9d84c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.460+0000 79184b2a5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.460+0000 79184b2a5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.484+0000 7b282459e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.485+0000 7b282459e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.507+0000 7a7d72595280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.507+0000 7a7d72595280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.528+0000 7b8a256bb280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.528+0000 7b8a256bb280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.550+0000 795a469a2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.550+0000 795a469a2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.573+0000 72dcc7e1c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.573+0000 72dcc7e1c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.594+0000 7c63f232c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.594+0000 7c63f232c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.613+0000 7ad2fc459280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.613+0000 7ad2fc459280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.636+0000 78c244b8a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:03.636+0000 78c244b8a280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.11 on ef8a650a8456...kill  23944...done
+2026-02-14T14:52:05.689+0000 706637dc1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.689+0000 706637dc1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.707+0000 774c68a39280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.708+0000 774c68a39280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.731+0000 7e5cec70e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.731+0000 7e5cec70e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.753+0000 77bdab6c1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.753+0000 77bdab6c1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.781+0000 7b0390b1c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.781+0000 7b0390b1c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.803+0000 7f521e7cb280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.804+0000 7f521e7cb280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.9 === 
+2026-02-14T14:52:05.828+0000 727054b12280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.828+0000 727054b12280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.850+0000 77dba8899280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.850+0000 77dba8899280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.871+0000 7a35558b1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.871+0000 7a35558b1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.890+0000 7f1ada99d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.890+0000 7f1ada99d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.903+0000 78e653357280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.903+0000 78e653357280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.922+0000 770fcc9d9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.922+0000 770fcc9d9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.946+0000 7d3c64e4d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.946+0000 7d3c64e4d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.968+0000 79a5d0f47280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.968+0000 79a5d0f47280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.990+0000 7920d5e21280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:05.990+0000 7920d5e21280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:06.010+0000 796102f1e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:06.011+0000 796102f1e280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.9 on ef8a650a8456...kill  23728...done
+2026-02-14T14:52:08.064+0000 7166b5b9b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.064+0000 7166b5b9b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.087+0000 7e20c577e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.087+0000 7e20c577e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.107+0000 75a00b9b0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.107+0000 75a00b9b0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.129+0000 70e1c5848280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.129+0000 70e1c5848280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.160+0000 71478a7e6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.160+0000 71478a7e6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.184+0000 710e9e60e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.184+0000 710e9e60e280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.1 === 
+2026-02-14T14:52:08.206+0000 7a36d4461280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.206+0000 7a36d4461280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.232+0000 7383dd618280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.232+0000 7383dd618280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.256+0000 7a0e268c6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.256+0000 7a0e268c6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.275+0000 711d633d7280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.275+0000 711d633d7280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.295+0000 740149448280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.295+0000 740149448280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.319+0000 75e9f1642280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.319+0000 75e9f1642280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.341+0000 7f9bc9f90280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.341+0000 7f9bc9f90280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.362+0000 78b02d4a3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.362+0000 78b02d4a3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.383+0000 70df24d4f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.383+0000 70df24d4f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.403+0000 7d9af2ecc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:08.403+0000 7d9af2ecc280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.1 on ef8a650a8456...kill  22861...done
+2026-02-14T14:52:10.436+0000 7b0f6e704240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:10.438+0000 7b0f6e704240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:10.439+0000 7b0f6e704240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:19.295+0000 7d6d06d84240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:19.297+0000 7d6d06d84240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:19.298+0000 7d6d06d84240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:28.102+0000 750e238ac240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:28.106+0000 750e238ac240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:28.106+0000 750e238ac240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:37.015+0000 747612056240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:37.017+0000 747612056240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:37.017+0000 747612056240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:46.128+0000 75961f9b0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:46.131+0000 75961f9b0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:46.131+0000 75961f9b0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:54.569+0000 748fe650e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:54.572+0000 748fe650e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:52:54.573+0000 748fe650e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:03.275+0000 75bd2ccec240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:03.278+0000 75bd2ccec240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:03.278+0000 75bd2ccec240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:12.239+0000 72082da82240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:12.242+0000 72082da82240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:12.242+0000 72082da82240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:21.193+0000 7a479e8d9240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:21.196+0000 7a479e8d9240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:21.196+0000 7a479e8d9240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:30.344+0000 7a11c7b51240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:30.347+0000 7a11c7b51240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:30.347+0000 7a11c7b51240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.404+0000 728c80476280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.404+0000 728c80476280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.427+0000 70a8125c1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.427+0000 70a8125c1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.441+0000 74cfedff0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.441+0000 74cfedff0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.461+0000 7a455aa18280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.461+0000 7a455aa18280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.492+0000 7b996d341280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.492+0000 7b996d341280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.514+0000 7a3610c25280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.514+0000 7a3610c25280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.11 === 
+2026-02-14T14:53:39.533+0000 7d534ee6e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.533+0000 7d534ee6e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.545+0000 7ee5ce938280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.545+0000 7ee5ce938280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.558+0000 7f0a34e80280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.558+0000 7f0a34e80280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.577+0000 79a6b97bd280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.577+0000 79a6b97bd280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.600+0000 73bc76c9d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.601+0000 73bc76c9d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.614+0000 7b32d82dc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.615+0000 7b32d82dc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.626+0000 7c0ecacd0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.627+0000 7c0ecacd0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.645+0000 7c1b7006e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.645+0000 7c1b7006e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.664+0000 726c9292e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.664+0000 726c9292e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.677+0000 71d533a69280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.677+0000 71d533a69280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.697+0000 7c4c42374280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.697+0000 7c4c42374280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.710+0000 72708517c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.710+0000 72708517c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.731+0000 7cc6a8870280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.731+0000 7cc6a8870280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.752+0000 74c7da72a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.752+0000 74c7da72a280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.11 on ef8a650a8456...
+2026-02-14T14:53:39.773+0000 768fd90ea280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.773+0000 768fd90ea280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.794+0000 7f48d91a4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.794+0000 7f48d91a4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.814+0000 7cf4bf38b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.814+0000 7cf4bf38b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.842+0000 741f6ba7c940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.844+0000 741f6ba7c940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.845+0000 741f6ba7c940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:39.847+0000 741f6ba7c940 -1 Falling back to public interface
+2026-02-14T14:53:39.993+0000 741f6ba7c940 -1 osd.11 93 log_to_monitors true
+2026-02-14T14:53:40.325+0000 7a453514b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.325+0000 7a453514b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.346+0000 793323cc3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.347+0000 793323cc3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.367+0000 7151e8526280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.367+0000 7151e8526280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.380+0000 7d1d2ccea280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.380+0000 7d1d2ccea280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.405+0000 79a5a1261280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.406+0000 79a5a1261280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.419+0000 7cb40fae3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.419+0000 7cb40fae3280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.9 === 
+2026-02-14T14:53:40.438+0000 7a8565c99280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.438+0000 7a8565c99280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.451+0000 77b299188280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.451+0000 77b299188280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.467+0000 748614693280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.468+0000 748614693280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.487+0000 78ef41a4a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.487+0000 78ef41a4a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.509+0000 7dd73baa9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.509+0000 7dd73baa9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.529+0000 7114f8bac280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.529+0000 7114f8bac280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.551+0000 78e346f41280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.551+0000 78e346f41280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.571+0000 7bc993718280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.572+0000 7bc993718280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.591+0000 743603ee1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.591+0000 743603ee1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.611+0000 7bbd411f4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.612+0000 7bbd411f4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.632+0000 7fde97218280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.632+0000 7fde97218280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.651+0000 7d349e4ad280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.651+0000 7d349e4ad280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.673+0000 7907959fe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.673+0000 7907959fe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.693+0000 71c1c56f0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.693+0000 71c1c56f0280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.9 on ef8a650a8456...
+2026-02-14T14:53:40.713+0000 79b8cf0c6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.713+0000 79b8cf0c6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.732+0000 7ef742421280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.732+0000 7ef742421280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.752+0000 7462f34fc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.752+0000 7462f34fc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.780+0000 75e5c5aaa940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.782+0000 75e5c5aaa940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.783+0000 75e5c5aaa940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:40.785+0000 75e5c5aaa940 -1 Falling back to public interface
+2026-02-14T14:53:40.935+0000 75e5c5aaa940 -1 osd.9 95 log_to_monitors true
+2026-02-14T14:53:41.368+0000 7f3b75216280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.368+0000 7f3b75216280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.381+0000 783704c29280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.381+0000 783704c29280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.394+0000 7d7f6adb0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.394+0000 7d7f6adb0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.407+0000 73834e5a8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.407+0000 73834e5a8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.424+0000 71baf6080280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.424+0000 71baf6080280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.436+0000 7e239814b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.436+0000 7e239814b280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.1 === 
+2026-02-14T14:53:41.448+0000 745ca8478280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.448+0000 745ca8478280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.465+0000 71f590d3f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.465+0000 71f590d3f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.478+0000 7014b00fe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.478+0000 7014b00fe280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.502+0000 74e76d94d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.502+0000 74e76d94d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.525+0000 766968861280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.525+0000 766968861280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.540+0000 7ed3e0bcb280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.540+0000 7ed3e0bcb280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.560+0000 79af0989f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.560+0000 79af0989f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.583+0000 7767cbc81280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.584+0000 7767cbc81280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.608+0000 73dca027c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.608+0000 73dca027c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.629+0000 72388ed76280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.629+0000 72388ed76280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.650+0000 7d296e7d1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.650+0000 7d296e7d1280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.663+0000 745b854ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.663+0000 745b854ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.684+0000 7abd45aee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.684+0000 7abd45aee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.704+0000 7ae3a70c3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.704+0000 7ae3a70c3280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.1 on ef8a650a8456...
+2026-02-14T14:53:41.717+0000 7bb70448b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.717+0000 7bb70448b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.741+0000 713dbc889280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.741+0000 713dbc889280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.763+0000 78010c8d0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.763+0000 78010c8d0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.790+0000 73a37ae03940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.792+0000 73a37ae03940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.793+0000 73a37ae03940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:41.794+0000 73a37ae03940 -1 Falling back to public interface
+2026-02-14T14:53:41.939+0000 73a37ae03940 -1 osd.1 97 log_to_monitors true
+2026-02-14T14:53:43.262+0000 7f25fa6cd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:43.265+0000 7f25fa6cd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:43.265+0000 7f25fa6cd240 -1 WARNING: all dangerous and experimental features are enabled.
+[isa-2m] Test passed! The files are identical!
+File Size: 2048.0 MB
+Write Time (avg of 10 runs): 6.0386947870254515 seconds
+Write Speed: 339.14613541990366 MB/s
+Read Time (avg of 10 runs): 8.677951502799989 seconds
+Read Speed: 236.0003970221776 MB/s
+
+--- Testing jerasure ---
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:53:44.758+0000 70babbd75640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:44.766+0000 70babbd75640 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.59103 s, 384 MB/s
+2026-02-14T14:53:50.698+0000 74c28efcd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:50.705+0000 74c28efcd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:50.705+0000 74c28efcd240 -1 WARNING: all dangerous and experimental features are enabled.
+error removing jerasure-2m-pool>largefile: (2) No such file or directory
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.44084 s, 395 MB/s
+2026-02-14T14:53:56.379+0000 7f33df8c2240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:56.382+0000 7f33df8c2240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:53:56.382+0000 7f33df8c2240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:04.679+0000 7529c4485240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:04.682+0000 7529c4485240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:04.682+0000 7529c4485240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.37622 s, 399 MB/s
+2026-02-14T14:54:10.308+0000 71ff04280240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:10.311+0000 71ff04280240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:10.311+0000 71ff04280240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:17.167+0000 7de362ca6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:17.170+0000 7de362ca6240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:17.170+0000 7de362ca6240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.37408 s, 400 MB/s
+2026-02-14T14:54:22.786+0000 7369d7c1e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:22.788+0000 7369d7c1e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:22.788+0000 7369d7c1e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:29.811+0000 7a73c4aea240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:29.814+0000 7a73c4aea240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:29.814+0000 7a73c4aea240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.38804 s, 399 MB/s
+2026-02-14T14:54:35.452+0000 71eba5dbf240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:35.454+0000 71eba5dbf240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:35.455+0000 71eba5dbf240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:41.626+0000 7ed232cc7240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:41.629+0000 7ed232cc7240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:41.629+0000 7ed232cc7240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.43 s, 395 MB/s
+2026-02-14T14:54:47.313+0000 72a7622b8240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:47.315+0000 72a7622b8240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:47.315+0000 72a7622b8240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:53.956+0000 7622afe26240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:53.959+0000 7622afe26240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:53.959+0000 7622afe26240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.33744 s, 402 MB/s
+2026-02-14T14:54:59.554+0000 79f24066f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:59.557+0000 79f24066f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:54:59.557+0000 79f24066f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:06.285+0000 73435505f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:06.302+0000 73435505f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:06.303+0000 73435505f240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.41211 s, 397 MB/s
+2026-02-14T14:55:11.952+0000 7e92ac6ea240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:11.955+0000 7e92ac6ea240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:11.955+0000 7e92ac6ea240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:18.519+0000 701e5086f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:18.522+0000 701e5086f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:18.522+0000 701e5086f240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.42025 s, 396 MB/s
+2026-02-14T14:55:24.198+0000 73d1186cb240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:24.201+0000 73d1186cb240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:24.201+0000 73d1186cb240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:30.947+0000 7d8801380240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:30.950+0000 7d8801380240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:30.950+0000 7d8801380240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.20285 s, 413 MB/s
+2026-02-14T14:55:36.401+0000 70b75afa0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:36.404+0000 70b75afa0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:36.404+0000 70b75afa0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:43.469+0000 72e951cc4240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:43.472+0000 72e951cc4240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:43.472+0000 72e951cc4240 -1 WARNING: all dangerous and experimental features are enabled.
+64+0 records in
+64+0 records out
+2147483648 bytes (2.1 GB, 2.0 GiB) copied, 5.35225 s, 401 MB/s
+2026-02-14T14:55:49.077+0000 70b702749240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:49.080+0000 70b702749240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:49.080+0000 70b702749240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:55.921+0000 70bba0e61240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:55.923+0000 70bba0e61240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:55.923+0000 70bba0e61240 -1 WARNING: all dangerous and experimental features are enabled.
+largefile
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:55:56.033+0000 7ff004a2c640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.039+0000 7ff004a2c640 -1 WARNING: all dangerous and experimental features are enabled.
+osdmap e106 pool 'jerasure-2m-pool' (6) object 'largefile' -> pg 6.52ad55bb (6.1b) -> up ([3,11,10,9,13,0,8,7,12,6,4,1,5,2], p3) acting ([3,11,10,9,13,0,8,7,12,6,4,1,5,2], p3)
+*** DEVELOPER MODE: setting PATH, PYTHONPATH and LD_LIBRARY_PATH ***
+2026-02-14T14:55:56.286+0000 7fc201dd0640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.309+0000 7fc201dd0640 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.486+0000 7d687ada4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.486+0000 7d687ada4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.499+0000 7f40dd093280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.499+0000 7f40dd093280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.511+0000 7165009ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.511+0000 7165009ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.524+0000 70a58e50a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.524+0000 70a58e50a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.543+0000 7d09495ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.543+0000 7d09495ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.555+0000 723b8eb99280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.555+0000 723b8eb99280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.7 === 
+2026-02-14T14:55:56.567+0000 7ed474846280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.567+0000 7ed474846280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.588+0000 7edd13ac8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.588+0000 7edd13ac8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.609+0000 7442214cc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.609+0000 7442214cc280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.634+0000 76cf306da280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.634+0000 76cf306da280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.656+0000 7f42ee4a9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.656+0000 7f42ee4a9280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.676+0000 7930ac2f6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.676+0000 7930ac2f6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.701+0000 74d0d1a00280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.701+0000 74d0d1a00280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.723+0000 7602b97e6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.723+0000 7602b97e6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.745+0000 7c721f823280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.745+0000 7c721f823280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.765+0000 7096671ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:56.765+0000 7096671ee280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.7 on ef8a650a8456...kill  23512...done
+2026-02-14T14:55:58.826+0000 7541b80ab280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.826+0000 7541b80ab280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.850+0000 7ca9112ad280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.850+0000 7ca9112ad280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.871+0000 716e7483f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.871+0000 716e7483f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.894+0000 7f3f09bb4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.894+0000 7f3f09bb4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.926+0000 7c38182ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.926+0000 7c38182ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.947+0000 7f7166b0a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.947+0000 7f7166b0a280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.6 === 
+2026-02-14T14:55:58.968+0000 7fe2bb1b6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.968+0000 7fe2bb1b6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.990+0000 76b3b1860280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:58.990+0000 76b3b1860280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.012+0000 725dacb34280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.012+0000 725dacb34280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.032+0000 7eb0643a6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.032+0000 7eb0643a6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.052+0000 753cdec7a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.052+0000 753cdec7a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.073+0000 7c2d03db4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.073+0000 7c2d03db4280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.087+0000 7bf44d8b7280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.088+0000 7bf44d8b7280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.109+0000 79dfbe545280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.109+0000 79dfbe545280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.130+0000 73ffcc1cf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.130+0000 73ffcc1cf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.150+0000 7ab22214f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:55:59.150+0000 7ab22214f280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.6 on ef8a650a8456...kill  23401...done
+2026-02-14T14:56:01.206+0000 76c82093f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.206+0000 76c82093f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.225+0000 75e798d62280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.225+0000 75e798d62280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.248+0000 7571979f0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.248+0000 7571979f0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.271+0000 715700867280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.271+0000 715700867280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.297+0000 725095c74280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.298+0000 725095c74280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.321+0000 754935902280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.321+0000 754935902280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.12 === 
+2026-02-14T14:56:01.338+0000 73d0022e5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.339+0000 73d0022e5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.360+0000 740d25ee5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.360+0000 740d25ee5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.382+0000 79fa65b74280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.382+0000 79fa65b74280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.405+0000 7876a2067280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.405+0000 7876a2067280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.425+0000 7706ca802280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.425+0000 7706ca802280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.445+0000 7da2889f6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.445+0000 7da2889f6280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.466+0000 7f0734008280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.466+0000 7f0734008280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.489+0000 7ae10abd5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.489+0000 7ae10abd5280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.509+0000 7902f25d3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.509+0000 7902f25d3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.527+0000 7fee648bf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:01.527+0000 7fee648bf280 -1 WARNING: all dangerous and experimental features are enabled.
+Stopping Ceph osd.12 on ef8a650a8456...kill  26050...done
+2026-02-14T14:56:03.571+0000 789bff8ee240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:03.574+0000 789bff8ee240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:03.574+0000 789bff8ee240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:13.370+0000 7aa5119fd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:13.372+0000 7aa5119fd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:13.372+0000 7aa5119fd240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:23.585+0000 75c8d974f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:23.587+0000 75c8d974f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:23.587+0000 75c8d974f240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:33.509+0000 7267c9acb240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:33.512+0000 7267c9acb240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:33.512+0000 7267c9acb240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:43.654+0000 7ef8555f3240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:43.656+0000 7ef8555f3240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:43.656+0000 7ef8555f3240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:53.674+0000 7475f4edf240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:53.677+0000 7475f4edf240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:56:53.677+0000 7475f4edf240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:03.746+0000 7101b3634240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:03.749+0000 7101b3634240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:03.749+0000 7101b3634240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:13.577+0000 7d3d6d4a8240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:13.580+0000 7d3d6d4a8240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:13.580+0000 7d3d6d4a8240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:22.838+0000 7f1bcc962240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:22.840+0000 7f1bcc962240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:22.840+0000 7f1bcc962240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:32.947+0000 7fbbbaef0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:32.950+0000 7fbbbaef0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:32.950+0000 7fbbbaef0240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.362+0000 70ebceb6b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.362+0000 70ebceb6b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.386+0000 74a7c6c12280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.386+0000 74a7c6c12280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.411+0000 7115a5d36280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.411+0000 7115a5d36280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.436+0000 7e1249eec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.436+0000 7e1249eec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.462+0000 7a5fad8e8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.462+0000 7a5fad8e8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.482+0000 789596c63280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.482+0000 789596c63280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.7 === 
+2026-02-14T14:57:42.502+0000 7812df6ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.502+0000 7812df6ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.516+0000 7fb4c6314280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.516+0000 7fb4c6314280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.536+0000 754a0c399280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.536+0000 754a0c399280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.559+0000 71033bebb280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.559+0000 71033bebb280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.579+0000 7221413fa280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.580+0000 7221413fa280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.599+0000 74ae9ac23280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.599+0000 74ae9ac23280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.618+0000 748032164280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.618+0000 748032164280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.636+0000 7534130e8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.636+0000 7534130e8280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.654+0000 70d750889280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.654+0000 70d750889280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.673+0000 762c8112e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.673+0000 762c8112e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.692+0000 755ea3689280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.692+0000 755ea3689280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.712+0000 7acc42b3d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.712+0000 7acc42b3d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.734+0000 7fccc9c69280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.734+0000 7fccc9c69280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.751+0000 70978953d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.751+0000 70978953d280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.7 on ef8a650a8456...
+2026-02-14T14:57:42.768+0000 789b2e63f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.768+0000 789b2e63f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.786+0000 75b8d6606280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.786+0000 75b8d6606280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.805+0000 7092b88ab280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.805+0000 7092b88ab280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.831+0000 7a3af6d6a940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.833+0000 7a3af6d6a940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.834+0000 7a3af6d6a940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:42.837+0000 7a3af6d6a940 -1 Falling back to public interface
+2026-02-14T14:57:42.985+0000 7a3af6d6a940 -1 osd.7 106 log_to_monitors true
+2026-02-14T14:57:43.457+0000 7384676d0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.457+0000 7384676d0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.474+0000 71435671c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.474+0000 71435671c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.491+0000 77d8d9680280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.492+0000 77d8d9680280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.505+0000 7b626413f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.505+0000 7b626413f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.523+0000 76cdbe4ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.523+0000 76cdbe4ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.540+0000 7efdc2d97280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.540+0000 7efdc2d97280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.6 === 
+2026-02-14T14:57:43.562+0000 7156cfc78280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.562+0000 7156cfc78280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.582+0000 7cfb3c6b3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.582+0000 7cfb3c6b3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.603+0000 75791f6ca280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.603+0000 75791f6ca280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.626+0000 7923f33a2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.626+0000 7923f33a2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.648+0000 7d6a87c18280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.648+0000 7d6a87c18280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.669+0000 78ed62cbd280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.669+0000 78ed62cbd280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.690+0000 71d07ae5f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.690+0000 71d07ae5f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.705+0000 70e0a245b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.705+0000 70e0a245b280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.724+0000 7b51e959e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.724+0000 7b51e959e280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.746+0000 7c2618528280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.747+0000 7c2618528280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.767+0000 7945b8aea280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.767+0000 7945b8aea280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.786+0000 7ca22d429280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.787+0000 7ca22d429280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.808+0000 7e9e58697280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.808+0000 7e9e58697280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.829+0000 7661f3d06280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.830+0000 7661f3d06280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.6 on ef8a650a8456...
+2026-02-14T14:57:43.849+0000 70f07f6d0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.849+0000 70f07f6d0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.868+0000 7eae5d259280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.868+0000 7eae5d259280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.890+0000 77914aad0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.891+0000 77914aad0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.915+0000 78526e4c3940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.918+0000 78526e4c3940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.919+0000 78526e4c3940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:43.921+0000 78526e4c3940 -1 Falling back to public interface
+2026-02-14T14:57:44.087+0000 78526e4c3940 -1 osd.6 108 log_to_monitors true
+2026-02-14T14:57:44.570+0000 78e565693280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.571+0000 78e565693280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.584+0000 7bff4bbc3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.584+0000 7bff4bbc3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.596+0000 781e9a7f0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.596+0000 781e9a7f0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.609+0000 7df9a44ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.609+0000 7df9a44ee280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.627+0000 7f38dcec3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.627+0000 7f38dcec3280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.640+0000 70969273a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.640+0000 70969273a280 -1 WARNING: all dangerous and experimental features are enabled.
+=== osd.12 === 
+2026-02-14T14:57:44.652+0000 70e3cee61280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.652+0000 70e3cee61280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.669+0000 7366163ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.669+0000 7366163ec280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.687+0000 763e95d93280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.687+0000 763e95d93280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.703+0000 7fc89144f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.704+0000 7fc89144f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.718+0000 772a5061f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.718+0000 772a5061f280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.735+0000 73ff2c949280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.735+0000 73ff2c949280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.748+0000 72644903d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.748+0000 72644903d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.768+0000 763f205bf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.768+0000 763f205bf280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.787+0000 76b4b1a6c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.787+0000 76b4b1a6c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.801+0000 7570422d2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.801+0000 7570422d2280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.819+0000 7a5bc4012280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.819+0000 7a5bc4012280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.839+0000 764df2533280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.839+0000 764df2533280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.862+0000 7d98110ad280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.862+0000 7d98110ad280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.882+0000 75aa1d45d280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.882+0000 75aa1d45d280 -1 WARNING: all dangerous and experimental features are enabled.
+Starting Ceph osd.12 on ef8a650a8456...
+2026-02-14T14:57:44.902+0000 70e70ec4a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.902+0000 70e70ec4a280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.923+0000 735d2335c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.923+0000 735d2335c280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.943+0000 7fd4086d0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.943+0000 7fd4086d0280 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.968+0000 74fa703e4940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.971+0000 74fa703e4940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.973+0000 74fa703e4940 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:44.978+0000 74fa703e4940 -1 Falling back to public interface
+2026-02-14T14:57:45.171+0000 74fa703e4940 -1 osd.12 110 log_to_monitors true
+2026-02-14T14:57:46.477+0000 7037e737e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:46.481+0000 7037e737e240 -1 WARNING: all dangerous and experimental features are enabled.
+2026-02-14T14:57:46.481+0000 7037e737e240 -1 WARNING: all dangerous and experimental features are enabled.
+[jerasure-2m] Test passed! The files are identical!
+File Size: 2048.0 MB
+Write Time (avg of 10 runs): 6.850169157981872 seconds
+Write Speed: 298.9707192286856 MB/s
+Read Time (avg of 10 runs): 9.656474137306214 seconds
+Read Speed: 212.08569203203123 MB/s
+
