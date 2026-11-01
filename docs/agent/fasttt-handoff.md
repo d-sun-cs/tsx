@@ -10,7 +10,7 @@
 
 | 字段 | 当前值 |
 | --- | --- |
-| 文档修订 | r8，论文Ceph18环境迁移／AVX2构建及7,464擦除组合验证版 |
+| 文档修订 | r9，完整分支发布已获用户授权／GitHub写入身份待配置 |
 | 最近更新时间 | 2026-11-01，Asia/Shanghai（UTC+8） |
 | 本次维护者 | Codex 主 agent；只读审查结果由主 agent 合并，正文单写者 |
 | 文档入口 | TSX 根 `AGENTS.md` → `docs/agent/fasttt-handoff.md`；所有定位均相对仓库，不绑定机器路径 |
@@ -18,12 +18,12 @@
 | TSX 当前基线 | `research/ceph-v18.2.7`；环境代码基线 `f244e3b0cdcc482ee2442dbd4c4b61d529c5b4de`，后续 `45b62f3`修正独立clone的根目录发现／--help，当前完整身份取实际HEAD；算法基于 `v0.0.1-ipdps@5c85ce5e629905fcf8e660c8490f6b66a4160c69`，编解码C++未改；本交接与AGENTS另随分支管理 |
 | Ceph 当前基线 | 官方 `v18.2.7`，detached HEAD `6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad`；递归子模块已全部对齐；父工作区仅应用 TSX 仓库内保存的三份明确补丁 |
 | 已检查的参考代码身份 | TSX 算法仍为发布 AVX2 基线。7.9–7.13 的深入 OSD/LRC 核验对应历史 Ceph20，迁移到18时必须重新定位；当前18旧 map/set EC接口与TSX匹配 |
-| 最新用户要求 | 2026-11-01 阅读 FastTT 论文，统一到论文 Ceph 版本；保留非仓库文档，并让后续工作可由官方 Ceph tag＋TSX 对应分支重建 |
+| 最新用户要求 | 论文Ceph18迁移已完成；用户现已明确批准将完整 research/ceph-v18.2.7 分支（含交接文档）推送到 d-sun-cs/tsx。发布授权持续有效，不再重复询问 |
 | 当前代码工作状态 | Ceph18与全部子模块已对齐，TSX研究分支、备份／旧build隔离／幂等补丁完成；新AVX2插件与benchmark构建成功，48组7,464种擦除组合全通过。未实现M1/M2 |
 | 当前实验状态 | E1/E-REEF-r8：GCC11.4、Boost1.79新构建通过；4组(k,m)、64KiB/2MiB数据片、constant/random(seed1)、1..m全擦除恢复通过。未测性能／真实集群／Redis故障 |
 | M1 状态 | 已有 8＋2 全局＋2 局部设计及最小实现建议（7.10）；物理编号仅为原型候选，尚未成为格式。当前活跃 TSX 没有新布局／局部校验／合法选片规划器，历史 Python 结果仍未复现 |
 | M2 状态 | 已有输出拥有权与线程预算设计；当前活跃内核未见线程池、任务切分或实际多线程执行 |
-| 当前主要缺口 | 新分支尚未发布；公开基础镜像拉取连接受阻，Dockerfile空镜像构建尚未完成。任意长度、尾部可靠性、系统／性能与M1/M2继续待完成 |
+| 当前主要缺口 | 用户已批准完整分支含交接文档发布，但本机HTTPS无凭据、已连接GitHub账号只有read权限且SSH未配置，尚未推送。公开Dockerfile空镜像验证仍未完成；其他研究缺口保留 |
 | 接手后的第一项任务 | 核验研究分支／18 tag／repro JSON，继续T1尾部及边界契约，随后M1-A/M2-A；不要回到20适配或沿用归档build。远端发布与公开Docker配方验收状态见7.14 |
 
 ### 0.1 给新 agent 的启动指令
@@ -789,7 +789,7 @@ chunk_mapping=[0,1,4,5,2,3,6,7]
 
 **18前台读的关键限制。** `ECBackend::objects_read_and_reconstruct`无条件以 `ECBackend.h::get_want_to_read_shards` 构造全部k条数据ID，`CallClientContexts::finish`经 `ECUtil::decode`／`decode_concat`重构整个stripe再裁客户端范围。它没有20 legacy partial-read分支。因此M1的单目标4helper能力应先在插件严格限制输入测试／后台恢复上验收；不能直接宣称Ceph18前台小读也只读4helpers。若要这一端到端收益，需要另外改读路径并测试。7.9–7.13中的20调用链保留历史证据，以本段18映射为当前约束。
 
-**新工作区的最小流程。** 克隆官方 `ceph/ceph --branch v18.2.7 --depth 1 --recurse-submodules`；将TSX对应研究分支克隆到`src/erasure-code/tsx`，再固定为该实验记录的完整commit；宿主执行`python3 src/erasure-code/tsx/repro/reproduce.py prepare`；用该目录Dockerfile构建Ubuntu22镜像，挂载Ceph到`/ceph`；容器内执行同入口`build --jobs 8`，启动独立回环Redis后执行`verify`。父Ceph只需官方tag和TSX携带补丁；不需要旧工作区dirty文件、旧私人镜像或旧二进制。新分支目前仅本地，未发布前不能声称GitHub可直接拉取。
+**新工作区的最小流程。** 克隆官方 `ceph/ceph --branch v18.2.7 --depth 1 --recurse-submodules`；将TSX对应研究分支克隆到`src/erasure-code/tsx`，再固定为该实验记录的完整commit；宿主执行`python3 src/erasure-code/tsx/repro/reproduce.py prepare`；用该目录Dockerfile构建Ubuntu22镜像，挂载Ceph到`/ceph`；容器内执行同入口`build --jobs 8`，启动独立回环Redis后执行`verify`。父Ceph只需官方tag和TSX携带补丁；不需要旧工作区dirty文件、旧私人镜像或旧二进制。新分支目前仅本地；用户已批准完整发布，但缺写入身份，未成功前不能声称GitHub可直接拉取。
 
 **新代码职责。** `versions.json`锁Ceph SHA、普通TSX起点和论文条件；`prepare`拒绝错版Ceph／子模块漂移，并顺序检查应用3patch，不强制覆盖冲突；`configure/build`用新cache和gcc-11/g++-11、目标AVX2，无全局AVX512，只编译3变体、ISA、Jerasure和benchmark；`verify`在4组论文(k,m)、两种等长片大小（64KiB／2MiB）和constant/random输入上穷举1..m擦除，逐字节验证恢复；JSON证据记录HEAD／diff／子模块／工具／产物哈希。此处没有M1/M2实现，也没有任意长度或系统可靠性保证。
 
@@ -810,7 +810,7 @@ benchmark    c295316358ee6df9800d1cf96c9b72bdc852c49381918ffcc68fc03d01b87bbc
 
 `build/fasttt-build.json`、`fasttt-verification.json`、`fasttt-environment.json`保存源码／diff／子模块／产物和编译命令／包版本；验证记录HEAD为环境代码基线f244e3b，后续仅handoff与独立clone根发现修正、不改变编译输入，产物身份仍可由source_hashes核对；原始输出留在本地`local_workspace/reef-*.log`。新工作区运行同入口重新生成，不继承旧“通过”。现有私人构建镜像ID为`sha256:d78fcd485b29a6f0278a885c8ebe4af3752a691ed83f46f5de2cb0adcc220681`，本机核验用了它，但复现配方不要求能够拉取它。
 
-**失败与未完成边界。** 直接下载Boost过慢，本轮中止重复下载后改分段下载同一官方archive，最终SHA与Ceph锁一致，再放入新build缓存；首次被中止构建不是算法失败，最终完整构建／测试均通过。DockerHub拉取Ubuntu基础镜像超时，公开缓存／ECR层下载也长时间无进展，已停止本轮拉取客户端，当前没有遗留下载任务；Ubuntu amd64 manifest从公开索引定位并锁为`sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f`。Dockerfile依赖已静态核对，但尚未从公开空镜像完成构建，不能声称已验证。分支与AGENTS／本文已作本地提交，新临时clone已核验完整携带源文件／3patch／复现工具／唯一handoff、无PDF和build；独立clone的`--help`及缺父Ceph错误已验证。远端尚未发布，因包含未公开研究交接已请求用户确认、尚未获得答复；只有发布后才能按远端分支直接clone。PDF／原始结果／备份／旧build保持本地，不随分支上传。
+**失败与未完成边界。** 直接下载Boost过慢，本轮中止重复下载后改分段下载同一官方archive，最终SHA与Ceph锁一致，再放入新build缓存；首次被中止构建不是算法失败，最终完整构建／测试均通过。DockerHub拉取Ubuntu基础镜像超时，公开缓存／ECR层下载也长时间无进展，已停止本轮拉取客户端，当前没有遗留下载任务；Ubuntu amd64 manifest从公开索引定位并锁为`sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f`。Dockerfile依赖已静态核对，但尚未从公开空镜像完成构建，不能声称已验证。分支与AGENTS／本文已作本地提交，新临时clone已核验完整携带源文件／3patch／复现工具／唯一handoff、无PDF和build；独立clone的`--help`及缺父Ceph错误已验证。远端尚未发布；用户现已明确答复“推送完整分支（含交接文档）”，授权已获得。实际 git push --set-upstream origin research/ceph-v18.2.7 退出128，提示HTTPS无法读取Username；GitHub连接账号Lai-JX对d-sun-cs/tsx的permissions.push=false，仅pull=true；本机无可用SSH identity／agent，严格host检查也未通过。git ls-remote只读核验远端尚无该分支。当前缺的是写入身份，不是再次发布批准；认证配置完成后直接继续推送完整分支，禁止改推其他账号仓库。只有成功后才能按远端分支直接clone。PDF／原始结果／备份／旧build保持本地，不随分支上传。
 
 
 ## 8. 两个里程碑共用的 Ceph 接入与尾部闭环
@@ -911,6 +911,8 @@ TSX f98ebcba4164f3e46b63dff722501fe6a7859325 + 修改的5个源码/脚本文件 
 
 **E-LIFECYCLE-r7 的复核摘要。** 2026-11-01 读取当前同一父 Ceph 的 OSD heartbeat/failure、PG 恢复调度、PrimaryLogPG unreadable 等待／maybe_kick_recovery、ECCommonL ClientReadCompleter、ECBackendL RecoveryBackend 选片／读完成／Push／事务，以及官方心跳、scrub、PG 状态、peering 与 recovery reservation 说明。记录普通读的 complete_object 与 recovery 的 transaction.write 两个不同完成点及读请求催促恢复例外。仅源码／文档核验，没有运行集群命令、重建或故障测试。本文按 UTF-8、章节／围栏、源码锚点、既有研究／历史内容保留与 whitespace 检查后原子保存并释放锁。
 
+**E-PUBLISH-r9：已授权发布，认证未完成。** 用户明确批准完整分支含交接文档；发布前审查所有新提交（含中间历史）只有13个文本路径，确认无PDF、build、local_workspace、Redis数据、stash或新增二进制，三份补丁精确重建父四文件，TSX工作区干净。HTTPS实际push失败128；已连接的GitHub账号Lai-JX只有该仓库读取权限；未配置现成SSH身份。未尝试越权写入，未修改远端main或创建其他仓库。已向用户请求选择有写权限的连接账号／本机Git认证／为当前连接账号授权；用户此前的发布批准不因认证失败而失效。后续核验目标远端branch head，正常快进push并再次核对SHA，成功后更新本文，不得把本次失败写成已发布。代码／测试状态完全不变。
+
 ### 10.2 实验记录格式
 
 每个影响决策的实验使用一个 ID。正文必须保存足以判断结论和重新执行的完整摘要，包括关键输出、数值、报错和输入生成办法。长日志可另存作补充，但即使它没有随工作区迁移，也不能因此丢失对实验的核心理解；不得只记录外部日志／结果文件的读取地址。
@@ -1008,7 +1010,7 @@ THEIA 代表一种系统层思路：primary OSD 先收集所需片段、重构�
 ### 12.1 当前交接给谁、下一步是什么
 
 - 下一任：负责具体代码实现的 AI agent；从 TSX 根 AGENTS 发现本文，按当前环境重新识别两个 Git 根与构建角色。
-- 第一任务：核验repro身份与E1限定正确性结果，继续T1尾部／边界契约并推进M1-A与M2-A；T0-A和对齐片长T0-B已完成。公开配方与发布状态另按7.14处理。
+- 本次发布待办：用户已批准完整发布，无须再次批准；待用户配置可写身份后，核验远端目标分支并正常push，核对远端SHA与本地一致。研究开发仍从T1尾部／边界继续，T0-A和限定T0-B已完成。
 - 2026-10-29 的官方 LRC 基础讲解已完成静态核验并写入 7.9；它提供局部选片、恢复与放置的具体参照，没有替换 M1 设计或完成实际集群验收。
 - 2026-10-31 的最小原型讲解已写入 7.10：参照 ISA／LRC 组织自己的通用子类，先做固定布局和共享规划。用户本轮要求讲解，没有授权必须立即创建代码；下一次实施仍先解决 T0-A，再按内核与 Ceph 适配分层验收。
 - 2026-11-01 的分组优劣与缓冲传参两问已写入 7.11–7.12；明确额外局部主片由总片数驱动准备并经 encoded/out 传入，不把其与 TT 尾部／scratch 混同；没有改变 M1 或开始实现。
@@ -1028,6 +1030,7 @@ THEIA 代表一种系统层思路：primary OSD 先收集所需片段、重构�
 | r4／2026-10-29 | 按用户要求补齐 Ceph 官方局部冗余基础：以源码／单测支持的 lrc 4／2／3 为例说明 8 片布局、层次编码、单片与多片恢复、通用选片接口至 OSD 的真实读取、CRUSH／min_size／优化池边界；记录官方示例整除差异及与 M1 的局部方程差异。联动快照、任务、证据与候选决策；只读核验，无代码实现或集群操作。 |
 | r5／2026-10-31 | 按“类比 ISA→TSX、先讲清最小逻辑”的要求新增 7.10：固定 12 片候选布局、三项核心动作、4 片局部恢复、临时 P0／旧 11 片工作视图、最小接口与可暂缓项；补充 final、实际 out 语义、新旧 encode 错误丢失和 Ceph 等长片／尾部约束。仅方案与文档更新，无新插件实现／运行结果。 |
 | r6／2026-11-01 | 按两问新增 7.11–7.12：统一规模比较混合／数据组局部，注明矩阵与尾部差异；追踪 n/k/B 到 create_aligned、encoded／in/out、层级映射与真实选片的完整链，并区分主片、scratch 和有效尾部。联动快照、任务、证据与下一步；仅静态核验和文档，无代码／运行实验。 |
+| r9／2026-11-01 | 用户批准完整研究分支含交接文档发布；发布前13文本文件与全部提交历史检查通过。实际HTTPS push失败：无凭据；GitHub连接账号只有读取权限，SSH无现成身份。保留本地完整提交与bundle，远端未发布；认证完成后直接续推，不重复申请发布批准。未改算法／编译输入，不重复正确性实验。 |
 | r8／2026-11-01 | 按用户要求阅读论文，迁移官方Ceph18／递归子模块和TSX普通AVX2研究分支；完整备份与归档旧build，新增版本锁／幂等补丁／构建验证入口。configure及新构建成功，48组／7,464擦除组合验证全通过；远端发布与公开基础镜像配方验收另记状态；补18读路径差异，保留20分析为历史。 |
 | r7／2026-11-01 | 补 7.13：澄清 LRC 依赖通用接口而非仅一个选片函数，追踪 OSD／对象故障发现、前台降级读返回和后台 recovery Push／事务写回，保留读请求可催促恢复的例外及外部 Redis 尾部不受通用状态自动管理的边界。仅静态核验与文档更新，无运行故障实验。 |
 
