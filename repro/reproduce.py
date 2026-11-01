@@ -275,11 +275,16 @@ def verify(ceph, build):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['prepare', 'configure', 'build', 'verify', 'doctor'])
-    parser.add_argument('--ceph-root', type=Path, default=TSX.parents[2])
+    parser.add_argument('--ceph-root', type=Path)
     parser.add_argument('--build-dir', type=Path)
     parser.add_argument('--jobs', type=int, default=8)
     args = parser.parse_args()
-    ceph = args.ceph_root.resolve()
+    ceph = args.ceph_root or next(
+        (parent for parent in TSX.parents
+         if (parent / 'src/erasure-code/tsx').resolve() == TSX), None)
+    if ceph is None:
+        raise RuntimeError('Clone this TSX repository into CEPH/src/erasure-code/tsx')
+    ceph = ceph.resolve()
     build = (args.build_dir or ceph / 'build').resolve()
     if args.jobs < 1:
         parser.error('--jobs must be positive')
