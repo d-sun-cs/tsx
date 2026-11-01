@@ -1,5 +1,9 @@
 # tsx plugin
-find_library(HIREDIS_LIB hiredis PATHS /usr/local/lib REQUIRED)
+find_path(HIREDIS_INCLUDE_DIR NAMES hiredis/hiredis.h)
+find_library(HIREDIS_LIB NAMES hiredis)
+if(NOT HIREDIS_INCLUDE_DIR OR NOT HIREDIS_LIB)
+  message(FATAL_ERROR "hiredis headers and library are required (install libhiredis-dev or set HIREDIS_INCLUDE_DIR and HIREDIS_LIB)")
+endif()
 find_package(OpenMP REQUIRED)
 
 set(tsx_srcs
@@ -11,6 +15,7 @@ set(tsx_srcs
 )   
 
 add_library(ec_tsx SHARED ${tsx_srcs})
+target_include_directories(ec_tsx PRIVATE "${HIREDIS_INCLUDE_DIR}")
 # target_compile_options(ec_tsx PRIVATE -mavx2)
 target_compile_options(ec_tsx PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsx PROPERTIES
@@ -30,6 +35,7 @@ set(tsxse_srcs
 )   
 
 add_library(ec_tsxse SHARED ${tsxse_srcs})
+target_include_directories(ec_tsxse PRIVATE "${HIREDIS_INCLUDE_DIR}")
 target_compile_options(ec_tsxse PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsxse PROPERTIES
   INSTALL_RPATH "")
@@ -47,6 +53,7 @@ set(tsxnaive_srcs
 )   
 
 add_library(ec_tsxnaive SHARED ${tsxnaive_srcs})
+target_include_directories(ec_tsxnaive PRIVATE "${HIREDIS_INCLUDE_DIR}")
 target_compile_options(ec_tsxnaive PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsxnaive PROPERTIES
   INSTALL_RPATH "")
@@ -64,6 +71,7 @@ set(tsxmap_srcs
 )   
 
 add_library(ec_tsxmap SHARED ${tsxmap_srcs})
+target_include_directories(ec_tsxmap PRIVATE "${HIREDIS_INCLUDE_DIR}")
 target_compile_options(ec_tsxmap PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsxmap PROPERTIES
   INSTALL_RPATH "")
@@ -82,6 +90,7 @@ set(tsxwin_srcs
 )   
 
 add_library(ec_tsxwin SHARED ${tsxwin_srcs})
+target_include_directories(ec_tsxwin PRIVATE "${HIREDIS_INCLUDE_DIR}")
 target_compile_options(ec_tsxwin PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsxwin PROPERTIES
   INSTALL_RPATH "")
@@ -99,6 +108,7 @@ set(tsxmerge_srcs
 )   
 
 add_library(ec_tsxmerge SHARED ${tsxmerge_srcs})
+target_include_directories(ec_tsxmerge PRIVATE "${HIREDIS_INCLUDE_DIR}")
 target_compile_options(ec_tsxmerge PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsxmerge PROPERTIES
   INSTALL_RPATH "")
@@ -106,18 +116,22 @@ target_link_libraries(ec_tsxmerge json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsxmerge DESTINATION ${erasure_plugin_dir})
 
 # cerasure plugin
-find_library(CERASURE_LIB isal PATHS /usr/lib REQUIRED)
-set(cerasure_srcs
-  ErasureCodePluginCerasure.cc
-  ErasureCodeCerasure.cc
-)   
+option(WITH_TSX_CERASURE "Build the optional Cerasure comparison plugin" OFF)
+if(WITH_TSX_CERASURE)
+  find_library(CERASURE_LIB isal PATHS /usr/lib REQUIRED)
+  set(cerasure_srcs
+    ErasureCodePluginCerasure.cc
+    ErasureCodeCerasure.cc
+  )
 
-add_library(ec_cerasure SHARED ${cerasure_srcs} )
-target_link_options(ec_cerasure PRIVATE)
-target_link_libraries(ec_cerasure ${CERASURE_LIB})
-set_target_properties(ec_cerasure PROPERTIES
-  INSTALL_RPATH "")
-install(TARGETS ec_cerasure DESTINATION ${erasure_plugin_dir})
+  add_library(ec_cerasure SHARED ${cerasure_srcs})
+  target_include_directories(ec_cerasure PRIVATE "${HIREDIS_INCLUDE_DIR}")
+  target_link_options(ec_cerasure PRIVATE)
+  target_link_libraries(ec_cerasure ${CERASURE_LIB})
+  set_target_properties(ec_cerasure PROPERTIES
+    INSTALL_RPATH "")
+  install(TARGETS ec_cerasure DESTINATION ${erasure_plugin_dir})
+endif()
 
 # tsx4 plugin
 set(tsx4_srcs
@@ -129,6 +143,7 @@ set(tsx4_srcs
 )   
 
 add_library(ec_tsx4 SHARED ${tsx4_srcs} )
+target_include_directories(ec_tsx4 PRIVATE "${HIREDIS_INCLUDE_DIR}")
 target_compile_options(ec_tsx4 PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsx4 PROPERTIES
   INSTALL_RPATH "")
@@ -145,6 +160,7 @@ set(tsx2_srcs
 )   
 
 add_library(ec_tsx2 SHARED ${tsx2_srcs} )
+target_include_directories(ec_tsx2 PRIVATE "${HIREDIS_INCLUDE_DIR}")
 target_compile_options(ec_tsx2 PRIVATE -mavx2 -O3)
 set_target_properties(ec_tsx2 PROPERTIES
   INSTALL_RPATH "")

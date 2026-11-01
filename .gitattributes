@@ -1,0 +1,2 @@
+# Unified-diff context lines preserve the upstream source's whitespace.
+repro/patches/*.patch -whitespace

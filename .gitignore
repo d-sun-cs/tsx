@@ -3,3 +3,6 @@ dummy.txt
 .vscode
 build
 *.rdb
+__pycache__/
+docs/agent/.fasttt-handoff.lock
+docs/agent/.fasttt-handoff.*.tmp

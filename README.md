@@ -1,6 +1,22 @@
 # FastTT: High-Performance Two-Tone Shift-XOR Erasure Coding for Ceph
 
-This is the artifact for the paper "FastTT: Accelerating Two-Tone Erasure Codes with Cache-Friendly Optimizations".
+This repository contains the artifact for "FastTT: Accelerating Shift-XOR Erasure Coding for Data Storage".
+
+## Current Ceph 18.2.7 Baseline
+
+Use [repro/README.md](repro/README.md) on `research/ceph-v18.2.7` for the pinned
+Ceph release, minimal integration patches, fresh AVX2 build, and deterministic
+correctness verification. This workflow supersedes the historical setup scripts
+below. It does not require a private container image or an edited Ceph fork.
+
+## Development and AI Agent Handoff
+
+Start with [AGENTS.md](AGENTS.md) and the single maintained
+[FastTT handoff document](docs/agent/fasttt-handoff.md). The handoff contains the
+current source baseline, implementation map, research plans, evidence, and next
+steps. Its paths are relative to this repository so it can move with a checkout.
+The instructions below are preserved as the historical artifact workflow;
+use the current baseline instructions above for new workspaces.
 
 ## Execution Environment Reference
 
