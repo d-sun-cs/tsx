@@ -15,7 +15,7 @@
 | 本次维护者 | Codex 主 agent；只读审查结果由主 agent 合并，正文单写者 |
 | 文档入口 | TSX 根 `AGENTS.md` → `docs/agent/fasttt-handoff.md`；所有定位均相对仓库，不绑定机器路径 |
 | 实际开发工作树 | 已定位：独立 Git 仓库 `d-sun-cs/tsx` 嵌在 Ceph 的 `src/erasure-code/tsx`；未注册为 Ceph Git submodule。两层 Git 必须分别核验 |
-| TSX 当前基线 | `research/ceph-v18.2.7`；环境／复现代码提交 `f244e3b0cdcc482ee2442dbd4c4b61d529c5b4de`，算法基于 `v0.0.1-ipdps@5c85ce5e629905fcf8e660c8490f6b66a4160c69`，编解码C++未改；本交接与AGENTS另随分支管理 |
+| TSX 当前基线 | `research/ceph-v18.2.7`；环境代码基线 `f244e3b0cdcc482ee2442dbd4c4b61d529c5b4de`，后续 `45b62f3`修正独立clone的根目录发现／--help，当前完整身份取实际HEAD；算法基于 `v0.0.1-ipdps@5c85ce5e629905fcf8e660c8490f6b66a4160c69`，编解码C++未改；本交接与AGENTS另随分支管理 |
 | Ceph 当前基线 | 官方 `v18.2.7`，detached HEAD `6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad`；递归子模块已全部对齐；父工作区仅应用 TSX 仓库内保存的三份明确补丁 |
 | 已检查的参考代码身份 | TSX 算法仍为发布 AVX2 基线。7.9–7.13 的深入 OSD/LRC 核验对应历史 Ceph20，迁移到18时必须重新定位；当前18旧 map/set EC接口与TSX匹配 |
 | 最新用户要求 | 2026-11-01 阅读 FastTT 论文，统一到论文 Ceph 版本；保留非仓库文档，并让后续工作可由官方 Ceph tag＋TSX 对应分支重建 |
@@ -808,9 +808,9 @@ libec_tsx4.so cc35ee3604e7a8b2ebf577420b4ccceb7ed08dd096abbcdac89689d58df47f4d
 benchmark    c295316358ee6df9800d1cf96c9b72bdc852c49381918ffcc68fc03d01b87bbc
 ```
 
-`build/fasttt-build.json`、`fasttt-verification.json`、`fasttt-environment.json`保存源码／diff／子模块／产物和编译命令／包版本；原始输出留在本地`local_workspace/reef-*.log`。新工作区运行同入口重新生成，不继承旧“通过”。现有私人构建镜像ID为`sha256:d78fcd485b29a6f0278a885c8ebe4af3752a691ed83f46f5de2cb0adcc220681`，本机核验用了它，但复现配方不要求能够拉取它。
+`build/fasttt-build.json`、`fasttt-verification.json`、`fasttt-environment.json`保存源码／diff／子模块／产物和编译命令／包版本；验证记录HEAD为环境代码基线f244e3b，后续仅handoff与独立clone根发现修正、不改变编译输入，产物身份仍可由source_hashes核对；原始输出留在本地`local_workspace/reef-*.log`。新工作区运行同入口重新生成，不继承旧“通过”。现有私人构建镜像ID为`sha256:d78fcd485b29a6f0278a885c8ebe4af3752a691ed83f46f5de2cb0adcc220681`，本机核验用了它，但复现配方不要求能够拉取它。
 
-**失败与未完成边界。** 直接下载Boost过慢，本轮中止重复下载后改分段下载同一官方archive，最终SHA与Ceph锁一致，再放入新build缓存；首次被中止构建不是算法失败，最终完整构建／测试均通过。DockerHub拉取Ubuntu基础镜像超时，公开缓存／ECR仍在重试；Ubuntu amd64 manifest从公开索引定位并锁为`sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f`。Dockerfile依赖已静态核对，但尚未从公开空镜像完成构建，不能声称已验证。分支与文档已准备本地提交，远端尚未发布；只有发布后才能按远端分支直接clone。PDF／原始结果／备份／旧build保持本地，不随分支上传。
+**失败与未完成边界。** 直接下载Boost过慢，本轮中止重复下载后改分段下载同一官方archive，最终SHA与Ceph锁一致，再放入新build缓存；首次被中止构建不是算法失败，最终完整构建／测试均通过。DockerHub拉取Ubuntu基础镜像超时，公开缓存／ECR层下载也长时间无进展，已停止本轮拉取客户端，当前没有遗留下载任务；Ubuntu amd64 manifest从公开索引定位并锁为`sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f`。Dockerfile依赖已静态核对，但尚未从公开空镜像完成构建，不能声称已验证。分支与AGENTS／本文已作本地提交，新临时clone已核验完整携带源文件／3patch／复现工具／唯一handoff、无PDF和build；独立clone的`--help`及缺父Ceph错误已验证。远端尚未发布，因包含未公开研究交接已请求用户确认、尚未获得答复；只有发布后才能按远端分支直接clone。PDF／原始结果／备份／旧build保持本地，不随分支上传。
 
 
 ## 8. 两个里程碑共用的 Ceph 接入与尾部闭环
