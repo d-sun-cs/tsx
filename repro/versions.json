@@ -10,6 +10,12 @@
     "algorithm_base": "5c85ce5e629905fcf8e660c8490f6b66a4160c69",
     "algorithm_base_tag": "v0.0.1-ipdps"
   },
+  "cerasure": {
+    "repository": "https://github.com/d-sun-cs/cerasure.git",
+    "branch": "fasttt",
+    "commit": "c9f305294cb8e52af6f5962e3c83cc607a85ba07",
+    "note": "Appendix A2 uses the default fasttt branch and fasttt.sh; main does not contain that entry point."
+  },
   "environment": {
     "distribution": "Ubuntu 22.04",
     "base_image_amd64": "ubuntu:22.04@sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f",

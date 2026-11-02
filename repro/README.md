@@ -52,5 +52,50 @@ python3 src/erasure-code/tsx/repro/reproduce.py doctor
 
 - `AGENTS.md` 与 `docs/agent/fasttt-handoff.md` 随 TSX 管理；后者是唯一持续交接正文。文档使用相对路径、代码符号与提交身份，不靠旧聊天恢复状态。
 - 论文 PDF、原始实验结果、旧构建、备份留在 Ceph 根下的本地 `local_workspace/`。它们不进入插件源文件列表，也不作为构建输入；不应自动上传论文 PDF 或庞大构建文件。
-- 保留上游旧脚本供历史查阅，但当前基线使用本目录入口。尤其不要执行旧 `recmake.sh`、覆盖完整 Ceph CMake 的脚本，或把 MemStore 测试当作磁盘端到端结果。
+- 附录的 `coding_benchmark_cases.sh` 与 `run_end_to_end_tests.sh` 已接入本目录入口；其余上游旧脚本保留供历史查阅。尤其不要执行旧 `recmake.sh`、覆盖完整 Ceph CMake 的脚本，或把 MemStore 测试当作磁盘端到端结果。
 - 不把旧 AVX512 stash 当作迁移补丁。任何算法变化、测试发现和新依赖都应进入此 TSX 分支并同步交接文档；指定实验以完整提交和结果清单为准。
+
+## 按论文附录实际执行 A1 / A2
+
+在已配置的独立容器内，从 Ceph 根运行：
+
+```bash
+# 构建所有 TSX/消融插件与 vstart，再按生成的 EC 安装规则安装。
+python3 src/erasure-code/tsx/repro/appendix.py install --cluster --jobs 16
+# 该目录必须实际存在 libec_tsx.so / libec_tsx2.so / libec_tsx4.so 等。
+ls /usr/local/lib/ceph/erasure-code
+python3 src/erasure-code/tsx/repro/appendix.py verify-installed
+python3 src/erasure-code/tsx/repro/appendix.py coding --iterations 2000
+python3 src/erasure-code/tsx/repro/appendix.py end-to-end --put-iterations 3 --degraded-read
+```
+
+`coding` 默认跑全部四组论文参数、FastTT/ISA-L/Jerasure及8+3消融，共163个测项。每种数据／校验擦除类型固定同一组位置供所有实现使用，每测项2000次，先预热两次；按擦除总数分别汇总。默认数据片2MiB，原始日志、完整命令、GB/s与GiB/s均保留。默认固定一个可用CPU、单测量轮次；这是流程验收入口，正式统计可用 `--repeats 3`，并先核验本机ISA-L实际SIMD分派与论文机器的差异。
+
+`install` 只执行生成的 `build/src/erasure-code/cmake_install.cmake`，避免全量安装；默认安装前缀来自CMake缓存。基准与集群明确从安装目录加载插件，不依赖先前的系统插件。
+
+`verify-installed` 对安装后的三实现及(8,3)四消融，使用2MiB随机数据片穷举1..m擦除，逐字节检查恢复；完整矩阵为48条命令、6,522种擦除组合。它与旧 `reproduce.py verify` 的7,464组合矩阵范围不同，不能混为同一个计数。
+
+`end-to-end` 使用官方Ceph18 `src/vstart.sh`，每次创建新的 `/tmp/fasttt-paper-cluster-*` 状态目录，单MON、最多14个OSD、MGR/MDS/RGW关闭，BlueStore使用普通文件，未指定原始块设备。每对象为4条完整stripe（默认48/64/80MiB），PUT后GET并比较SHA256；PUT吞吐按总字节／总时间计算。各k/m采用不同但确定的数据种子，避免原Redis内容键在不同尾部格式间相撞，这不构成尾部命名或可靠性修复。`--degraded-read` 从对象acting映射选一个OSD，核对其进程属于当前独立配置后停止，执行降级GET并比较SHA，再恢复；最终只停止带本次精确配置路径的进程。日志与结果保留，不调用旧的全局stop／删除build脚本。该流程不等于论文硬件、生产故障域或任意故障可靠性验证。
+
+端到端池的ISA-L/Jerasure按原vstart脚本默认值使用 `reed_sol_van`，与内存基准的 `cauchy/cauchy_good` 分开记录。全矩阵共用14个OSD，各池仍按自身k+m放置；这是缩小规模的流程验收，不复述论文磁盘吞吐比例。
+
+论文原入口名称继续可用，已改为上述实现的包装：
+
+```bash
+cd src/erasure-code/tsx
+bash coding_benchmark_cases.sh 8 3 2048 2000
+bash run_end_to_end_tests.sh 8 3 2m 3
+```
+
+A2需在可联网的宿主先克隆论文指定的独立仓库，使用 `fasttt` 分支而非缺少入口的 `main`，并核对 `versions.json` 中的提交：
+
+```bash
+git clone --branch fasttt https://github.com/d-sun-cs/cerasure.git local_workspace/cerasure-paper
+git -C local_workspace/cerasure-paper checkout c9f305294cb8e52af6f5962e3c83cc607a85ba07
+# 回到同一个实验容器后：
+python3 src/erasure-code/tsx/repro/appendix.py cerasure --jobs 16
+```
+
+此入口从Ceph固定GF-Complete子模块复制源码并在本地依赖前缀构建，不修改原子模块，也不覆盖系统ISA-L。随后构建独立Cerasure程序，使用 `bash -e fasttt.sh` 执行附录原脚本的24项比较，校验逐项 `decode success` 与输出完整性。A2中的FastTT是该独立框架中的实现，不能与Ceph插件的测量数据混为一个表。
+
+所有输出默认保存在 `local_workspace/paper-reproduction/` 的独立目录；安装清单保存在 `build/fasttt-installation.json`。输出不会写进插件源码目录。

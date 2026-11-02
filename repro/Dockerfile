@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     liblz4-dev libzstd-dev libaio-dev libudev-dev libblkid-dev libkeyutils-dev \
     xfslibs-dev libgoogle-perftools-dev libexpat1-dev libcap-ng-dev \
     libatomic-ops-dev libsqlite3-dev uuid-dev libxml2-dev valgrind \
-    libhiredis-dev redis-server && rm -rf /var/lib/apt/lists/*
+    libhiredis-dev redis-server uuid-runtime iproute2 procps jq \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /ceph
 CMD ["bash"]
