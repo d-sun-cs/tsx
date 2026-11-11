@@ -166,3 +166,21 @@ set_target_properties(ec_tsx2 PROPERTIES
   INSTALL_RPATH "")
 target_link_libraries(ec_tsx2 json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsx2 DESTINATION ${erasure_plugin_dir})
+
+# Fixed-layout LRC scaffold. Real FastTT globals/tails remain TODO in this class.
+add_library(ec_tsx_lrc SHARED
+  ErasureCodePluginTsxLrc.cc
+  ErasureCodeTsxLrc.cc
+  $<TARGET_OBJECTS:erasure_code_objs>
+  $<TARGET_OBJECTS:crush_objs>
+  ${CMAKE_SOURCE_DIR}/src/common/str_map.cc)
+target_link_libraries(ec_tsx_lrc json_spirit)
+set_target_properties(ec_tsx_lrc PROPERTIES INSTALL_RPATH "")
+install(TARGETS ec_tsx_lrc DESTINATION ${erasure_plugin_dir})
+
+if(WITH_TESTS)
+  add_executable(ceph_test_erasure_code_tsx_lrc TestErasureCodeTsxLrc.cc)
+  target_link_libraries(ceph_test_erasure_code_tsx_lrc
+    ceph-common global ${CMAKE_DL_LIBS})
+  add_dependencies(ceph_test_erasure_code_tsx_lrc ec_tsx_lrc ec_isa)
+endif()

@@ -1,87 +1,64 @@
-#!/bin/bash
-
-current_dir=$(pwd)
-if [[ ! $current_dir =~ /ceph/src/erasure-code/tsx$ ]]; then
-    echo "Error: Please run this script from /ceph/src/erasure-code/tsx directory"
-    exit 1
+#!/usr/bin/env bash
+# Exhaustive recovery checks use the benchmark's byte comparisons, not its timing path.
+set -euo pipefail
+if [[ "${1:-}" == -h || "${1:-}" == --help ]]; then
+  echo "Usage: bash check_correctivity.sh [k m [chunk-KiB=2048] [pattern=random]]"
+  echo "No arguments: all four paper configurations, including 8+3 ablations."
+  exit 0
 fi
-
-CEPH_BUILD=$(cd ../../../build && pwd)
-
-cd $CEPH_BUILD || exit
-
-NINJA_TARGETS=("ec_tsx" "ec_tsxse" "ec_tsxnaive" "ec_tsxmap" "ec_tsxwin" "ec_tsxmerge" "ec_tsx4" "ceph_erasure_code_benchmark")
-
-needs_install=false
-
-for target in "${NINJA_TARGETS[@]}"; do
-    ninja_output=$(ninja "$target")
-    if [[ "$ninja_output" != *"no work to do."* ]]; then
-        needs_install=true
-    fi
-done
-
-if $needs_install; then
-    sudo ninja install
+[[ $# == 0 || $# == 2 || $# == 3 || $# == 4 ]] || { echo "Expected k m [chunk-KiB] [pattern]" >&2; exit 2; }
+cases=("6 2" "6 3" "8 3" "10 4")
+if (( $# )); then
+  case "$1 $2" in
+    '6 2'|'6 3'|'8 3'|'10 4') cases=("$1 $2");;
+    *) echo "Supported k,m: 6,2 / 6,3 / 8,3 / 10,4" >&2; exit 2;;
+  esac
 fi
-
-# 定义测试参数
-k=10
-m=4
-s=$((k * 2 * 1024 * 1024))  # 根据公式计算s值
-error_modes=(1 2 3 4)
-# algorithms=("tsxnaive" "tsxmap" "tsxwin" "tsxmerge" "tsx" "tsxse")
-algorithms=("tsx4")
-
-# 初始化测试结果跟踪
-all_tests_passed=true
-
-# 遍历所有算法和错误模式
-for algo in "${algorithms[@]}"; do
-    for e in "${error_modes[@]}"; do
-        echo "------------------------------------------------"
-        echo "Testing algorithm: $algo with error mode: $e"
-        echo "------------------------------------------------"
-        
-        # 运行测试并捕获输出
-        output=$(./bin/ceph_erasure_code_benchmark -w decode -p "$algo" -P k=$k -P m=$m -s $s -i 1 -v -E exhaustive -e $e 2>&1)
-        
-        # 检查输出中是否包含"fault"，如果all_tests_passed仍为true才有必要检查，否则跳过
-        if $all_tests_passed; then
-            if grep -q "fault" <<< "$output"; then
-                echo -e "\033[31mFAILURE: Fault detected during $algo test (e=$e)\033[0m"
-                all_tests_passed=false
-            else
-                echo -e "\033[32mNo faults detected in $algo (e=$e)\033[0m"
-            fi
-        fi
-
-
-        # 检查输出中是否包含"different"，如果all_tests_passed仍为true才有必要检查，否则跳过
-        if $all_tests_passed; then
-            if grep -q "different" <<< "$output"; then
-                echo -e "\033[31mFAILURE: Data mismatch detected in $algo (e=$e)\033[0m"
-                all_tests_passed=false
-            else
-                echo -e "\033[32mSUCCESS: $algo passed verification (e=$e)\033[0m"
-            fi
-        fi
-
-        
-        
-        # 输出分隔线
-        echo "================================================"
+chunk=${3:-2048}
+pattern=${4:-random}
+[[ "$chunk" =~ ^[1-9][0-9]*$ && "$chunk" -le 209715 ]] || { echo "Invalid chunk-KiB" >&2; exit 2; }
+[[ "$pattern" == random || "$pattern" == constant ]] || { echo "Use random or constant input" >&2; exit 2; }
+tsx=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+ceph=$(cd "$tsx/../../.." && pwd)
+build=${BUILD_DIR:-$ceph/build}
+plugins=${PLUGIN_DIR:-${INSTALL_PREFIX:-/usr/local}/lib/ceph/erasure-code}
+bench=$build/bin/ceph_erasure_code_benchmark
+test -x "$bench" || { echo "Run bash recmake.sh first" >&2; exit 1; }
+[[ $(redis-cli ping) == PONG ]] || { echo "Start the experiment's local Redis first" >&2; exit 1; }
+cpu=${CPU:-$(awk '/Cpus_allowed_list/ {split($2,a,/[,-]/); print a[1]}' /proc/self/status)}
+export OMP_NUM_THREADS=1
+mkdir -p "${RESULT_DIR:-$ceph/local_workspace/ec-tests}"
+out=$(mktemp -d "${RESULT_DIR:-$ceph/local_workspace/ec-tests}/correctness-XXXXXXXX")
+chmod 755 "$out"
+printf 'plugin,k,m,erasures,combinations,status\n' > "$out/results.csv"
+groups=0
+combinations=0
+for pair in "${cases[@]}"; do
+  read -r k m <<< "$pair"
+  case "$pair" in
+    '6 2') fasttt=tsx2;; '6 3'|'8 3') fasttt=tsx;; '10 4') fasttt=tsx4;;
+    *) echo "Supported k,m: 6,2 / 6,3 / 8,3 / 10,4" >&2; exit 2;;
+  esac
+  algorithms=("$fasttt" isa jerasure)
+  if [[ "$pair" == '8 3' ]]; then algorithms+=(tsxnaive tsxmap tsxwin tsxmerge); fi
+  for plugin in "${algorithms[@]}"; do
+    args=(-p "$plugin" -P "k=$k" -P "m=$m")
+    case "$plugin" in isa) args+=(-P technique=cauchy);; jerasure) args+=(-P technique=cauchy_good);; esac
+    for ((e=1; e<=m; e++)); do
+      cmd=(taskset -c "$cpu" "$bench" --erasure-code-dir "$plugins" "${args[@]}"
+        -s "$((k*chunk*1024))" -i 1 -w decode -v -E exhaustive -e "$e"
+        --input-pattern "$pattern" --input-seed 1)
+      printf '%q ' "${cmd[@]}" >> "$out/commands.log"; printf '\n' >> "$out/commands.log"
+      log=$out/$plugin-$k-$m-e$e.log
+      if ! "${cmd[@]}" > "$log" 2>&1; then
+        tail -40 "$log" >&2; echo "FAILED: $log" >&2; exit 1
+      fi
+      count=1
+      for ((i=1; i<=e; i++)); do count=$((count*(k+m-i+1)/i)); done
+      combinations=$((combinations+count)); groups=$((groups+1))
+      printf '%s,%s,%s,%s,%s,PASS\n' "$plugin" "$k" "$m" "$e" "$count" >> "$out/results.csv"
+      echo "PASS $plugin ($k,$m), erasures=$e, combinations=$count"
     done
+  done
 done
-
-# 返回原始目录
-cd "$current_dir" || exit
-
-# 输出最终测试结果
-if $all_tests_passed; then
-    echo -e "\n\033[42mALL TESTS PASSED SUCCESSFULLY\033[0m"
-    exit 0
-else
-    echo -e "\n\033[41mSOME TESTS FAILED\033[0m"
-    exit 1
-fi
+echo "PASS: $groups commands, $combinations erasure combinations. Logs: $out"

@@ -2,7 +2,7 @@
 
 > 本文件是可独立迁移的代码交接入口，直接保存研究目标、算法、代码职责、进展、证据、决策与下一步。接手 agent 不需要取得旧报告、演示稿、聊天、缓存或旧工作区，就能理解此前的核心工作；实施修改时仍须核对当前真实源码和环境约束。
 >
-> **研究主线仍为局部冗余纠删码（M1）与多线程模式设计（M2）；当前执行阶段先复现原论文实验、建立可信性能基线，再推进新实现。** 增量更新、码转换和 THEIA 预取暂列候选扩展。
+> **研究主线仍为局部冗余纠删码（M1）与多线程模式设计（M2）；当前只做Ceph纠删码benchmark和内存算法测试，系统集群验证后置。** 增量更新、码转换和 THEIA 预取暂列候选扩展。
 
 仓库内唯一主文档：`docs/agent/fasttt-handoff.md`（相对 **TSX 仓库根**）；根目录 `AGENTS.md` 是发现入口，`README.md` 提供导航。原文件 `FastTT_代码Agent交接文档.md` 已迁移，不保留第二份正文。本文仍可单独携带阅读；迁移的是上下文，源码、未提交文件、stash、构建环境和进程需要分别迁移或重建。
 
@@ -10,21 +10,21 @@
 
 | 字段 | 当前值 |
 | --- | --- |
-| 文档修订 | r14，附录A1/A2标准安装、编码/消融、独立比较和BlueStore读写/降级流程全部通过 |
-| 最近更新时间 | 2026-11-02，Asia/Shanghai（UTC+8） |
+| 文档修订 | r19，补齐encode/decode_chunks逐参数／逐片号契约、上层缓冲准备和层内重编号；代码与r16验证不变 |
+| 最近更新时间 | 2026-11-09，Asia/Shanghai（UTC+8） |
 | 本次维护者 | Codex 主 agent；只读审查结果由主 agent 合并，正文单写者 |
 | 文档入口 | TSX 根 `AGENTS.md` → `docs/agent/fasttt-handoff.md`；所有定位均相对仓库，不绑定机器路径 |
 | 实际开发工作树 | 已定位：独立 Git 仓库 `d-sun-cs/tsx` 嵌在 Ceph 的 `src/erasure-code/tsx`；未注册为 Ceph Git submodule。两层 Git 必须分别核验 |
-| TSX 当前基线 | `research/ceph-v18.2.7`；环境代码基线 `f244e3b0cdcc482ee2442dbd4c4b61d529c5b4de`，后续 `45b62f3`修正独立clone的根目录发现／--help，当前完整身份取实际HEAD；算法基于 `v0.0.1-ipdps@5c85ce5e629905fcf8e660c8490f6b66a4160c69`，编解码C++未改；本交接与AGENTS另随分支管理 |
-| Ceph 当前基线 | 官方 `v18.2.7`，detached HEAD `6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad`；递归子模块已全部对齐；父工作区仅应用 TSX 仓库内保存的三份明确补丁 |
+| TSX 当前基线 | research/ceph-v18.2.7；已提交HEAD8ad62fe，本轮及r15均为未提交工作树修改。原tsx/2/4算法仍基于v0.0.1-ipdps@5c85ce5，另新增tsx_lrc占位骨架 |
+| Ceph 当前基线 | 官方 `v18.2.7@6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad`，detached；原四文件差异由根目录 `ceph-v18.2.7.patch` 精确重建 |
 | 已检查的参考代码身份 | TSX 算法仍为发布 AVX2 基线。7.9–7.13 的深入 OSD/LRC 核验对应历史 Ceph20，迁移到18时必须重新定位；当前18旧 map/set EC接口与TSX匹配 |
-| 最新用户要求 | 2026-11-02按论文附录正确安装TSX对应插件，并用合适脚本实际打通实验流程，允许数值不同；持续记录安装、测量、故障与阶段完成情况 |
-| 当前代码工作状态 | 新增repro/appendix.py，修正附录两份shell入口，补Docker依赖／A2版本锁与复现说明；C++算法与普通AVX2基线不变。插件标准安装和全部实际流程通过；本轮新增提交仅本地，未推送 |
-| 当前实验状态 | 163项编码/多擦除/消融，每项2000次；安装后48命令6522随机擦除；A2原脚本24项；最终BlueStore12池36次PUT/GET及12次单OSD降级GET全通过。集群正常停止，无强杀／残留 |
-| M1 状态 | 已有 8＋2 全局＋2 局部设计及最小实现建议（7.10）；物理编号仅为原型候选，尚未成为格式。当前活跃 TSX 没有新布局／局部校验／合法选片规划器，历史 Python 结果仍未复现 |
+| 最新用户要求 | 2026-11-09准确回顾encode_chunks／decode_chunks每个参数和索引对应的数据，延伸到上层怎样给数据／要求何种输出，以简洁示例写入人读设计和handoff |
+| 当前代码工作状态 | 本轮仅更新设计与handoff，核对当前18基类／ECUtil／新旧TSX实际调用；r15精简和r16占位骨架不改，仍未提交／推送 |
+| 当前实验状态 | 沿用r16原6522组合与新骨架532恢复＋64预期拒绝；本轮仅源码契约核验／文档校验，无新构建、算法或集群运行 |
+| M1 状态 | 固定8+2+2的独立tsx_lrc骨架与局部XOR／规划已存在且测试；全局暂ISA，mode=fasttt返回-95。真正G+/G-、尾部与联合三擦除恢复未实现，不标M1完成 |
 | M2 状态 | 已有输出拥有权与线程预算设计；当前活跃内核未见线程池、任务切分或实际多线程执行 |
-| 当前主要缺口 | 附录实验流程已打通，尚非论文硬件或公平性能比例复现：SIMD路径与多轮稳定性需另验。公开Docker空镜像未验收；TT尾部持久化／任意长度／M1/M2仍待实现 |
-| 接手后的第一项任务 | 先核验7.17本轮安装／结果／执行入口，T0-PAPER流程验收已完成；可按既定方案继续T1与M1/M2。若需论文级数值结论，另安排同SIMD和多轮独占测量，不把本轮流程数据当性能承诺 |
+| 当前主要缺口 | 真正TT全局内核、尾部／等长片契约、联合恢复和M2尚未实现；占位骨架32种三擦除每长度明确拒绝。当前不要求集群或性能验收 |
+| 接手后的第一项任务 | 按7.5／7.18运行原纠删码与check_lrc确认骨架；优先定义TT显式尾部契约并实现init_fasttt_global_layer，再补联合恢复，保留scaffold测试对照 |
 
 ### 0.1 给新 agent 的启动指令
 
@@ -145,7 +145,7 @@ Markdown 文件本身不会在后台运行、监听代码变化、定时唤醒 a
 | 共同系统验证 M3 | Ceph 集成与可靠性闭环 | 正常写、降级读、重建、重启与尾部可用性 |
 | 候选扩展 | 增量更新、复杂多擦除并行、码转换、THEIA 预取 | 保留理解和接口线索，不挤占 M1／M2 的当前验收范围 |
 
-`[用户确定，2026-11-02]` 当前先复现原论文实验以确认环境与建立基线；M1/M2研究范围保留，但其新实现排在T0-PAPER之后。
+`[用户确定，2026-11-07]` 当前收敛为纠删码插件安装与自定义内存测试；原论文参数与M1/M2保留，不把虚拟集群或独立Cerasure环境当作本阶段前置。
 
 `[用户确定]` 两个优先里程碑均须保留。历史上曾考虑“做小原型后选一个主方案”，现已由双里程碑优先要求覆盖，不得自行删掉其中一个。具体工作次序可按依赖和实验结果调整，重大范围变化须记录依据。
 
@@ -213,7 +213,7 @@ CFWP 的设计条件是窗口至少覆盖 `k-1` 个单元；一种取值办法�
 
 ## 5. M1：局部冗余纠删码
 
-本节完整定义当前优先设计，**不是对当前代码已实现功能的宣告**。先做完整对象写与恢复闭环，覆盖写增量接口后置。
+本节定义完整TT-LRC目标。r16已实现独立插件骨架、局部XOR与ISA占位执行流，但G+/G-、移位尾部和完整三擦除恢复仍未实现，见7.18；覆盖写增量接口后置。
 
 ### 5.1 拟议布局与编码
 
@@ -353,7 +353,7 @@ D1[t] = S[t] XOR D0[t]
 
 这组身份标识历史算法基线；当前仓库完整HEAD见0节及实际Git，本轮方案复核只改文档。下面使用文件名、类／函数和行为特征定位，不依赖旧行号。父 Ceph 有自己的提交和未提交代码，不能由 TSX 提交号代表，见 7.6。
 
-**算法代码已定位且原TSX基线已实际构建与测试；M1／M2仍没有新增实现。** 不同阶段实验仅对各自记录的版本与输入成立。
+**原TSX基线已实际构建与测试；r16另有M1占位骨架，TT内核与M2尚未实现。** 不同阶段实验仅对各自记录的版本与输入成立。
 
 ### 7.2 核心入口与调用关系
 
@@ -371,7 +371,7 @@ D1[t] = S[t] XOR D0[t]
 
 调用链的理解起点：`插件注册／factory → ErasureCodeTsx::init → Ceph ErasureCode::encode／_decode → encode_chunks／decode_chunks → 快路径或一般窗口解码 → 该分支需要的尾部存取 → 返回`。当前Ceph18已实际通过工厂创建／插件加载与编解码；历史Ceph20的纯虚不兼容不能继续作为当前阻碍。读取前另有 `minimum_to_decode → _minimum_to_decode`；已核验默认选片规则；当前18见5.3／7.14，7.7仅为历史20差异。实例是否共享、对象／条带版本如何传递至尾部存储仍待上层追踪。
 
-原三校验物理映射已核验：数据索引 `0…k-1`；`encoded[k]`／`parity1` 对应 `G+`，`encoded[k+1]`／`parity2` 对应无移位 `P0`，`encoded[k+2]`／`parity3` 对应 `G-`。新 M1 的 12 片编号尚未确定；旧解码器依赖中间 P0 的位置，必须有显式适配。
+原三校验物理映射已核验：数据索引 `0…k-1`；`encoded[k]`／`parity1` 对应 `G+`，`encoded[k+1]`／`parity2` 对应无移位 `P0`，`encoded[k+2]`／`parity3` 对应 `G-`。r16骨架固定的12片编号见7.18，尚非已发布TT存储格式；旧解码器依赖中间P0位置，仍须显式适配。
 
 ### 7.3 变体与参数现状
 
@@ -396,7 +396,7 @@ D1[t] = S[t] XOR D0[t]
 - 主入口仅在“恰好 1 个数据缺失且 3 个校验都在输入集合”时调用单数据快路径；数据全在且只缺 1 校验时调用单校验重算；校验全缺而数据全在时复用编码器。数学上只需 7 数据＋P0，不代表当前分支条件允许只给这 8 片便走快路径；Ceph 实际选片与该条件的配合仍待实测。
 - 一般解码先在当前窗口代入，再对前一窗口消元，具有“代入领先消元”的依赖；这不是自动可并行的独立窗口。
 - 已读的 9 个非 Plugin 编解码实现（含 Cerasure 包装）中，未发现 OpenMP 指令、线程创建、线程池或实际异步执行标记；结论是**未见编解码多线程实现**，不是“链接 OpenMP 后已实现”。
-- 活跃内核未见局部组／局部校验／locality 参数，校验遍历全 `k`。Ceph 原生 lrc 模块被纳入构建，只说明那个模块存在，不代表 FastTT 已完成 M1。
+- 原TSX主内核未见局部组／局部校验／locality 参数，校验遍历全 `k`；r16新增独立tsx_lrc骨架见7.18。Ceph 原生 lrc 模块被纳入构建，只说明那个模块存在，不代表 FastTT 已完成 M1。
 
 ### 7.4 Redis 尾部：当前实现、具体局限与改动入口
 
@@ -434,59 +434,70 @@ decode_chunks：window_id==1 时 GET，复制 reply->str/reply->len，再挂接 
 
 M1 不再保存 P0，会直接触及旧“用 P0 首 32B 作键”的耦合；不能只新增 L0／L1 后保持全部尾部逻辑不变。独立原型可先把尾部作为显式输入／输出，Ceph 接入时再落实对象／条带／版本一致的可靠方案。选择何种存储方式尚未确定，不能将建议伪装成已有接口。
 
-### 7.5 构建、运行与脚本审查
+### 7.5 安装与运行：当前唯一操作说明
 
-`[代码核验]` 历史构建方案使用 Linux／Ubuntu 容器、支持 AVX2 的 CPU、Ceph **v18.2.7**，将 TSX 放入 Ceph 纠删码子目录构建，依赖 Docker、Python 3、hiredis／Redis。TSX 在当前父仓库没有 submodule 登记，不能用 `git submodule update` 代替获取该独立仓库。r3时仅作只读识别；r8已按论文切回18并重建，现行入口与验证见7.14。
+`[用户确定，2026-11-07]` 当前只构建并运行 Ceph 自定义纠删码 benchmark；不用 MON／OSD、vstart、rados 或分布式虚拟集群。安装、依赖和测试说明集中在本文；根目录 shell 直接执行实际命令，没有 Python runner、配置清单或第二份操作手册。
 
-构建采用 Ceph 上下文的 object targets，**不是独立普通 CMake 工程**。已有脚本的工作顺序是：准备 Ceph 与 tsx → 宿主运行容器设置脚本 → 容器内初始化环境与安装依赖 → 构建 → 基准。涉及的脚本标识及其行为已在下表直接说明，不需要读取另一份设置文档；执行前仍须核对当前源码和脚本副作用。
+**版本与目录。** Ceph 为官方 `v18.2.7@6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad`；TSX 使用 `research/ceph-v18.2.7`，算法仍基于普通 AVX2 `v0.0.1-ipdps@5c85ce5e629905fcf8e660c8490f6b66a4160c69`。TSX 必须位于 Ceph 的 `src/erasure-code/tsx`。脚本自己定位目录，下面均从 TSX 根执行；复现指定实验时分别核对两个 Git HEAD 和未提交差异。本次精简基于本地 `8ad62fe0fbdc1f84f07ea662f9b0ccff544753fb`；新工作区需取得包含精简改动的版本，远端旧提交没有这些改动。
 
-| 脚本／入口 | 5c85历史脚本审查；r14活动入口另见7.17 |
-| --- | --- |
-| `setup_container.sh`、`update_cmake.sh`、`update_docker_build.sh` | 容器准备期间会更新／覆盖 Ceph 父级 CMakeLists 和容器构建配置；先查看 diff，不把它当无副作用初始化 |
-| `coding_benchmark*.sh` | 可能编译多个插件并执行 `sudo ninja install`，会改变安装内容；不是纯测试命令 |
-| `init_container_env.sh`、`install_dependencies.sh` | 容器内环境／依赖初始化；后者安装 Redis 与 hiredis 并关闭 Redis 持久化，不能直接套用于已有服务环境 |
-| `recmake.sh` | 删除 Ceph 的整个 `build` 后重新配置、全量构建；不能当日常增量编译入口 |
-| `coding_benchmark_cases.sh` | 参数声明为 k/m/块KB/次数，但 `TEST_COUNT=${3:-4000}` 错误复用第 3 参数；构建目标未列 `ec_tsx2/ec_tsx4`，后面却会选它们；预热固定擦除 3 片，对 `m=2` 不适配 |
-| 同上脚本的统计／退出 | 历史研究使用过 2000 次，而代码默认值为 4000 且存在上述参数错误；实际次数须记录，随机擦除选择须可复现；不能仅用最后的成功提示判定通过，须核查各命令退出码及输出 |
-| `check_correctivity.sh` | 当前固定 `tsx4,k=10,m=4`，用 `-v -E exhaustive -e 1..4`；按输出 `fault/different` 判断，没有充分利用被测命令退出码；不能代表全部变体已通过 |
-| `run_end_to_end_tests.sh` | 包装 vstart 和 tsx／ISA-L／Jerasure 测试，默认 `(8,3),2m,10次`；原实现把输出写到固定容器地址并覆盖旧内容，迁移前需改为运行时解析，并将关键结果内联到本文 |
-| `vstart.sh` | 实际启动参数含 `--memstore`；不能把当前脚本的结果标成磁盘端到端实验 |
-| `vstart.sh`、`stop.sh` | 还会停止测试集群并删除 build 下的 `out`／`dev`；恢复上下文时不能自动运行 |
-| `general_test.sh` | 生成 2GiB 文件，PUT／停止部分 OSD／GET／diff；固定 `osd_ids[7],[9],[8]`，未随布局适配；会删除测试对象及本地测试文件，仅应在明确隔离的测试环境使用 |
-| 旧设置入口的完整性 | 曾有脚本提示不存在于该参考版本的批量入口，不能照抄提示执行；`fasttt.sh` 属于另一个 Cerasure 对比实现，不能在 tsx 中假定存在，也不作为当前 M1／M2 的接手前置 |
-
-r14已将coding_benchmark_cases.sh和run_end_to_end_tests.sh改为统一runner包装，修复上述两入口的问题；本表其余旧脚本仅保留历史，不作为现行附录执行链。现行入口、安装和完整结果见7.17。
-
-接手后先从当前工具提供的工作目录和已挂载源码识别各根目录：`TSX_ROOT` 表示包含 tsx 编解码类的仓库根，`CEPH_ROOT` 表示对应 Ceph 根，`BUILD_ROOT` 表示已配置的构建根。变量名是运行时角色，不是旧地址；未定位时不得猜测执行。可先按文件／符号检索，再使用以下只读命令：
+首次取得源码（宿主）：
 
 ```bash
-git -C "$TSX_ROOT" status --short
-git -C "$TSX_ROOT" rev-parse --show-toplevel
-git -C "$TSX_ROOT" rev-parse HEAD
-git -C "$TSX_ROOT" branch --show-current
-git -C "$TSX_ROOT" diff --stat
-git -C "$CEPH_ROOT" describe --tags --always
-rg -n 'encode_chunks|decode_chunks|decode_one_data_chunk|reencode_one_coding_chunk' "$TSX_ROOT"
-rg -n 'WINDOW_SIZE|EXTRA_DATA_SIZE|redisCommand|rctx' "$TSX_ROOT"
+git clone --branch v18.2.7 --depth 1 --recurse-submodules https://github.com/ceph/ceph.git
+cd ceph
+git clone --branch research/ceph-v18.2.7 https://github.com/d-sun-cs/tsx.git src/erasure-code/tsx
+cd src/erasure-code/tsx
 ```
 
-在**已正确配置的 Linux Ceph 构建目录**内，以下是由 CMake 定义确认目标名后的候选增量入口，本轮未执行：
+**构建环境。** 使用支持 AVX2 的 Linux／Ubuntu22.04、GCC11、CMake、Ninja。已有环境直接使用；本机可在宿主执行 `docker exec -it fasttt_reef bash`，进入后 `cd /ceph/src/erasure-code/tsx`。需要新容器时，宿主运行 `bash setup_container.sh`，它仅挂载当前 Ceph 到 `/ceph` 并打开 Ubuntu22.04 shell；退出后容器保留，可用 `docker start -ai fasttt_ec` 再进入。没有自定义 Dockerfile 或 Ceph 集群初始化。
+
+新 Ubuntu22.04 环境的依赖命令如下（容器内 root 执行；已有依赖则跳过）：
 
 ```bash
-cd "$BUILD_ROOT"
-ninja ec_tsx ceph_erasure_code_benchmark
-# 若需要对应变体，显式追加 ec_tsx2 / ec_tsx4；不要依赖旧脚本已构建它们。
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends   ca-certificates git build-essential gcc-11 g++-11 cmake ninja-build   autoconf automake libtool pkg-config nasm curl python3 python3-dev   python3-setuptools python3-pip cython3 python3-yaml python3-prettytable   python3-sphinx libssl-dev libcurl4-openssl-dev libsnappy-dev zlib1g-dev   liblz4-dev libzstd-dev libaio-dev libudev-dev libblkid-dev libkeyutils-dev   xfslibs-dev libgoogle-perftools-dev libexpat1-dev libcap-ng-dev   libatomic-ops-dev libsqlite3-dev uuid-dev libxml2-dev valgrind   libhiredis-dev redis-server
 ```
 
-脚本中已有的正确性调用形式如下，仅展示待核验命令，不代表已经运行；先确认实际程序帮助、插件加载位置、对齐要求和 Redis 状态，再扩展到全变体：
+若容器 Git 提示挂载目录的 ownership 不匹配，仅在此专用实验容器中执行 `git config --global --add safe.directory '*'`。不要运行旧 `init_container_env.sh`／`install_dependencies.sh`，不添加第三方 Redis 源，不克隆未固定版本的 hiredis，也不改已有 Redis 的全局持久化配置。论文未锁 Redis／hiredis 版本；本机已有 Redis8.4.0、hiredis1.3.0 与 Ubuntu 包版本可能不同。
+
+**安装并测试。** 原 TSX 仍把移位尾部存在本机 Redis，所以即使只做内存测试也需要它。先执行 `redis-cli ping`；若该独立实验环境没有 Redis，再启动一个回环实例：
 
 ```bash
-# 先在当前环境定位并进入已构建的 BUILD_ROOT；以下为旧tsx4配置，不是新M1布局。
-cd "$BUILD_ROOT"
-./bin/ceph_erasure_code_benchmark -w decode -p tsx4 -P k=10 -P m=4 -s 20971520 -i 1 -v -E exhaustive -e 1
+redis-server --bind 127.0.0.1 --port 6379 --save '' --appendonly no --daemonize yes
+redis-cli ping                         # 必须为 PONG
+bash recmake.sh 8                       # 只构建／安装 EC 插件与 benchmark
+bash check_correctivity.sh             # 四配置＋8/3消融，随机输入穷举恢复
+bash check_lrc.sh                      # 新tsx_lrc占位骨架：选片／恢复／错误路径
+bash coding_benchmark_cases.sh 8 3 2048 2000
 ```
 
-后续必须在本文补充**真实成功过的**构建、加载和测试命令，以及退出码、关键输出、版本和环境；不能只留下外部日志地址。不要把本节候选入口直接标记为可复现完成。
+已有 Redis 返回 PONG 时跳过启动命令。`recmake.sh` 校验 Ceph SHA／子模块与缓存归属，幂等应用根目录 `ceph-v18.2.7.patch`，冲突即退出；不会删除 build。该单补丁完整保留原三份补丁：启用 TSX、给官方 benchmark 增加 constant/random 输入与 seed／首差异诊断、修正 Boost 官方下载地址；父仓库仍只改原四文件。Boost仍为1.79.0，SHA256 `475d589d51a7f8b3ba2ba4eda022b170e562ca3b760ee922c146b6c65856ef39`，首次构建需获取其源码。
+
+构建显式指定 `ceph_erasure_code_benchmark`、原8个TSX族插件、新ec_tsx_lrc及其独立测试、ISA-L和Jerasure；关闭BlueStore等系统功能。Ceph公共库及这些插件的依赖会自动构建，但不选择 `all`、`vstart`、`ceph-osd`、`ceph-mon` 等目标。安装只执行 tsx／isa／jerasure 三个子目录生成的安装规则，不执行全量 `ninja install`。默认插件目录 `/usr/local/lib/ceph/erasure-code`，默认 benchmark 为 Ceph根 `build/bin/ceph_erasure_code_benchmark`；安装系统目录需相应写权限，容器中使用root。
+
+不写系统目录时，在三项命令前统一设置 `export INSTALL_PREFIX="$CEPH_ROOT/local_workspace/ec-install"`，其中 CEPH_ROOT 必须是本机实际绝对目录。`BUILD_DIR` 可指定独立绝对构建目录；测试还可通过 `PLUGIN_DIR` 覆盖加载目录、`CPU` 指定亲和核、`RESULT_DIR` 指定输出根。不设置时自动取允许使用的最小CPU、OMP_NUM_THREADS=1、Ceph根 `local_workspace/ec-tests/`；每次建立独立结果目录，不覆盖旧数据。
+
+**正确性命令。** 无参数覆盖 `(6,2,tsx2)/(6,3,tsx)/(8,3,tsx)/(10,4,tsx4)`，均与ISA-L cauchy、Jerasure cauchy_good对照；8/3另加naive/map/win/merge。默认每数据片2048KiB、mt19937低8位随机输入、seed1，逐个执行 `-w decode -i 1 -v -E exhaustive -e 1..m`。官方基准逐字节比较每个丢失数据／校验主片；共48命令、6522个组合执行，通过后输出计数。它不包括未用于论文的tsxse。只检查一组或改输入时：
+
+```bash
+bash check_correctivity.sh 6 2 2048 random
+bash check_correctivity.sh 8 3 64 constant
+```
+
+**性能命令。** 四个位置参数依次为 k、m、每数据片KiB、每测项迭代数；省略时为 `8 3 2048 2000`，8/3自动带消融。编码及1..m总擦除下的每种数据／校验数量分别测量，位置固定为各类前几个片，所有实现相同。输入为原默认constant X；每测项先预热2次，再计时2000次。四配置全跑：
+
+```bash
+for pair in '6 2' '6 3' '8 3' '10 4'; do
+  read -r k m <<< "$pair"
+  bash coding_benchmark_cases.sh "$k" "$m" 2048 2000
+done
+```
+
+全矩阵163项；`results.csv`保存逐项时间、KiB、十进制GB/s和二进制GiB/s，`summary.csv`按插件／编码或解码／擦除总数，对故障类型吞吐做算术平均。每条实际命令与预热／计时原始日志保留；命令失败或计量不符立即退出。显式 `--erased` 的计时路径不比较恢复字节，不能替代前面的独立正确性检查。当前固定故障位置不同于r14的seed1抽样位置，所以两次性能数据不混算。
+
+`all_test.sh`、`all_test_cases.sh`、`vstart.sh`、`general_test.sh`、`stop.sh`、`restart-osds.sh` 是保留的旧集群脚本；`cache_memory_access_test.sh` 和其他 `coding_benchmark*.sh` 是旧专项脚本，当前不作为必需入口。`update_cmake.sh` 会整文件覆盖父CMake，`update_docker_build.sh`会改父容器工具，均不用。已删除引用Python runner的 `run_end_to_end_tests.sh`。Cerasure A2的历史结果见7.17，当前不再维护独立框架／集群的一键封装。M3系统验证留待以后单独开展。
+
+本节命令只确认对齐片长与尾部当次可用条件下的插件正确性／性能；任意长度、尾部丢失／重启可靠性及M1/M2仍需后续实现。当前Xeon8358与论文i9-14900K不同，ISA-L存在运行时SIMD分派；单轮计时不能直接称为论文性能比例复现。
 
 ### 7.6 当前开发工作树地图：接手后维护在这里
 
@@ -497,13 +508,13 @@ cd "$BUILD_ROOT"
 | TSX 身份 | `d-sun-cs/tsx`，`research/ceph-v18.2.7`；算法基线 `5c85ce5e629905fcf8e660c8490f6b66a4160c69`，尚未改编解码 C++ |
 | Ceph 身份 | `ceph/ceph`，官方 `v18.2.7@6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad`，detached；所有递归 gitlinks 已对齐 |
 | 根目录 | TSX 为 `CEPH_ROOT/src/erasure-code/tsx` 的独立 Git 仓库，不是父 Ceph submodule；分别记录 HEAD/diff |
-| Ceph 可重建差异 | `repro/patches/0001` 启用TSX与3个组目标；`0002` benchmark constant/random与uint32 seed默认1、mt19937每次低8位和首差异诊断；`0003` Boost1.79下载改官方archive，哈希不变。prepare幂等应用；不能只携带父diff而丢掉其源补丁 |
-| TSX 新增接入 | `CMakeLists.txt` hiredis头／库发现及各target include、Cerasure默认可选关闭；`repro/versions.json`、`reproduce.py`、Dockerfile与README负责版本、构建、正确性及证据清单 |
+| Ceph 可重建差异 | 根目录 `ceph-v18.2.7.patch` 合并原三补丁，仍只改父CMake、benchmark .cc/.h、Boost下载四文件；recmake.sh幂等应用，冲突退出 |
+| TSX 新增接入 | CMake增加ec_tsx_lrc及ceph_test_erasure_code_tsx_lrc；recmake.sh一并构建安装，新check_lrc.sh直接运行已安装插件测试；无新编排框架 |
 | 非源码资料 | Ceph根 `local_workspace/` 保留论文、结果、备份与归档；TSX `AGENTS.md`／唯一handoff为文档入口，不加入CMake源列表 |
-| 构建环境 | 宿主缺cmake/ninja，已有`ceph_build`容器挂载当前Ceph为`/ceph`；Ubuntu22.04、GCC11.4、CMake3.22.1。现有私人镜像只供本机核验，不是新工作区必需依赖；公开Dockerfile另存 |
+| 构建环境 | Ubuntu22.04／GCC11.4／CMake3.22.1；本机fasttt_reef挂载Ceph为/ceph，独立回环Redis。新工作区可直接安装7.5列出的Ubuntu依赖，不需私人镜像 |
 | 旧 build | 完整移至 `local_workspace/build-archives/ceph-v20.2.0-avx512-20261101`，约51GiB；不删除、不复用cache或.so。新 `build/` 已GCC11.4配置成功，不含全局AVX512 |
-| M1/M2与尾部 | 尚无新局部布局／规划器／线程执行；仍是P0内容键＋同步Redis，可靠性问题保留 |
-| 最新验证 | 新构建与48组7,464组合已通过；r11另完成24项论文参数基础性能预检，非全套论文性能复现 |
+| M1/M2与尾部 | tsx_lrc已有固定层和共享恢复计划，但全局为ISA、无TT尾部；原TSX仍P0内容键＋同步Redis。M2线程执行及持久化可靠性仍未实现 |
+| 最新验证 | 原插件48命令6522组合回归通过；新占位骨架532恢复＋64预期拒绝、注册／输入过滤／错误路径通过，完整边界见7.18 |
 
 **普通主线与旧实验的隔离。** 用户已停止 AVX512 实验；当前 TSX CMake 主要使用 `-mavx2 -O3`，主实现为 `_mm256_*`。旧改动保存在本地 stash 对象 `032f48c806f57ab39b89a12080f2ac4f203dd27d`，创建时名为 `stash@{0}`，基于 AVX512 提交 `f98ebcba4164f3e46b63dff722501fe6a7859325`；包含 `CMakeLists.txt`、`ErasureCodeTsx.cc/.h`、`archive/CMakeLists.txt`、`coding_benchmark.sh`、`reproduce_fasttt.py` 六个文件，统计 1453 行新增／257 行删除。stash 序号会变，且不会随 clone／普通 push 自动迁移；它不属于当前 main，也不是接手前置条件。不得为“修好接口”直接整包应用旧实验 stash。
 
@@ -627,7 +638,7 @@ local layer1   _ _ _ _ D D D c      局部校验在 7
 
 ### 7.10 FastTT-LRC 最小原型：类比 ISA→TSX 的实现路径
 
-`[设计建议＋代码核验，2026-10-31，E-PROTO-r5]` 用户要求先讲清最小实现逻辑，并未要求本轮创建插件。下面均为拟议名称与职责，不是已有文件／函数，也不代表已选定最终架构或已完成M1。r11已将最小接口表改为当前Ceph18要求，保留后文20缓冲分析的历史身份。
+`[历史设计建议＋代码核验，2026-10-31，E-PROTO-r5；r16实际骨架见7.18]` 用户要求先讲清最小实现逻辑，并未要求本轮创建插件。下面均为拟议名称与职责，不是已有文件／函数，也不代表已选定最终架构或已完成M1。r11已将最小接口表改为当前Ceph18要求，保留后文20缓冲分析的历史身份。
 
 **与此前实现方式的类比。** ISA→TSX 可沿用 Ceph 插件注册、factory、profile 和构建骨架，编解码处接入 TT 算法；TSX→TSX-LRC 可沿用同类骨架，复用 TT 计算，再增加局部组、局部 XOR 和恢复分派。新增的关键责任是 `_minimum_to_decode()`：选片必须与实际恢复算法配套，不能继续使用默认任取 k 片规则。官方 LRC 提供这一组织方式的参照，不必初版就复制它的通用 JSON layers／参数生成器。
 
@@ -793,13 +804,11 @@ chunk_mapping=[0,1,4,5,2,3,6,7]
 
 **18前台读的关键限制。** `ECBackend::objects_read_and_reconstruct`无条件以 `ECBackend.h::get_want_to_read_shards` 构造全部k条数据ID，`CallClientContexts::finish`经 `ECUtil::decode`／`decode_concat`重构整个stripe再裁客户端范围。它没有20 legacy partial-read分支。因此M1的单目标4helper能力应先在插件严格限制输入测试／后台恢复上验收；不能直接宣称Ceph18前台小读也只读4helpers。若要这一端到端收益，需要另外改读路径并测试。7.9–7.13中的20调用链保留历史证据，以本段18映射为当前约束。
 
-**新工作区的最小流程。** 克隆官方 `ceph/ceph --branch v18.2.7 --depth 1 --recurse-submodules`；将TSX对应研究分支克隆到`src/erasure-code/tsx`，再固定为该实验记录的完整commit；宿主执行`python3 src/erasure-code/tsx/repro/reproduce.py prepare`；用该目录Dockerfile构建Ubuntu22镜像，挂载Ceph到`/ceph`；容器内执行同入口`build --jobs 8`，启动独立回环Redis后执行`verify`。父Ceph只需官方tag和TSX携带补丁；不需要旧工作区dirty文件、旧私人镜像或旧二进制。研究分支已发布到 `d-sun-cs/tsx` 的 `research/ceph-v18.2.7`，可直接clone；具体实验仍固定为记录中的完整commit，不只依赖移动分支名。
-
-**新代码职责。** `versions.json`锁Ceph SHA、普通TSX起点和论文条件；`prepare`拒绝错版Ceph／子模块漂移，并顺序检查应用3patch，不强制覆盖冲突；`configure/build`用新cache和gcc-11/g++-11、目标AVX2，无全局AVX512，只编译3变体、ISA、Jerasure和benchmark；`verify`在4组论文(k,m)、两种等长片大小（64KiB／2MiB）和constant/random输入上穷举1..m擦除，逐字节验证恢复；JSON证据记录HEAD／diff／子模块／工具／产物哈希。此处没有M1/M2实现，也没有任意长度或系统可靠性保证。
+**当前重建方法。** 版本、依赖、单一接入补丁和直接shell命令已集中在7.5。r8曾使用版本JSON、Python构建／验证工具与3份分散补丁；这些编排文件已在r15删除，父四文件的同样差异由根目录单补丁携带，避免依赖旧工作区dirty源码。下文仅记录r8当时的真实执行。
 
 **E1／E-REEF-r8实际结果。** 环境代码提交 `f244e3b0cdcc482ee2442dbd4c4b61d529c5b4de`；Ceph固定SHA见快照，父4文件修改精确等于3patch。已用独立临时git工作区取官方tag的原文件、应用全部patch、与当前父文件逐字节比较，并反向check：全部通过，证明没有遗漏的隐藏父源码修改。新GCC为`11.4.0-1ubuntu1~22.04.2`，CMake3.22.1，Boost1.79固定SHA；C/CXX全局flags为空，TSX目标`-mavx2 -O3`，构建类型RelWithDebInfo。NASM能汇编AVX512只是系统能力检测，不等于TSX恢复了AVX512实现。
 
-实际命令：已有构建容器挂载当前Ceph到`/ceph`，在Ceph根执行 `python3 src/erasure-code/tsx/repro/reproduce.py build --jobs 24`，所有6目标退出0；独立`fasttt_reef`容器使用同源挂载、`--network none`，只启动`redis-server --bind 127.0.0.1 --port 6379 --save '' --appendonly no --daemonize yes`，随后运行同入口`verify`。本机验证Redis实际为8.4.0、hiredis1.3.0；论文没有锁这两者版本，Dockerfile的Ubuntu包可能不同，不能声称完全相同依赖镜像。旧容器Redis及其他`/tmp`工作树未动。
+当时已有容器挂载当前Ceph到`/ceph`，旧工具以jobs24构建三种TSX、ISA、Jerasure及benchmark，六目标均退出0；独立`fasttt_reef`容器使用同源挂载、`--network none`，只启动`redis-server --bind 127.0.0.1 --port 6379 --save '' --appendonly no --daemonize yes`，随后以旧工具执行下述穷举矩阵。本机验证Redis实际为8.4.0、hiredis1.3.0；论文没有锁这两者版本，Ubuntu依赖包可能不同，不能声称完全相同依赖镜像。旧容器Redis及其他`/tmp`工作树未动。
 
 验证输入为 `(6,2,tsx2)、(6,3,tsx)、(8,3,tsx)、(10,4,tsx4)`；每组数据片长64KiB和2MiB，`-s=k*片长`，constant全X与random，seed1，`-i 1 -w decode -E exhaustive -e 1..m -v`。random为mt19937每次低8位，种子1前10字节 `25 eb 8c 48 ff 89 cb 85 4f c0`。每一缺失主片均由官方benchmark比较长度和内容。48条命令全部退出0，实际打印组合计数与预期全部一致，组合总数 **7,464**；n=14,m=4的四擦除每类输入/长度分别验证1,001组合。只证明这些完整对齐窗口与同次编码尾部可用条件下正确；没有运行任意长度、Redis丢失、跨重启、OSD故障、LRC、多线程或性能验收。
 
@@ -812,9 +821,9 @@ libec_tsx4.so cc35ee3604e7a8b2ebf577420b4ccceb7ed08dd096abbcdac89689d58df47f4d
 benchmark    c295316358ee6df9800d1cf96c9b72bdc852c49381918ffcc68fc03d01b87bbc
 ```
 
-`build/fasttt-build.json`、`fasttt-verification.json`、`fasttt-environment.json`保存源码／diff／子模块／产物和编译命令／包版本；验证记录HEAD为环境代码基线f244e3b，后续仅handoff与独立clone根发现修正、不改变编译输入，产物身份仍可由source_hashes核对；原始输出留在本地`local_workspace/reef-*.log`。新工作区运行同入口重新生成，不继承旧“通过”。现有私人构建镜像ID为`sha256:d78fcd485b29a6f0278a885c8ebe4af3752a691ed83f46f5de2cb0adcc220681`，本机核验用了它，但复现配方不要求能够拉取它。
+`build/fasttt-build.json`、`fasttt-verification.json`、`fasttt-environment.json`保存源码／diff／子模块／产物和编译命令／包版本；验证记录HEAD为环境代码基线f244e3b，后续仅handoff与独立clone根发现修正、不改变编译输入，产物身份仍可由source_hashes核对；原始输出留在本地`local_workspace/reef-*.log`。新工作区按7.5重新构建／测试，不继承旧“通过”。现有私人构建镜像ID为`sha256:d78fcd485b29a6f0278a885c8ebe4af3752a691ed83f46f5de2cb0adcc220681`，本机核验用了它，但复现配方不要求能够拉取它。
 
-**失败与未完成边界。** 直接下载Boost过慢，本轮中止重复下载后改分段下载同一官方archive，最终SHA与Ceph锁一致，再放入新build缓存；首次被中止构建不是算法失败，最终完整构建／测试均通过。DockerHub拉取Ubuntu基础镜像超时，公开缓存／ECR层下载也长时间无进展，已停止本轮拉取客户端，当前没有遗留下载任务；Ubuntu amd64 manifest从公开索引定位并锁为`sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f`。Dockerfile依赖已静态核对，但尚未从公开空镜像完成构建，不能声称已验证。分支与AGENTS／本文已作本地提交，新临时clone已核验完整携带源文件／3patch／复现工具／唯一handoff、无PDF和build；独立clone的`--help`及缺父Ceph错误已验证。远端研究分支现已发布。此前HTTPS无凭据、连接账号无写权限的阻碍，已通过用户个人账号d-sun-cs的仓库限定认证解决；不切换全局GitHub连接，仅在TSX的.git/config配置目标URL、用户名及useHttpPath。此前跨执行内存缓存未保留凭据，因此本轮在同次执行内以临时askpass读取用户提供的文件，正常push后用ls-remote核对SHA；全部步骤成功后才删除明文令牌文件，临时helper也清理，不将令牌写入代码／配置／提交或远程URL。首次发布核对的提交为 `ec55c417d0ba5bb7aa1a2a7f57c2a4a02beaac1d`，本条发布记录随随后文档提交同步，当前完整身份以远端分支tip为准。PDF／原始结果／备份／旧build保持本地，不随分支上传。
+**失败与未完成边界。** 直接下载Boost过慢，本轮中止重复下载后改分段下载同一官方archive，最终SHA与Ceph锁一致，再放入新build缓存；首次被中止构建不是算法失败，最终完整构建／测试均通过。DockerHub拉取Ubuntu基础镜像超时，公开缓存／ECR层下载也长时间无进展，已停止本轮拉取客户端，当前没有遗留下载任务；Ubuntu amd64 manifest从公开索引定位并锁为`sha256:8a2321a92b438238f93b4346fff61bc4259c99fdd4d9b52ee86f153fee0c344f`。当时Docker依赖配方已静态核对，但未从空镜像完成构建；该配方现已删除，历史失败不改写为成功。分支与AGENTS／本文已作本地提交，新临时clone已核验完整携带源文件／3patch／复现工具／唯一handoff、无PDF和build；独立clone的`--help`及缺父Ceph错误已验证。远端研究分支现已发布。此前HTTPS无凭据、连接账号无写权限的阻碍，已通过用户个人账号d-sun-cs的仓库限定认证解决；不切换全局GitHub连接，仅在TSX的.git/config配置目标URL、用户名及useHttpPath。此前跨执行内存缓存未保留凭据，因此本轮在同次执行内以临时askpass读取用户提供的文件，正常push后用ls-remote核对SHA；全部步骤成功后才删除明文令牌文件，临时helper也清理，不将令牌写入代码／配置／提交或远程URL。首次发布核对的提交为 `ec55c417d0ba5bb7aa1a2a7f57c2a4a02beaac1d`，本条发布记录随随后文档提交同步，当前完整身份以远端分支tip为准。PDF／原始结果／备份／旧build保持本地，不随分支上传。
 
 
 ### 7.15 r11方案复核：已明确的主干与仍未定型的细节
@@ -832,86 +841,172 @@ benchmark    c295316358ee6df9800d1cf96c9b72bdc852c49381918ffcc68fc03d01b87bbc
 
 本轮修正此前散落段落的时效矛盾：当前Ceph18却仍写20、已构建却仍写未构建、当前18却要求20新重载、下一步仍写待选Ceph、旧build与提交状态等。历史分析保留原身份；当前实现要求在5.3、7.10、7.14及本节一致。r11仅修改交接正文，不改算法；本地文档更新尚未提交／推送，远端仍为r10/b133351，不能声称新修订已在远端。
 
-### 7.16 T0-PAPER：原论文实验复现顺序与本轮预检
+### 7.16 论文内存实验的统计要求与历史预检
 
-`[用户确定，2026-11-02]` 当前首先复现原FastTT论文，以确认环境和形成新研究的对照基线。4组配置为(6,2)/(6,3)/(8,3)/(10,4)。论文写每片2MB、每实验重复2000次；原artifact脚本按2048KiB即2MiB传参，所以入口记录精确字节2097152，benchmark总输入为k×2097152。论文未锁全部数据模式、预热、CPU亲和性、擦除位置和统计权重，不虚构这些字段。
+论文参数为(6,2)/(6,3)/(8,3)/(10,4)，每片2MB、每测项2000次；artifact按2048KiB即2097152B执行。benchmark的 `-s` 为k乘数据片字节数。论文未锁所有输入、预热、亲和性、擦除位置和统计权重，不能事后虚构。性能需按擦除总数分组，保存逐项时间，明确每类次数和平均权重；1024进制为GiB/s，不标成十进制GB/s。正式公平比较需核验ISA-L实际SIMD路径、独占资源和多轮波动。
 
-| 顺序 | 论文实验 | 当前就绪状态／下一动作 |
+2026-11-02预检E-PAPER-PREFLIGHT-r11：TSX b133351＋官方Ceph18，4配置×3实现×编码／单数据片0擦除解码，共24项与24次预热。每片2MiB、每项2000次、constant X、CPU0、OMP_NUM_THREADS=1；全部退出0，唯一计量行的KiB均等于2000×k×2048。它只证明测量链路，不新增正确性证明。原始输出在Ceph根 `local_workspace/paper-reproduction/preflight-20261102-bxqc282d/`；后续完整流程另记7.17。
+
+r12/r13过程中曾误取Cerasure main而缺少fasttt.sh，改取默认fasttt分支；第一次configure又缺GF-Complete，复制Ceph固定子模块到独立依赖前缀后构建成功。阶段中的“编译中／待集群／A2运行中”已由r14完成记录覆盖，不保留为当前待办。当前实际运行命令统一在7.5，不再使用旧Python入口。
+
+### 7.17 2026-11-02附录实验的历史完成记录
+
+`[实验验证，E-APPENDIX-r14]` 本节保留此前真实结果；2026-11-07已收敛为7.5的插件测试流程。旧Python编排代码与集群封装已删除；若需精确检查旧入口，可从TSX本地提交 `8ad62fe0fbdc1f84f07ea662f9b0ccff544753fb` 读取，不要求把它恢复到当前开发树。
+
+当时Ceph为官方18.2.7@6b0e988，TSX运行树为b133351加复现脚本，完成后提交8ad62fe；C++算法未改。在fasttt_reef容器中构建了vstart和插件组，将19个EC共享库安装到 `/usr/local/lib/ceph/erasure-code`，8个TSX族与官方插件ldd正常。安装清单为 `build/fasttt-installation.json`。这些清单是历史证据，不作为新脚本是否构建成功的判据。
+
+| 阶段 | 实际输入与通过条件 | 历史结果目录（相对Ceph根） |
 | --- | --- | --- |
-| 0 | 版本、原算法、正确性 | 官方18／GCC11.4／AVX2与48组7,464组合已通过；本轮doctor及Redis PONG正常 |
-| 1 | Table I与III：FastTT/ISA-L/Jerasure | 标准安装后的4组编码／所有数据校验擦除类型已跑通；基线123项，每项2000次，逐擦除数汇总 |
-| 2 | Table V：(8,3)消融 | naive/map/win/merge四变体另40项完成，合计A1内存163项；完整版本沿用基线同次测量 |
-| 3 | Table II与IV：Cerasure独立比较 | 按A2默认fasttt分支及原fasttt.sh完成24项，各项decode success；不与Ceph框架数据混表 |
-| 4 | Table VI：vstart＋rados PUT | 当前18隔离BlueStore文件后端、14OSD、12池；36次PUT/GET和12次单OSD降级GET全通过，官方对照池reed_sol_van |
+| A1内存与消融 | 四配置、三对照与8/3四消融；所有数据／校验擦除数量类型；163项，每项2000次、预热2次、2MiB片、constant X、CPU0。seed1位置跨实现相同；计量与退出码通过 | local_workspace/paper-reproduction/coding-e121ecqi |
+| 安装后正确性 | 2MiB随机seed1、三对照和四消融、1..m穷举，48命令6522组合逐字节一致；不含tsxse | local_workspace/paper-reproduction/installed-correctness-7l7xf_8n |
+| A2独立Cerasure | fasttt分支c9f305294cb8e52af6f5962e3c83cc607a85ba07；实际执行taskset -c 0 bash -e fasttt.sh，24项各-n 2000，24个decode success且输出完整；原单位GiB/s | local_workspace/paper-reproduction/cerasure-gp33pv9i |
+| BlueStore历史系统流程 | 1MON、14OSD、12池；官方对照reed_sol_van。每对象4条stripe，2MiB片、48/48/64/80MiB对象；每池3次PUT/GET及1次单OSD降级GET，36/12次SHA256全一致 | local_workspace/paper-reproduction/end-to-end-may5khzw |
 
-**统计与公平性约束。** 原脚本TEST_COUNT取错参数，且PER_CASE_COUNT=ceil(TEST_COUNT/NUM_CASES)是在所有擦除类型间分摊次数，不能默认为每种故障各2000次；shuf未固定种子。原脚本最终汇总全部故障类型的一个均值，不能直接填入Table III按擦除数分行的结果。正式入口必须按擦除总数分组，并明确每种故障的实际次数、位置、聚合权重与重复轮数，先保存逐项时间再汇总，不从最后一句“成功”判断通过。原脚本连续除1024得到的实际是GiB/s，却标GB/s；新结果同时保存十进制GB/s和二进制GiB/s，论文表格单位的精确解释仍需对照原输出，不能借单位混用宣称复现差距。
+A2仓库为 `https://github.com/d-sun-cs/cerasure.git`，当前不作为插件测试的必需依赖。当时GF-Complete使用Ceph固定提交 `7e61b44404f0ed410c83cfd3947a52e88ae044e1`，复制后在 `local_workspace/cerasure-deps/install` 构建，不改原子模块或系统ISA-L。独立框架中的FastTT与Ceph插件分别统计。
 
-当前CPU为Xeon Platinum8358，区别于论文i9-14900K；FastTT本体仍为普通AVX2。bundled ISA-L的ec_multibinary.asm含base/SSE/AVX/AVX2/AVX512分派；当前机器可能进入比论文机器更宽的SIMD，尚未测实际选中函数。正式公平比较前需固定或证实双方有效SIMD路径，不能仅因TSX编译有-mavx2便称所有基线都只用AVX2。也不为此恢复旧FastTT AVX512实验stash。记录CPU／NUMA／亲和性／频率与重复波动，当前硬件不要求数值等于论文。
+历史BlueStore在容器新建的/tmp目录使用普通文件（block2GiB／DB256MiB／WAL64MiB），不是MemStore或原始块设备。通过acting映射选OSD、核对精确配置PID后停止、读取比SHA、重启；最后正常停止所有本次集群进程，无强杀／残留，Redis保留。早期cauchy对照也通过36/12检查，另存 `end-to-end-5x_ha10o`，对齐原默认reed_sol_van后重跑才作为最终口径；早期吞吐算术平均已从原始时间改为总字节／总时间并保留修正前清单，不混算两轮。
 
-**E-PAPER-PREFLIGHT-r11实际执行。** 代码为TSX b133351、官方Ceph6b0e988，容器fasttt_reef；入口先调用repro的check_sources/check_build核验源码与产物，Redis为该容器独立实例。4配置各选择FastTT(tsx2/tsx/tsx/tsx4)、ISA-L(cauchy)、Jerasure(cauchy_good)，每实现执行encode与decode，共24项。每片2097152B，每项预热2次、测量2000次，constant为原artifact默认全X（不是论文明确锁定的数据模式），decode仅固定单数据擦除0。所有测项taskset固定CPU0、OMP_NUM_THREADS=1；这些是本次预检条件，不冒充论文原条件。
+汇总是 `local_workspace/paper-reproduction/appendix-report-20261102.md`。A1少量计时与A2依赖编译重叠，且只有单轮；没有据此宣称论文硬件性能比例。端到端按k/m使用不同确定种子，避免原Redis内容键跨尾部格式碰撞，未修复内容键／持久化。单OSD降级读成功不等于替换重建或Redis丢失恢复，更不代表M1/M2实现。过去公开Docker基础镜像拉取超时，未完成空镜像配方验证；该Dockerfile随repro删除，当前用普通Ubuntu依赖命令，不再将其列为本阶段待办。
 
-完整命令模板（以容器挂载Ceph根识别CEPH_ROOT）：
+### 7.18 FastTT-LRC 初版插件骨架（r16）
+
+`[用户确定，2026-11-08]` 先确认现有直接纠删码工作流，再创建独立FastTT-LRC编码插件；参照当前18官方LRC的写法，详细内核允许留空，但注册、初始化、布局、选片、编码、恢复和测试要真实跑通。继续不用分布式虚拟集群；人读说明为docs/fasttt-lrc-design.md，保持简洁，本文保存完整接续事实。
+
+**本轮落地与范围。** 新插件为 `tsx_lrc`，类 `ErasureCodeTsxLrc : public ceph::ErasureCode`，不是继承final的旧TSX或官方LRC。新Plugin类提供标准factory／init／version入口。复制的是官方Layer组织和本层编号映射思路，没有复制JSON通用解析器，也不动态包装另一个lrc对象；只需ISA子插件，无ec_lrc新依赖。基线仍为官方18.2.7@6b0e988，TSX已提交HEAD8ad62fe，本轮及r15精简均为其上的未提交改动；未推送。旧tsx/tsx2/tsx4算法不改，父四文件及根单补丁不改。
+
+**模式必须显式。** `plugin=tsx_lrc mode=scaffold k=8 m=2 locality=4` 为当前可运行配置，k/m/locality可省略后使用这些默认值；不支持其他值、官方l参数、外部mapping/layers或自定义CRUSH分组。m只表示2个全局校验，接口返回数据8、总片12、全部校验4，默认identity物理编号。`mode=scaffold` 的全局层是ISA cauchy占位，两局部层是ISA reed_sol_van的m=1真实XOR；没有TT移位或Redis尾部。缺mode返回-EINVAL，`mode=fasttt`经真实全局层创建路径进入 `init_fasttt_global_layer()`，清空子对象并返回-EOPNOTSUPP(-95)。禁止给空内核返回0、把占位全局校验称为G+/G-或拿它测FastTT性能。
+
+固定布局与三层如下；8、9只是未来TT全局的位置，当前存ISA校验，不是已发布TT存储格式：
 
 ```text
-taskset -c 0 BUILD_ROOT/bin/ceph_erasure_code_benchmark --erasure-code-dir BUILD_ROOT/lib   -p PLUGIN -P k=K -P m=M -s (K*2097152) -w encode --input-pattern constant -i 2000
-# ISA-L另加 -P technique=cauchy；Jerasure另加 -P technique=cauchy_good
-# decode把-w改为decode，另加-e 1 --erased 0；预热用相同参数-i 2
+mapping: DDDDDDDD____
+global:  DDDDDDDDcc__   data=[0..7], coding=[8,9]
+local0:  DDDD______c_   data=[0..3], coding=[10]
+local1:  ____DDDD___c   data=[4..7], coding=[11]
+L0=XOR(D0..D3), L1=XOR(D4..D7)
 ```
 
-24/24测项与24次预热命令全部退出0；每项报告的KiB等于2000×K×2048，成功解析唯一时间／计量行。该结果只证明三实现的基础测量链路可用；单次预检不等于多擦除性能、统计稳定性、消融、Cerasure、磁盘系统实验或新M1/M2验收。不能把--erased模式的成功退出说成新增逐字节正确性证明，正确性仍引用独立E1。
+`Layer`实际保存data、coding、chunks、erasure_code；chunks=data接coding。本轮用固定C++表构造，不解析上述字符串。调用子插件时按chunks顺序重排为本层0..k+m-1，回调后映回物理ID；bufferlist是引用，不为每一层拷贝整片payload。
 
-原始命令、预热输出、计时输出、双单位换算保存在Ceph根 `local_workspace/paper-reproduction/preflight-20261102-bxqc282d/` 的results.json、summary.csv及24个log；新生成目录已设为0755保证宿主可读。doctor输出另保存在local_workspace/reef-doctor-20261102.log和build/fasttt-environment.json。关键条件和通过判据已内联，新工作区不需要这些旧输出才能理解或重跑。当前无遗留性能任务，未启动／停止任何Ceph集群。
+| 文件／符号 | 真实执行责任 |
+| --- | --- |
+| ErasureCodePluginTsxLrc.h/.cc：factory与两个导出入口 | 注册tsx_lrc，创建对象，init失败不发布对象 |
+| ErasureCodeTsxLrc.h/.cc：init／layers_init | 验证模式和固定参数，创建全局8+2与两个局部4+1子插件；FastTT全局创建hook明确未实现 |
+| get_chunk_count／get_data_chunk_count／get_chunk_size | 返回12／8及全局子插件规范化片长；Ceph基类据此准备12片 |
+| encode／encode_chunks | encode_prepare准备主片，按全局→local0→local1调用编码；覆写encode传播内核错误，仅发布want，修正Ceph18基类忽略返回值的问题 |
+| make_repair_plan／_minimum_to_decode | 共享规划，局部优先→全局→必要时再局部；逆向裁掉无关依赖，返回原始可读输入ID |
+| decode／decode_chunks | 基类准备工作缓冲，执行同一规划的步骤与映射；先前恢复片可作后续helper，错误传出，仅发布want对应有效输出 |
+| TestErasureCodeTsxLrc.cc | 独立可执行程序，通过registry加载安装目录.so；不直接链接新类来绕开动态注册 |
+| CMakeLists.txt／recmake.sh／check_lrc.sh | 增加ec_tsx_lrc和ceph_test_erasure_code_tsx_lrc，沿用原直接构建／安装链；新shell只直接执行测试程序，无Python封装 |
 
-**r12执行检查点／2026-11-02。** 已开始实际A1安装与完整流程实施，不再只停留预检。独立容器fasttt_reef正在编译当前18的vstart、通用EC插件与TSX全部消融目标，宿主日志`local_workspace/paper-reproduction/appendix-build-20261102.log`；观察命令`docker exec fasttt_reef ps -eo pid,args`及tail日志。编译尚未结束，未启动Ceph集群。计划用生成的各插件子目录cmake_install.cmake安装至独立容器`/usr/local/lib/ceph/erasure-code`，再明确用该安装目录运行基准与OSD；不以只存在build/lib冒充安装通过。
+**规划契约。** 输入want和available，输出RepairPlan.inputs及有序RepairStep(layer,helpers,targets)。先从available维护known，逆序尝试本层缺片数不超过本层校验数的恢复；每成功一步只增加已知片。全局恢复可能解锁局部校验，所以重复遍历，直到want全部已知或本轮无进展返回-EIO。每步增加known，最多补12片，不会无界自旋。随后从want反向追踪步骤依赖，移除无关步骤和输入。该启发式不保证任意故障下全局最少I/O。
 
-原论文A1入口为coding_benchmark_cases.sh和run_end_to_end_tests.sh，旧实现的参数、覆盖输出、全量安装／删除目录及MemStore问题需修正为可审查的新入口。目标是编码／多类型擦除／消融／BlueStore文件后端PUT与GET内容核对都实际跑通。A2另按d-sun-cs/cerasure独立框架核验；已在本地资料区获取main，不能用另一个旧工作树的产物代替。研究算法不在本次复现中重写。
+例如D2目标只需{0,1,3,10}；即使另一组L1也丢失，不将其4个数据加入D2的读取。D0/D1同组双丢失采用全局层的{2,3,4,5,6,7,8,9}。D0与L0同时丢失时，先全局恢复D0，再局部重算L0。解码仅把step.helpers交给子插件；使用私有工作map，输入片保持字节不变，最终只向外发布want；未读取但被基类预分配的片不冒充有效输出。检查ID、空输入和等长条件；失败输出为空。
 
-**r13实际安装与A1内存实验完成。** `repro/appendix.py install --cluster --jobs 32` 已退出0，使用Ceph生成的EC子目录cmake_install.cmake安装至 `/usr/local/lib/ceph/erasure-code`，8个TSX族插件与官方EC插件组已安装并ldd检查无缺失；清单为build/fasttt-installation.json。后续所有基准使用该安装目录，已实际动态加载，不使用build/lib里的插件替代安装结果。vstart所需当前18二进制与cython_rados已构建。
+**当前容量与未支持组合。** 在12片所有1..3擦除共298种集合中，此逐层ISA骨架每长度能恢复266种，另外32种明确拒绝：同组3数据（8种），或同组2数据＋1全局（24种）。这是当前逐层规划边界，不证明这些码方程数学上不可解，更不代表真正TT方案不能恢复。1..2擦除共78种全部通过。不得将“298种用例执行完毕”写成“298种TT恢复成功”。未来TT联合策略必须单独完成第5节要求。
 
-`appendix.py coding --iterations 2000 --repeats 1` 已完成：4组参数，FastTT/ISA-L/Jerasure及(8,3)的naive/map/win/merge消融，共163项，包含所有1..m擦除总数下的数据／校验数量类型；同一故障类型跨实现固定相同位置，seed1、每片2MiB、CPU0、每项预热2次和计时2000次。结果为local_workspace/paper-reproduction/coding-e121ecqi/results.json、raw.csv、summary.csv与逐项log。按擦除总数分别汇总，不混淆GiB/s与GB/s。少量测量期间同容器有A2依赖构建，因此本轮数据只作流程验收，不宣称论文性能比例或严格稳定性结论。
-
-`appendix.py verify-installed` 从标准安装目录对三实现和(8,3)四消融使用随机seed1、2MiB数据片、1..m全擦除组合逐字节比较：48命令、6522组合全部通过，结果在local_workspace/paper-reproduction/installed-correctness-7l7xf_8n。该检查不包括未用于论文的tsxse，不覆盖任意长度／Redis故障。此前E1的48组7464组合仍是独立旧基线证据，两者计数不同，不能相加后称不同故障集合。
-
-**r13新入口与A2依赖修正。** coding_benchmark_cases.sh现为参数明确、失败退出的appendix.py coding包装；第4参数为每测项迭代数，默认2000，不再全量安装或覆盖输出。run_end_to_end_tests.sh现调用独立BlueStore端到端实现，不再使用旧MemStore／全局stop脚本。完整复现命令已补入repro/README。Python runner负责安装、coding、verify-installed、cerasure与end-to-end；算法文件不变。
-
-首次只取Cerasure main未包含fasttt.sh，查明远端默认是fasttt分支，已固定c9f305294cb8e52af6f5962e3c83cc607a85ba07并写versions.json。A2初次configure提示缺GF-Complete；从Ceph18固定GF子模块复制源码，在local_workspace/cerasure-deps/install独立前缀构建，未修改原子模块或覆盖系统ISA-L，随后独立程序编译及两次迭代烟测通过。当前 `appendix.py cerasure --jobs 16` 正执行附录原始 `bash -e fasttt.sh`；日志local_workspace/paper-reproduction/appendix-cerasure-20261102.log，完成前不标A2通过。
-
-### 7.17 r14附录实际复现：安装、命令、结果与边界
-
-`[实验验证，2026-11-02，E-APPENDIX-r14]` 用户允许具体数值不同，要求安装正确并把实验流程打通。本轮A1与A2所有阶段均实际通过，不能继续将其标为“仅预检／待执行”；也不因此宣称与论文相同硬件性能或新M1/M2已实现。
-
-**代码与安装身份。** Ceph仍为官方18.2.7@6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad，父4文件仅三份原集成补丁；本轮实验开始时TSX HEAD为b133351，工作树逐步加入新复现控制脚本与文档，C++编解码文件没有改动。最终新增代码以本地分支实际HEAD为准，远端仍为此前r10，新增代码／r14未推送。当前appendix.py SHA256为`a10ba9243996e94b40c8e29fcdff237aceac16371d8230f5dcae5b8ff9bb2309`；各次结果另外记录安装.so哈希和完整实际命令，不依赖HEAD单独标识带修改的运行树。
-
-在独立容器fasttt_reef中构建 `vstart erasure_code_plugins ec_tsxse ec_tsxnaive ec_tsxmap ec_tsxwin ec_tsxmerge` 及原六目标，生成当前18的MON/OSD/rados/cython_rados。`appendix.py install --cluster --jobs 32` 使用生成的EC子目录cmake_install.cmake将19个EC共享库安装至 `/usr/local/lib/ceph/erasure-code`，8个TSX族插件和官方插件均完成ldd依赖检查；build/fasttt-installation.json记录哈希与状态passed。基准与集群配置实际使用此安装目录，不能用仅存在build/lib来替代“已安装”。没有全量sudo ninja install、没有删除旧build，也没有更改其他容器的插件或Redis。
-
-当前活动复现入口（相对Ceph根，容器内执行）：
+当前直接运行（容器内TSX根）：
 
 ```bash
-python3 src/erasure-code/tsx/repro/appendix.py install --cluster --jobs 16
-python3 src/erasure-code/tsx/repro/appendix.py verify-installed
-python3 src/erasure-code/tsx/repro/appendix.py coding --iterations 2000 --repeats 1
-python3 src/erasure-code/tsx/repro/appendix.py cerasure --jobs 16
-python3 src/erasure-code/tsx/repro/appendix.py end-to-end --put-iterations 3 --degraded-read
+bash recmake.sh 8
+bash check_lrc.sh
 ```
 
-A2首次需宿主克隆`https://github.com/d-sun-cs/cerasure.git --branch fasttt`到Ceph根local_workspace/cerasure-paper，再固定c9f305294cb8e52af6f5962e3c83cc607a85ba07；新版本锁已记录。A2 runner从Ceph固定GF-Complete子模块复制源码到本地依赖区构建，前缀local_workspace/cerasure-deps/install，不修改原子模块或系统ISA-L。第一次误取main缺fasttt.sh、第一次configure缺GF依赖的失败和修正保留于r12/r13检查点。
+新程序默认从 `/usr/local/lib/ceph/erasure-code` 动态加载tsx_lrc和isa；check_lrc可用BUILD_DIR、INSTALL_PREFIX、PLUGIN_DIR覆盖位置。新占位插件测试运行时不用Redis；原TSX基准仍按7.5使用Redis。不要把tsx_lrc直接塞入旧benchmark的k=8,m=2性能矩阵：旧基准按k+m=10枚举，忽略额外局部片，故本轮用按get_chunk_count()=12编写的独立程序测试，不宣称已支持其性能入口。
 
-**A1编码／解码／消融。** `coding --iterations 2000 --repeats 1` 退出0。四组(k,m)选择tsx2/tsx/tsx/tsx4与ISA-L cauchy、Jerasure cauchy_good，覆盖编码及1..m擦除总数的每种数据／校验数量类型；(8,3)另加naive/map/win/merge。共163项（123基线＋40消融），每项预热2次、计时2000次、2MiB数据片、固定CPU0和OMP_NUM_THREADS=1、原artifact默认constant输入，故障位置seed1且跨实现相同。每项退出码／计时计量校验通过；原始位置、时间、KiB、GB/s和GiB/s都保存，按擦除总数分别做类型吞吐的算术平均。结果目录 `local_workspace/paper-reproduction/coding-e121ecqi/`，含results.json、raw.csv、summary.csv、ablation-summary.csv和逐项log。附录同名coding_benchmark_cases.sh从任意CWD调用的6/2、2048KiB、第四参数2次烟测也已通过（coding-wpy5q0rr），不会再把块大小当作次数。
+**实际验证 E-LRC-SCAFFOLD-r16。** 原工作流预检 `check_correctivity.sh 6 2 64 random` 通过6命令108组合。完整构建入口 `recmake.sh 16`最终退出0，新共享库安装到标准目录，独立测试可执行文件生成。首次编译缺少bufferlist完整定义，补include/buffer.h后构建通过；旧错误日志保留 `local_workspace/ec-tests/lrc-build-20261108.log`，最终日志lrc-build-final-20261108.log。不是算法运行失败，也未改Ceph官方接口。
 
-**安装后独立正确性。** `verify-installed` 对上述三实现／四配置及(8,3)四消融，以随机seed1、每片2MiB穷举全部1..m擦除，基准逐字节比较每个丢失主片。48条命令、6522组合全通过，目录 `installed-correctness-7l7xf_8n/`。不包括未用于论文的tsxse；与此前原TSX两片长两模式7464组合范围不同，不合并计数冒称不同故障集合。已检验的只是这些规范化长度／输入和当次尾部可用条件。
+从容器/tmp调用check_lrc.sh，测试mode和错误配置、12/8/4片数、数据映射、局部XOR字节、目标已读直返、严格4helper局部恢复、无关组故障、全局后备、全局→局部多步、空／坏ID／不等长、失败不输出与成功裁剪。随机mt19937种子17+片长，片长4096和65536B；每长度穷举298擦除集合，只向decode提供minimum计划选中的片，成功片逐字节比较，已知输入检查未被修改。两长度共532恢复成功＋64预期拒绝，另验四擦除反例；最终输出 `PASS tsx_lrc scaffold: 4KiB/64KiB, 532 repairs + 64 expected planner rejections`。日志为Ceph根local_workspace/ec-tests/lrc-test-20261108.log。已有原TSX／ISA／Jerasure完整回归也重新通过48命令6522组合，日志post-lrc-baseline-20261108.log、逐项目录correctness-gynpzfsC。没有新性能结论、没有启动Ceph集群。
 
-**A2独立框架。** 采用论文指定独立仓库的fasttt分支，通过autogen/configure/make/make ex后，实际执行 `taskset -c 0 bash -e fasttt.sh` 原脚本。4配置、1..m擦除、Cerasure／独立FastTT各一条，共24项，每项原定-n 2000；逐块匹配24个decode success且无decode fail，24组编码／解码输出完整。原程序按1024^3换算，单位为GiB/s。目录 `cerasure-gp33pv9i/` 保留构建日志、fasttt.log、results.json和summary.csv；该FastTT是独立框架实现，不是把Ceph插件二进制改名后混合比较。
+**下一步明确留空的实现。** `init_fasttt_global_layer()` 应创建真正支持G+/G-及显式尾部的子内核，不能重命名旧tsx2。TT尾部格式／等长片／错误传播先形成契约；再扩展RepairPlan与解码，支持虚拟P0=L0 XOR L1或直接联合方程，覆盖当前拒绝组合及第5节全部TT三擦除。仅换ISA子插件并不会自动完成联合恢复。多线程、最优选片、参数泛化、CRUSH组拓扑、M3与持久化可靠性继续后置。人读设计文档只保留这些结构差异和关键入口，不复制本文实验台账。
 
-**最终A1 BlueStore端到端。** 采用当前18官方src/vstart.sh，独立容器、回环地址、1MON／14OSD，MGR/MDS/RGW关闭，配置及数据位于全新 `/tmp/fasttt-paper-cluster-*`。BlueStore是普通文件后端，block2GiB、DB256MiB、WAL64MiB，没有指定或格式化原始块设备，也没有使用MemStore。全矩阵共用14OSD，每池仍按自身k+m放置、故障域osd；不是生产多主机放置。
+**r16未提交代码SHA256。** 配合上述8ad62fe和r15保留修改识别实际运行树：
 
-四配置各建FastTT/ISA-L/Jerasure三池，共12池。端到端官方对照按原vstart默认profile显式使用reed_sol_van，区别于内存基准cauchy/cauchy_good。每对象4条完整stripe，2MiB数据片，分别为48MiB/48MiB/64MiB/80MiB，每池3次新对象PUT，逐次GET并与本地源SHA256比较；PUT吞吐为总字节／总PUT时间。每池另从对象acting映射选择一个OSD，核对精确配置所属PID后停止、标记down、执行降级GET并比SHA，再启动该OSD并等待全部up。36次正常PUT/GET、12次单OSD降级GET全部一致，全部OSD已恢复；最终按精确配置路径依次停止OSD和MON，未调用全局pkill，强杀列表为空，最终检查无本次集群残留进程。Redis保持运行。
+```text
+ErasureCodeTsxLrc.h bdbfd27a055954f5e2eecfae9d438dad30652c5d30f9673470ea5a431db37cbe
+ErasureCodeTsxLrc.cc 864f072c8c253756fe9388b0df4ba5df73fbee67937fc913313e607dd8f7a9e8
+ErasureCodePluginTsxLrc.h 141bca694325d6e65e6f9f255e171a7e280c437b3169de96f515a31411af1aa1
+ErasureCodePluginTsxLrc.cc fa9446ab901e99681beed7a80e8bc2c13356a91af6478da0f9c4fe345db8072f
+TestErasureCodeTsxLrc.cc 46cb8c8fa79dc003b4b5ec8af3f8251adfbd1fc9bbcacfc2dec7650ec0a06d05
+CMakeLists.txt 797e97ffe8e10332e71eb034363b581b2e303a6543303608798bb55949f00591
+recmake.sh f1e2395a5c1644b4ba613309f77cd7b39a69320b608765314bd3b3e9fa593a4e
+check_lrc.sh 5da003bfcab51148d74b9e21891ddfe45c0c4689f15a3f11d79b8a998d0585ab
+```
 
-最终对齐目录为 `local_workspace/paper-reproduction/end-to-end-may5khzw/`，保存12个实际profile、每次时间／SHA、vstart输出、ceph.conf、daemon日志与summary.csv。早期端到端用了cauchy对照也通过36/12检查，保留在end-to-end-5x_ha10o作为补充；发现与原vstart默认profile不同后已对齐并重跑，最终Table VI口径只使用may5khzw，不混算两轮。早期PUT汇总曾用吞吐算术平均，已从原始时间修正为总字节／总时间并保留修正前清单；最终runner和最终轮直接采用正确口径。
+### 7.19 Layer与普通k+m编码的解释口径（r17）
 
-**汇总与局限。** `local_workspace/paper-reproduction/appendix-report-20261102.md`汇总本轮实测表和目录索引。其正文只作补充，以上代码身份、命令、输入、计数和结论已内联，不要求迁移旧结果才能理解或重跑。新runner／shell语法、独立clone布局--help与git diff --check均通过。当前没有遗留实验任务，所有本次集群已停止；生成的BlueStore状态／日志保留用于检查，不删除用户原数据。脚本／文档代码会保存在本地研究分支和bundle；没有可用的长期Git凭据，未声称新增内容已同步远端。
+`[用户要求＋当前18源码对照，2026-11-08，E-LAYER-r17]` 用户此前未接触Layer，要求举例解释其与“原数据切k片、再编码m校验”的区别，并写入人读设计。本轮只更新docs/fasttt-lrc-design.md和本文，不改编码／规划／构建脚本；r16测试记录保持原身份，不新增运行通过结论。
 
-本轮为流程验收：使用既有构建容器，公开Dockerfile的空镜像重建仍未验证；A1少量测量与A2依赖构建重叠、单轮测量、CPU和ISA-L分派区别于论文，所以不据此宣称论文性能提升比例。不同k/m用确定且不同的随机种子生成端到端输入，避免原Redis内容键跨尾部格式相撞，但未修复原尾部命名、持久化或重启可靠性。单OSD停止后读成功不是擦除磁盘／替换OSD重建／所有错误路径验收，不代表M1/M2已实现。若需要论文级性能数字，另做同SIMD、独占资源与多轮统计；本次按用户要求的安装／实验流程已经完成。
+**核心口径。** Layer表示一次指定输入／输出的编码任务，不是另一份原文件或一套独立存储池。原始数据只切一次，层间复用同一条带的已有片与缓冲；校验也可成为下一层的输入。Layer.data是本层输入角色，不保证是原始数据；Layer.coding是本层输出角色，子插件的k/m由这两者大小决定，不直接沿用最外层profile的k/m。LRC外部仍能表示为k数据＋m_total校验，差异在生成方程、依赖范围和恢复选片，不是另有一套专用接口。
 
+**统一小例子。** 原始16KiB切D0..D3四个4KiB片。普通RS4+2直接从四数据生成G0/G1，保存6片24KiB payload。官方LRC4/2/3先做同样全局编码，再执行局部D0,D1,G0→L0和D2,D3,G1→L1；三层子插件分别为4+2、3+1、3+1。物理排列[0:D0,1:D1,2:G0,3:L0,4:D2,5:D3,6:G1,7:L1]，mapping为DD__DD__，全局chunks=[0,1,4,5,2,6]，局部chunks分别[0,1,2,3]、[4,5,6,7]。最终8片32KiB payload，不能把层的输入重复相加成6+4+4。profile m=2为全局数，get_coding_chunk_count=4、get_chunk_count=8。
+
+局部单校验用XOR作具体例子：L0=D0 XOR D1 XOR G0。D0缺失，读取D1/G0/L0三个helper，共12KiB，而普通RS4+2所列全局路径读取D1/D2/D3/G0四片，共16KiB。逐字节示例已生成D0=0x01、D1=0x02、G0=0x04，则L0=0x07，恢复0x07 XOR 0x02 XOR 0x04=0x01。D0/D1同组双丢失超过局部m=1，尝试全局G0/D2/D3/G1四输入。以上是方程与读取字节推算，不声称本轮执行官方LRC运行实验，也不把单目标helper数当作当前18完整前台请求的实际读取量。
+
+**与同开销普通码的区别。** 普通RS4+4与上述LRC都保存8片，但RS四校验为全局MDS方程，LRC两全局＋两局部形成不同依赖；标准RS4+4能恢复任意四片擦除，不能仅凭LRC也有四校验就继承同样容错。局部修复收益须与额外冗余／容错结构一并解释。
+
+**对应当前FastTT骨架。** 三层为8+2、4+1、4+1，局部组只含原始数据，分别D0..D3→L0、D4..D7→L1，不依赖G0/G1，逻辑上不必等待全局层；当前实现仍顺序执行。每层是同一个ISA插件的独立参数实例，非每层必须一种不同算法。此差异来自布局选择；官方低层layers也能表达数据分组。真正TT内核／尾部仍未实现，不因本次概念说明改变r16占位身份。
+
+依据为当前18的ErasureCodeLrc::parse_kml/layers_init/encode_chunks/decode_chunks、ISA的m==1 XOR分支，以及tsx_lrc的固定Layer表。人读文档已将上述例子、每层k/m表、共享输入含义、单／双故障和同开销对比写清；本文保留足以接续的摘要，不能要求后续agent回读聊天。本轮验证UTF-8、代码围栏、源符号／表述与文档差异，不运行算法测试。
+
+### 7.20 人读设计以当前代码责任为中心（r18）
+
+`[用户确定，2026-11-08，E-IMPL-DOC-r18]` 用户强调一直先从具体代码实现开始；人读设计只写本次直接要实现／维护的代码，Ceph内部机制若与当前实现无关就不展开。上一轮Layer通用讲解不是后续必须保留的人读篇幅。已将docs/fasttt-lrc-design.md从通用RS／官方配置实例收敛为当前函数表、固定层表、编号重排、D2调用和下一步改动；AGENTS同步此持续写作约束。r17例子保留本节前的7.19历史说明，不删除agent理解依据，也不要求人读设计继续承担背景教程。
+
+**必须讲清的责任边界。** 计算仍通过encode_chunks／decode_chunks；局部少读还依赖对外minimum_to_decode接口，当前18通过覆写基类_minimum_to_decode扩展点接入。原ErasureCodeTsx没有覆盖该扩展点，使用基类默认选片；新LRC必须匹配其局部／全局恢复输入。Layer不是Ceph强制接口或OSD自动替新插件创建的结构：它是ErasureCodeTsxLrc.h里的自有private任务结构，因此在当前采用分层实现时确实属于本次需要维护的代码。Ceph不要求所有LRC都必须用Layer这一组织形式；本轮不因解释该区别而重写现有架构。
+
+**最近的代码落点。** layers_init固定data/coding并创建子编码器；chunks=data接coding，决定物理ID到本层连续ID的映射，encode_chunks／decode_chunks必须成对处理。局部层1的[4,5,6,7,11]映成本层[0,1,2,3,4]，物理11是本层校验4，不能混用。make_repair_plan的inputs和steps同时服务_minimum_to_decode与decode_chunks；例如D2只选{0,1,3,10}，不能仅写局部XOR却仍默认读取8片。现encode/decode包装的错误传播、want输出裁剪，以及get_data_chunk_count=8／get_chunk_count=12／片长契约，也直接影响本次插件的有效缓冲和返回结果，应保留说明。
+
+**后续修改顺序不变。** 先填init_fasttt_global_layer及真正G+/G-和显式尾部内核，再扩展共享规划／执行以支持TT与局部方程联合恢复，继续只给计划输入做测试。当前ISA占位、mode=fasttt返回未实现、32类三擦除每长度拒绝的事实不变。本文继续保存完整Ceph接入／可靠性历史，但人读设计不再堆叠官方k/m/l生成器、RS存储倍率、CRUSH／OSD等当前不需改写的说明。
+
+本轮为源码职责对照和文档更新，仅三个文本文件变化；核验新旧类的选片覆盖、Layer成员、层内编号映射和函数名，检查文档UTF-8／围栏／相对链接及既有r16源码哈希。不启动编译、Redis、集群或算法测试，不生成新的运行通过结论。
+
+### 7.21 encode_chunks／decode_chunks的实际数据契约（r19）
+
+`[用户要求＋当前18源码核验，2026-11-09，E-CHUNK-ABI-r19]` 本轮只补人读设计和本文。核对当前Ceph18的ErasureCode::encode_prepare/encode/_decode/decode/decode_concat，ECUtil的encode与两条decode路径，ECBackend选片及全k前台目标，以及原ErasureCodeTsx和新ErasureCodeTsxLrc的实际参数访问。以下是源码推得的契约，非新运行实验；旧r16测试记录不变。
+
+**编号与单位。** 以下采用identity mapping、k=8、一次in长32768B、B=4096B。物理片号是map key，不是OSD号或第几个输入条目；片内t才是字节偏移。数据Di[t]=in[i*B+t]，0≤t<B。各数据起始字节依次0/4096/8192/12288/16384/20480/24576/28672，结束为下一起始点或32768；非整齐输入由get_chunk_size与encode_prepare补齐，不据此宣称旧TT支持任意长度。
+
+| 片号 | 原tsx默认8+3 | 新tsx_lrc当前scaffold |
+| --- | --- | --- |
+| 0 | D0，in[0,4096) | 同左 |
+| 1 | D1，in[4096,8192) | 同左 |
+| 2 | D2，in[8192,12288) | 同左 |
+| 3 | D3，in[12288,16384) | 同左 |
+| 4 | D4，in[16384,20480) | 同左 |
+| 5 | D5，in[20480,24576) | 同左 |
+| 6 | D6，in[24576,28672) | 同左 |
+| 7 | D7，in[28672,32768) | 同左 |
+| 8 | G+主片 | ISA全局G0主片 |
+| 9 | P0主片，无移位 | ISA全局G1主片，不能称TT的G− |
+| 10 | G−主片 | L0=XOR(D0..D3) |
+| 11 | 不存在 | L1=XOR(D4..D7) |
+
+原tsx的局部指针数组chunks[i]是encoded[i]的字节地址；decode的data[i]来自decoded[i]、coding[j]来自decoded[k+j]，因此coding[1]对应物理9的P0。k/m来自实例初始化，不是两个_chunks函数的逐次参数。原G+/G−的B字节主片之外还各需224B有效尾部，当前由插件另行分配448B并SET/GET Redis，不包含在map中；并非每条decode分支都访问Redis。新scaffold尚无TT尾部，不能因其主片等长便认为TT存储问题已解决。
+
+**编码的两层参数状态。** 公开encode(want,in,&out)的in是一次逻辑编码单元，out按接口约定初始为空。want是希望得到的输出片号集合，不承载payload，通常为全部n片，也可只要校验。当前新LRC在私有work上调用基类encode_prepare：0..7准备为已知数据，8..11按get_chunk_count−get_data_chunk_count分配B字节校验空间；不足数据部分补零。完整输入一般用substr_of引用并重建连续／对齐缓冲，不等于无条件深拷贝8份数据。校验create_aligned只分配，内容不保证为零。
+
+低层encode_chunks(want,encoded*)的encoded已是输入输出工作map，不能按空输出map理解。读取其中数据并写入校验空间；want为子集也不意味着只准备该子集条目。当前骨架的每一层layer_want都包含该层全部编号，因此实际计算三层全部校验，最后encode仅发布want；旧基类直接在外层encoded上准备／计算／删去非want，新类采用私有work以便先检查错误。每次返回int为0或负errno，实际字节在bufferlist中；新类已修正旧Ceph18 base encode忽略encode_chunks错误的包装行为，原TSX仍受旧基类行为约束。
+
+**解码的三个参数。** want_to_read是必须提供有效内容的目标ID，既能含数据也能含校验，亦可包含已经可读的片；不等于helper集合或所有未提供片。chunks是本次真正可用的输入map，只认可已有key及有效payload；缺key表示本次未提供，既可能实际丢失也可能只是没读。不能用全零buffer替代缺key，因为find/count会将它识别成已有输入。每片来自同一条带的相同片内范围，长度一致。
+
+decoded*在进入低层时已是工作map：基类_decode对已有输入复制bufferlist引用并做对齐，对所有不在chunks里的ID新分配B字节恢复空间，然后才调虚函数decode_chunks。输入和工作map可共享底层buffer，map复制不等于payload私有副本；const chunks约束map访问，不能据此推断所有别名都不可写。后续内核应显式区分只读输入和可改scratch。原TSX确实用chunks.find判断缺失，却从decoded取data/coding指针，不能换成从chunks为缺片取地址。
+
+**单D2恢复，精确工作状态。** 对新布局want={2}，minimum选择{0,1,3,10}，测试只提供chunks={0:D0,1:D1,3:D3,10:L0}。公开decode的out初始空；新包装建立私有work，ErasureCode::_decode把work准备为{0:D0,1:D1,2:未填B空间,3:D3,4:未填,5:未填,6:未填,7:未填,8:未填,9:未填,10:L0,11:未填}，再以&work作为低层decoded。所有条目存在且长B，不代表所有内容有效。D4..D7等可以健康但未读；不能据decoded.count或长度把它们加入输入。
+
+计划执行后只新填2的D2，原0/1/3/10继续有效，其他未填空间在此例仍未计算。当前decode包装只发布out={2:D2}，失败则不发布输出。通用ErasureCodeInterface允许返回want之外的额外有效片，但不允许发布未完成片；这正是稀疏LRC不能直接把整个基类work当结果交回的原因。若want已全部在chunks中，_decode直接引用返回，根本不调用decode_chunks；局部计算不应依赖每次都会进入回调。
+
+**子插件又是一套局部编号。** 全局层外ID[0..9]对应本层[0..9]；local0外ID[0,1,2,3,10]对应[0,1,2,3,4]；local1外ID[4,5,6,7,11]对应[0,1,2,3,4]。上例local0回调参数为layer_want={2}，layer_chunks={0:D0,1:D1,3:D3,4:L0}，layer_decoded={0:D0,1:D1,2:未填,3:D3,4:L0}。子插件写本层2后映回外层2；L0在子回调的key是4，绝不是10。当前Layer.erasure_code的encode_chunks/decode_chunks直接调用低层接口，层工作缓冲和编号重排必须由我们的调度代码准备。
+
+**上层输入与输出边界。** ECUtil::encode先要求整理后的in按stripe_width对齐，逐stripe取buf调用ec_impl->encode，再把每条带同片号结果追加到out[i]；插件看到的不一定是整对象或原始客户端写入片段。例两条带64KiB逻辑输入，B=4KiB时最终上层out[0]是两条带D0的拼接、长8KiB，不是整文件开头连续8KiB。
+
+恢复片路径ECUtil::decode(map输出)以out的key构造need，获取minimum并逐条带取各输入片，再调用ec_impl->decode(need,chunks,&out_bls,sinfo.get_chunk_size())；chunk_size为B而非原对象大小，当前基类和新包装未用此参数改变分配，而是按收到的chunk长度准备工作。ECBackend可能依据配置提供minimum的有效超集；契约不要求chunks恰好等于minimum，独立测试刻意严格只给minimum。
+
+完整数据路径ECUtil::decode(bufferlist输出)逐条带调decode_concat；当前继承的ErasureCode::decode_concat构造全部k数据目标，直接调用_decode而不是虚函数decode，再按数据顺序拼接。这一路不经过新decode包装的结果裁剪，但内部只取已要求恢复的k个数据片形成连续输出。Ceph18前台默认目标为全部k数据；本节{2}仅作单片恢复／独立插件测试，不将四helper能力等同于完整前台请求的总读取数。
+
+这些接口没有对象名、OSD号、磁盘地址参数，不在回调内做普通shard网络读取或持久写回。系统层取走的是主片bufferlist并负责后续存储／请求返回；移位尾部的额外身份与持久化仍是T1待解决契约。直接调用_chunks必须自行满足低层缓冲准备条件，不能把公开encode/decode初始空out的约定照搬到底层。
+
+本轮只读上述当前18代码、重整人读设计并保存本文，校验索引表、源符号、围栏与源码哈希；未运行编译、算法、Redis或集群，不新增性能／正确性通过结论。
 
 ## 8. 两个里程碑共用的 Ceph 接入与尾部闭环
 
@@ -936,20 +1031,20 @@ A2首次需宿主克隆`https://github.com/d-sun-cs/cerasure.git --branch fasttt
 
 ## 9. 可执行队列与里程碑状态
 
-T0-PAPER本轮流程验收已完成，当前可继续T1、M1/M2；如需论文级数值，单独安排公平统计。两研究里程碑保留，具体实验顺序见7.16。
+当前使用7.5的直接shell、纠删码benchmark与7.18新LRC独立测试；M1占位骨架已通过，下一步做真正TT全局与尾部／联合恢复，M2与M3分别后续验收。
 
 | ID | 优先级／状态 | 目标与入口 | 下一步动作 | 完成定义 |
 | --- | --- | --- | --- | --- |
 | T0-PAPER | **按本轮要求流程验收完成** | 附录A1/A2安装与各阶段实际执行，见7.17 | 已有163项、安装后6522组合、A2 24项、BlueStore36/12通过；可继续T1/M1/M2 | 本轮允许数值不同；论文级公平性能／多轮统计另做，不冒充硬件数值复现 |
-| T0 | 基线构建与限定正确性通过 | 论文指定18、AVX2、幂等接入和证据清单已建立 | 后续单独扩展任意长度和可靠性 | 复现来源与限制明确；公开Docker配方仍需空镜像验证 |
-| T0-LRC | 基础理解；静态核验完成 | 官方 LRC 配置、层次编码、局部选片与 OSD 读取链，见 7.9 | 已记录 4／2／3 例子及与 M1 的差异；不替代 T0-A／B 构建与运行 | 参数、编号、输入集合、恢复／不可解例子和通用接口已内联；尚未实测 |
-| T0-PROTO | 最小实现思路；讲解与静态核验完成 | ISA→TSX 类比、固定 TSX-LRC、共享恢复计划与旧内核适配，见 7.10 | 先T0-PAPER，再做固定内存原型与Ceph适配分层验收 | 已解释重要接口、局部例子、全局后备与可暂缓项；没有创建新插件 |
+| T0 | 基线构建与限定正确性通过 | 官方18＋AVX2，根目录单补丁与三个直接脚本 | 按7.5运行和维护，不新增编排框架 | 插件和benchmark可增量构建／安装／校验；不要求集群或Docker配方验收 |
+| T0-LRC | r19已复核实际参数契约 | 新旧编码索引、工作缓冲与Layer本层编号，见7.21 | 人读设计按encode／decode的实际输入输出说明；后续按此接TT内核 | 目标／helpers／已分配未填空间／有效输出区分清楚；本轮仅源码与文档核验 |
+| T0-PROTO | 历史讲解完成；r16已有占位骨架 | ISA→TSX类比与固定TSX-LRC，7.10为历史建议，7.18为实际实现 | 从现存Layer／共享规划继续TT内核与尾部契约 | 旧讲解不再等于当前无插件；占位通过仍不等于M1完成 |
 | T0-COMPARE | 两问基础核验完成 | 混合／数据组局部的取舍、额外内存和接口调用链，见 7.11–7.12 | M1 实施时分别落实物理片数、选片、主片／scratch／尾部契约 | 同规模比较与精确参数职责已内联；不代表性能／可解性或系统测试通过 |
-| T0-LIFECYCLE | 检测与恢复职责核验完成 | 通用 LRC 接口、OSD／对象故障发现、降级读／后台持久重建，见 7.13 | 后续 M3 分开验证 helper 选择、前台返回与后台写回；当前首项为T0-PAPER，后续系统验证独立验收 | 前台／后台／读触发恢复边界已内联，未做故障注入或集群实验 |
+| T0-LIFECYCLE | 检测与恢复职责核验完成 | 通用 LRC 接口、OSD／对象故障发现、降级读／后台持久重建，见 7.13 | 后续 M3 分开验证 helper 选择、前台返回与后台写回；当前只做插件测试，后续系统验证独立验收 | 前台／后台／读触发恢复边界已内联，未做故障注入或集群实验 |
 | T0-A | **完成** | 官方18与普通AVX2兼容基线 | 3种TSX、ISA、Jerasure与benchmark新构建退出0 | 工厂实际加载并执行旧map/set内核；版本／差异／命令和哈希记录见7.14与E1 |
 | T0-B | **限定矩阵完成** | 普通AVX2编解码正确性基线 | 4组配置、2片长、2输入、1..m全组合；48组／7,464组合通过 | 不包含任意长度、Redis故障／重启与真实OSD路径，需后续补验 |
 | T1 | 静态问题已定位；接口修复／运行未完成 | 尾部存取、主核错误路径和长度语义 | 依 7.4 处理 rctx／reply／容量与生命周期；定义显式尾部接口，复核重启／同版本行为 | 能准确说明“哪些字节存哪、如何读回、失败怎么办”，不把临时方案称为可靠存储 |
-| M1-A | 优先；设计待实现 | 独立参考编码／恢复与合法选片 | 按第 5 节建立 12 片布局和标量真值；显式只提供选中输入 | 1–3 擦除正确性与不可解反例有可复现实验 |
+| M1-A | 骨架流程通过；TT内核未实现 | 独立tsx_lrc三层布局／共享计划／ISA占位 | 实现真正G+/G-、尾部与联合恢复，保留当前占位对照；入口见7.18 | 需另验真正TT的1–3擦除全矩阵；532占位恢复不是M1完成 |
 | M1-B | 优先；待执行 | SIMD 四校验编码与恢复优化 | 分别实现／评估四校验同算、完整／按需 P0、直接方程法 | 同布局优化基线与逐项关闭实验能解释收益或退化 |
 | M2-A | 优先；设计待实现 | 输出拥有权任务切分 | 先做新内核一线程，再接线程池；先编码与单擦除 | 边界、尾部、完成语义正确，多线程结果与参考一致 |
 | M2-B | 优先；待执行 | 线程预算与请求调度 | 对比单线程请求、固定线程、自适应模式 | 同核数／不同并发的吞吐与尾延迟结果可复现 |
@@ -959,10 +1054,9 @@ T0-PAPER本轮流程验收已完成，当前可继续T1、M1/M2；如需论文�
 
 当前最小工作包：
 
-1. 核验官方18、普通AVX2研究分支、父三补丁和已测产物身份，保留旧stash／归档。
-2. 按7.16确定有效SIMD、单位、每类擦除位置与迭代分配，复现原论文内存编解码；保存逐项原始时间和统计规则。
-3. 再做消融、独立Cerasure对照、明确磁盘／后端的vstart＋rados PUT，分阶段标记完成，不混用旧脚本或MemStore结论。
-4. 原论文基线可复核后，继续T1尾部／长度与错误契约，然后按既定设计实施M1-A和M2-A；不在复现前改变算法。
+1. 按7.5／7.18直接安装并运行原纠删码与LRC测试，保留scaffold占位身份；当前不以占位层测FastTT性能。
+2. 继续T1尾部／长度契约与M1真实全局hook，补联合恢复；M2输出拥有权后续独立实施，不恢复旧AVX512 stash。
+3. 原位维护本文；独立Cerasure、虚拟集群与M3系统故障验证留待明确需要时再开展。
 
 如果缺少信息但还有独立可做工作，先推进独立部分；遇到确实依赖用户环境的缺口，提出具体问题并记录已有排查，避免反复让用户解释全部背景。
 
@@ -985,6 +1079,11 @@ T0-PAPER本轮流程验收已完成，当前可继续T1、M1/M2；如需论文�
 | H-LRC | 历史记录，未复现 | LRC 三种长度共 894 项满秩检查 | 缺完整脚本／输入／输出；按本文重新建立测试，不代表当前 C++／Ceph 已验收 |
 | H-MT | 历史记录，未复现 | 特定双擦除 840 例、分段比较 4200 次 | 只涉及特定 Python 等价性，不能推出多线程安全或性能 |
 | H-UPD | 历史记录，未复现 | 增量更新 1006 次，另有 231 种擦除检查的记录 | 数字分别保留；缺脚本时不能合并成新的测试结论 |
+| E-CHUNK-ABI-r19 | 当前18源码契约与文档核对 | 7.21：逐参数／逐片号、prepare与_decode工作表、稀疏D2和层内映射、上层条带边界 | 无C++／脚本修改，无新运行实验；r16结果不变 |
+| E-IMPL-DOC-r18 | 源码职责核对与文档收敛 | 7.20：计算接口／选片扩展点／自有Layer区别，函数落点与D2实际调用 | 只改设计、handoff与阅读约定；代码及r16实验结论不变 |
+| E-LAYER-r17 | 源码对照与文档更新 | 7.19：原始切分一次、每层k/m、校验作输入、4/2/3实例和普通RS对比 | 无代码修改；未重跑构建／算法／集群，r16实验状态不变 |
+| E-LRC-SCAFFOLD-r16 | 编译／安装／独立测试通过 | 7.18：新插件三层、共享计划、严格输入恢复、532成功＋64预期拒绝；原6522回归通过 | 全局ISA占位，TT／尾部／联合三擦除未实现，无集群验收 |
+| E-EC-r15 | 本轮直接shell验证 | 见下方E-EC-r15执行记录；构建和测试均为纠删码目标 | 无集群、无新算法或尾部可靠性验收 |
 | E-APPENDIX-r14 | 本轮安装／实验流程验收完成 | 标准安装19库，163项A1与6522安装后随机组合，A2 24项，最终BlueStore36 PUT/GET及12降级GET全通过，见7.17 | 非论文硬件性能／新M1/M2／Redis故障／替换重建验收；新增代码仅本地 |
 | E-PAPER-PREFLIGHT-r11 | 24项基础性能预检通过 | 4配置×3实现×encode/单数据擦除decode，每片2MiB、每项2000次、同CPU0；退出码与计量字节正常，见7.16 | 非全套论文复现，未新增正确性证明；多擦除／消融／Cerasure／系统仍待运行 |
 | E1 | 构建与限定正确性通过 | 官方18＋普通AVX2；48组、7,464组合逐字节恢复一致，见7.14 | 仅对齐片长、同次编码尾部可用；不代表任意长度、持久故障或性能 |
@@ -1015,7 +1114,25 @@ TSX f98ebcba4164f3e46b63dff722501fe6a7859325 + 修改的5个源码/脚本文件 
 
 **E-PUBLISH-r9（历史检查点，r10已解决）：已授权发布，认证未完成。** 用户明确批准完整分支含交接文档；发布前审查所有新提交（含中间历史）只有13个文本路径，确认无PDF、build、local_workspace、Redis数据、stash或新增二进制，三份补丁精确重建父四文件，TSX工作区干净。HTTPS实际push失败128；已连接的GitHub账号Lai-JX只有该仓库读取权限；未配置现成SSH身份。未尝试越权写入，未修改远端main或创建其他仓库。已向用户请求选择有写权限的连接账号／本机Git认证／为当前连接账号授权；用户此前的发布批准不因认证失败而失效。后续核验目标远端branch head，正常快进push并再次核对SHA，成功后更新本文，不得把本次失败写成已发布。代码／测试状态完全不变。
 
-**E-PUBLISH-r10／2026-11-02：实际发布完成。** 个人账号d-sun-cs身份及仓库写入权限已核验；普通push至origin研究分支成功，首次远端SHA与本地 `ec55c417d0ba5bb7aa1a2a7f57c2a4a02beaac1d` 一致。发布包含既定13个文本路径及交接正文；主分支、Ceph官方源码版本和编译输入未改，没有重跑算法实验或将周报写入核心文档。认证仅作用于本TSX仓库目标URL，凭据不入Git；本次改为同次执行完成推送／核对，成功后清理明文输入和临时helper。公开Dockerfile从空镜像验证仍保留未完成状态。
+**E-PUBLISH-r10／2026-11-02：实际发布完成。** 个人账号d-sun-cs身份及仓库写入权限已核验；普通push至origin研究分支成功，首次远端SHA与本地 `ec55c417d0ba5bb7aa1a2a7f57c2a4a02beaac1d` 一致。发布包含既定13个文本路径及交接正文；主分支、Ceph官方源码版本和编译输入未改，没有重跑算法实验或将周报写入核心文档。认证仅作用于本TSX仓库目标URL，凭据不入Git；本次改为同次执行完成推送／核对，成功后清理明文输入和临时helper。当时公开空镜像验证未完成；该配方现已删除，当前流程见7.5。
+
+**E-EC-r15／2026-11-07：精简后的实际验证。** 基于TSX本地8ad62fe工作树；删除repro和端到端包装，更新根目录shell／README／AGENTS并合并接入补丁，未改算法C++或父四文件。官方Ceph仍为18.2.7@6b0e988；在既有fasttt_reef（Ubuntu22.04／GCC11.4／Xeon8358）中执行，Redis当次PONG，下面CPU0、OMP_NUM_THREADS=1。
+
+1. `bash recmake.sh 16`退出0，显式EC目标构建并安装成功；缓存核验WITH_BLUESTORE=OFF、WITH_MGR=OFF、WITH_RADOSGW=OFF。此次因配置变化实际执行226步，包含benchmark必需公共库；没有编译MON／OSD可执行目标或vstart。tsx／isa／jerasure三子目录共安装13个共享库，ldd均无缺失。日志为Ceph根local_workspace/ec-tests/build-20261107.log。
+2. 从容器/tmp执行 `bash /ceph/src/erasure-code/tsx/check_correctivity.sh`退出0；每片2MiB、随机seed1，四配置和消融共48命令／6522组合通过。日志local_workspace/ec-tests/correctness-20261107.log，逐项命令／输出／CSV在correctness-8Ay9XKDv。该计数与r14相同，是本轮重新执行，不合并成不同故障集合。
+3. 从容器/tmp依次执行四组 `bash /ceph/src/erasure-code/tsx/coding_benchmark_cases.sh K M 2048 10`，全部退出0；每项预热2次、计时10次，测项数18＋30＋70＋45＝163，所有时间／计量行正常。原始日志local_workspace/ec-tests/coding-20261107.log；四目录为coding-6-2-r9cyTaaR、coding-6-3-wgz3Oc2U、coding-8-3-z5MdbFTs、coding-10-4-VT7yTs4O。已逐行核对KiB=10×k×2048、秒数大于0和GiB/s换算。本轮只验收脚本，不把10次烟测当2000次正式性能统计。
+4. 四脚本bash语法、从其他CWD读取帮助和非法参数退出2通过；故意指定不存在的插件目录，正确性脚本退出1且无PASS汇总。单补丁已在临时目录从官方原文件应用，与当前父四文件逐字节完全一致；未为验证而回滚实际源码。
+
+本轮没有启动任何Ceph集群；非Z状态的Ceph daemon数为0。既有容器/proc仍可见旧任务48个已退出的Z条目，不当作活跃集群，也未为此重启容器。没有遗留构建／实验任务。setup_container.sh的新Ubuntu shell入口只作静态／帮助检查，本轮实际构建使用既有环境，未声称完成全新公网镜像依赖下载验收。精简前源码／文档备份在local_workspace/environment-backups/2026-11-07-ec-simplification/tsx-before-simplification.tar.gz，旧结果和build保留。
+
+对应本轮未提交运行树的SHA256：
+
+```text
+recmake.sh 6719c7ecd21697cddf11bb231e6d01db8a1fc5fac2adae4b2d85bbb0524aa2b5
+check_correctivity.sh 9c91ab56ad5df1f54c915cd1628c1b9930a035e0c882058e9921f75d784f2049
+coding_benchmark_cases.sh 60700d09f09b36c817c03eda602e235e9bca9c545ae4bfed2e6784f6ce8b07b4
+ceph-v18.2.7.patch dfc4fa6b7c4996a52f3cab837e3bc456a39f85afe8d92f77f55759dd89fb0e85
+```
 
 ### 10.2 实验记录格式
 
@@ -1052,10 +1169,10 @@ TSX f98ebcba4164f3e46b63dff722501fe6a7859325 + 修改的5个源码/脚本文件 
 | D5 | 用户确定，2026-10-29 | 本文保持独立；必要事实直接转述，不依赖其他文本、缓存链接或固定机器地址 | 后续每次更新均检查是否重新引入外部依赖 |
 | D6 | 用户确定，2026-10-29 | 停止此前 AVX512 实验，回归普通 main／AVX2；旧实验仅保留本地 stash 与历史产物身份 | 后续用户明确恢复该实验或改变基线时更新 |
 | D7 | 本轮维护落位 | 唯一正文放 TSX 仓库 `docs/agent/fasttt-handoff.md`，根 AGENTS 与 README 导航；与源码一起迁移时可发现，正文独立可读 | 若仓库结构改变，同步入口并保留单一正文；未提交内容需显式携带 |
-| D8 | 用户确定，已执行 | 2026-11-01按论文统一到官方Ceph18.2.7；TSX从普通AVX2发布基线建research/ceph-v18.2.7，不做20接口适配 | 独立TSX保存接入补丁与复现工具，保留旧基线和备份 |
-| D9 | 设计候选，未选型 | 参考官方 LRC 分层组合或在 TSX 内实现局部布局与选片；两者均需真实 TT 全局方程、尾部契约及匹配的 Ceph 接口 | 完成兼容基线／内核契约后，比较实现代价和正确性再确定，不将高层 k/m/l 当成现成 M1 |
-| D11 | 用户确定，2026-11-02 | 当前先复现原论文以确认环境并建立基线，再推进T1/M1/M2；复现期间保留普通AVX2原算法 | 完成7.16各阶段并核对证据后进入新功能 |
-| D10 | 初版设计建议，非用户已选型 | 为便于理解与实现，先建立固定布局 TSX-LRC 通用子类，核心为编码／共享恢复计划／解码；先内存原型、再 Ceph 长度与存储适配，不先实现通用 layers | 用户要求开始代码实施时复核目标与契约；不得把本轮讲解记成插件已实现或全部细节可忽略 |
+| D8 | 用户确定，已执行 | 2026-11-01按论文统一到官方Ceph18.2.7；TSX从普通AVX2发布基线建research/ceph-v18.2.7，不做20接口适配 | 独立TSX保存单补丁和直接shell，保留旧基线和备份 |
+| D9 | 本轮原型采用，非最终TT格式 | 独立ErasureCode子类，参照官方Layer与本层编号重排，固定数据局部组；全局ISA占位 | 接入真正TT后重新验收尾部、规划与布局，不把子插件替换当M1完成 |
+| D11 | 用户确定，2026-11-07更新 | 当前只做原AVX2插件及自定义纠删码测试；操作说明集中handoff，移除repro多层封装，系统集群后置 | 按7.5的直接入口维护基线，随后T1/M1/M2 |
+| D10 | 用户已要求骨架，2026-11-08 | 先完整执行流，TT细节允许留空；人读设计简洁、agent交接详细 | 当前实现／通过事实在7.18；后续由真实内核与故障测试决定完成状态 |
 
 新增决策须记录：状态、问题、选择、考虑过的替代办法、证据、代价、适用版本、失效／替代条件。未被采纳的方案不要伪装成用户要求。
 
@@ -1068,10 +1185,10 @@ TSX f98ebcba4164f3e46b63dff722501fe6a7859325 + 修改的5个源码/脚本文件 
 | K3 | 尾部可靠性与并发语义未验收 | 按第 7／8 节补代码、故障和版本一致性证据 |
 | K4 | 四校验同算／按需 P0／输出分工的性能未知 | 以公平基线和逐项关闭实验决定保留哪种实现 |
 | K5 | 历史消融百分比不可靠，原始运行条件未完整复核 | 仅保留第 3.1 节内联数值及限制；新结论用当前实验重算 |
-| K6 | 当前没有新增算法实现或运行失败实验；已有静态风险及工具缺失记录 | 保留证据类型；不能把静态风险写成运行中已经复现的故障 |
+| K6 | 原TT内核未改；新增局部布局／计划骨架，全局ISA占位；首次缺buffer定义头文件的构建失败已修正 | 不把占位恢复计为TT新算法通过，保留首错及最终成功日志 |
 | K7 | 历史20纯虚缺口通过回归18避开，18工厂／内核已实际加载测试 | 保留版本边界，不重复要求实现20接口 |
 | K8 | 旧AVX512 build已归档，新build身份及限定正确性已验证 | 不混用归档；宿主缺工具时用已识别容器，论文性能按7.16复现 |
-| K9 | r10已发布；本轮r14新复现脚本和交接仅本地，父集成仍由三patch重建；stash／结果／镜像不是Git内容 | 用本地完整分支／bundle携带新增代码，远端同步须可用写入身份；不重新上传论文或大体积数据 |
+| K9 | r10曾发布；r15精简及r16骨架均未提交／推送，父四文件由根单补丁重建 | 跨工作区传递全部未提交／新文件或对应完整提交，不能只拉旧远端；PDF／结果不自动上传 |
 | K10 | 历史20官方简介与parse_kml约束存在差异，20的LRC优化池限制仅属历史版本结论 | 采用源码／单测明确支持的 4／2／3；区分通用接口实现与优化池支持，不照抄不同版本示例宣称可运行 |
 | K11 | TT尾部与Ceph等长片／stripe_unit契约未解决；当前18的encode包装仍丢弃内核返回值，20新旧路径仅作历史 | 内存原型显式携带尾部；接池前确定数据映射／序列化／I/O 偏移并检查错误传播，不靠增加 get_chunk_size 或仅返回 errno 宣称系统完成 |
 
@@ -1112,25 +1229,26 @@ THEIA 代表一种系统层思路：primary OSD 先收集所需片段、重构�
 
 ## 12. 下一次交接、运行中工作与变更记录
 
-### 12.1 当前交接给谁、下一步是什么
+### 12.1 当前交接与下一步
 
-- 下一任：负责具体代码实现的 AI agent；从 TSX 根 AGENTS 发现本文，按当前环境重新识别两个 Git 根与构建角色。
-- 本轮用户要求的T0-PAPER流程验收已完成，先核验7.17结果后可继续T1尾部／长度契约及M1/M2；需要论文级数字时另做同SIMD和多轮统计。远端为r10，本次新脚本／r14仅本地，不能声称已远端同步。
-- 2026-10-29 的官方 LRC 基础讲解已完成静态核验并写入 7.9；它提供局部选片、恢复与放置的具体参照，没有替换 M1 设计或完成实际集群验收。
-- 2026-10-31 的最小原型讲解已写入 7.10：参照 ISA／LRC 组织自己的通用子类，先做固定布局和共享规划。当时仅讲解、没有创建插件；T0-A现已完成，当前先做T0-PAPER，再按内核与Ceph适配分层验收。
-- 2026-11-01 的分组优劣与缓冲传参两问已写入 7.11–7.12；明确额外局部主片由总片数驱动准备并经 encoded/out 传入，不把其与 TT 尾部／scratch 混同；没有改变 M1 或开始实现。
-- 2026-11-01 的后续检测／恢复提问已写入 7.13：minimum_to_decode 的系统作用、故障发现时机、前台解码与后台持久重建及按需催促恢复的区别；没有故障注入或系统验证。
-- r8完成检查点：编译与正确性任务均退出0，未启动Ceph集群；独立`fasttt_reef`容器／回环Redis保留用于继续开发。公开基础镜像下载独立于通过的代码测试，状态见7.14。
-- 无需继承旧聊天、工具会话、子 agent 或缓存才能理解本项目。当前源码已定位，但换工作区后仍须核对实际版本；历史Ceph20接口差距与旧build版本边界不能丢失；它们不是当前18接口事实。
-- 携带最新正文即可恢复理解；要继续开发，还需对应 TSX／Ceph 代码与未提交差异。交接与AGENTS随研究分支管理，但仅本地分支／未推送提交不会出现在GitHub；stash、ignored文件、历史结果、二进制、进程与数据不会随clone迁移，缺失时按本文重建。
-- 本文件在每次交接后继续更新，不能冻结为“首次方案说明”。
-
-- r12正在编译vstart与全部插件，完成后安装并执行附录实验；运行角色／观察方法见7.16。此前方案复核已完成；未改变原算法。文档清理了历史20／未构建／旧任务优先级残留，新增7.15完整性边界和7.16论文协议／24项预检证据。
+- 操作说明在7.5，新LRC核心契约／证据在7.18；增加check_lrc直接测试，无集群或编排框架。
+- r19已复核逐参数／逐片号和上层缓冲契约，见7.21；人读设计仍遵守7.20的实现导向。无运行任务，后续先TT全局／显式尾部契约，不把源码讲解记为新算法验收。
+- 论文软件基线保持官方Ceph18与普通AVX2。最新本地已提交HEAD为8ad62fe，r15精简与r16骨架均是其上的未提交改动；远端上次核对为b133351，不能称本轮已推送。
+- 本轮LRC骨架已编译／安装／测试；下一项先定义显式TT尾部和G+/G-子内核，再扩展联合恢复，M2／M3独立后置。历史20接口不能套到当前18。
+- r8/r14真实通过记录保留在7.14／7.17，不作为精简脚本的新结果。原精简验证在E-EC-r15，新骨架及本轮回归在E-LRC-SCAFFOLD-r16／7.18。
+- 本机保留fasttt_reef和其Redis；本轮不启动MON／OSD，不删除旧build、PDF、旧实验结果或归档。
+- 精简前文件备份在Ceph根local_workspace/environment-backups/2026-11-07-ec-simplification，另可从本地Git提交恢复。它不是新工作区运行前置。
+- 两个仓库的未提交差异、stash、ignored资料、容器和二进制不会随clone迁移。实际交接要传递包含改动的代码版本与本文，不能只传一个移动分支名。
 
 ### 12.2 重要变更记录
 
 | 修订／日期 | 变化、原因与验证 |
 | --- | --- |
+| r19／2026-11-09 | 对照当前18基类、ECUtil与新旧TSX，补齐两个_chunks接口的参数和每个片号、低层工作表与公开空out区别、D2稀疏恢复和层内编号；明确decode_concat／全k前台边界、原尾部不在主片map中。只更新两份文档，不改代码或重跑实验。 |
+| r18／2026-11-08 | 按用户的实现优先要求收敛人读设计：只讲当前Layer表／子编码器／编号映射、计算接口、选片共享规划、错误与有效输出及TODO落点；明确Layer是自有组织代码而非强制Ceph接口。同步AGENTS／本文，仅文档校验，不改代码或重跑实验。 |
+| r17／2026-11-08 | 用16KiB、普通RS4+2与官方LRC4+2+2解释Layer任务／相对输入角色／每层k,m、单与双故障路径及同开销RS4+4差别；同步人读设计与本文，当前TT占位及r16测试事实不变。本轮只文档校验。 |
+| r16／2026-11-08 | 原纠删码工作流复验；新增独立tsx_lrc及三层／共享恢复计划，显式ISA占位，FastTT hook返回未实现。构建安装和新测试532恢复＋64预期拒绝通过，原48命令6522组合回归通过；新增简洁人读设计，集群后置。 |
+| r15／2026-11-07 | 按用户要求移除repro、版本JSON／Dockerfile／Python编排和端到端包装；单补丁与根目录三个shell直接完成插件安装、恢复和计时，关闭BlueStore、无集群目标。操作说明统一到7.5，压缩旧阶段记录并保留真实结果，验证见E-EC-r15。 |
 | r1／2026-10-26 | 初建交接入口，整合双里程碑、参考代码核验、验收与更新协议；当时仍含外部文本与固定地址依赖。未实施项目代码。 |
 | r2／2026-10-29 | 按用户要求改为独立迁移版：必要理解、历史证据与限制直接内联；删除外部文本引用、来源编号、外链、证据缓存及机器地址；代码按身份／符号检索，命令根目录运行时解析；维护模板同步改为内联结果。未运行新增代码实验。 |
 | r3／2026-10-29 | 将用户新增根目录文档迁入 `docs/agent/fasttt-handoff.md`，新增 AGENTS／README 入口并规范单写者／迁移协议；核对当前 main、父 Ceph 20.2.0、旧 stash 和 AVX512 产物身份；补齐纯虚接口差距、选片入口、TPS 条件、窗口／尾部容量／生命周期和 M1/M2 代码落点；T0 静态部分完成，下一项收敛为兼容基线与新构建。仅文档改动，未构建或运行算法实验。 |
