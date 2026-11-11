@@ -19,14 +19,8 @@ public:
   int _minimum_to_decode(const std::set<int>& want,
                         const std::set<int>& available,
                         std::set<int>* minimum) override;
-  int encode(const std::set<int>& want, const ceph::bufferlist& in,
-             std::map<int, ceph::bufferlist>* encoded) override;
   int encode_chunks(const std::set<int>& want,
                     std::map<int, ceph::bufferlist>* encoded) override;
-  int decode(const std::set<int>& want,
-             const std::map<int, ceph::bufferlist>& chunks,
-             std::map<int, ceph::bufferlist>* decoded,
-             int chunk_size) override;
   int decode_chunks(const std::set<int>& want,
                     const std::map<int, ceph::bufferlist>& chunks,
                     std::map<int, ceph::bufferlist>* decoded) override;

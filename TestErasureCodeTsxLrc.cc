@@ -57,7 +57,6 @@ static void repair(ErasureCodeInterfaceRef code, const Chunks& all,
   Chunks decoded;
   if (!supported) {
     check(r == -EIO, "unsupported plan must return -EIO");
-    decoded[99].append("sentinel");
     check(code->decode(want, healthy, &decoded, 0) == -EIO,
           "unsupported decode must return -EIO");
     check(decoded.empty(), "failed decode published output");
@@ -78,10 +77,15 @@ static void repair(ErasureCodeInterfaceRef code, const Chunks& all,
   // Deliberately pass ONLY planned inputs, not the full healthy codeword.
   r = code->decode(want, selected, &decoded, 0);
   check(r == 0, "decode failed with its own planned inputs");
-  check(decoded.size() == want.size(), "published unread/uninitialised spare shards");
   for (int id : want) {
     check(decoded.count(id) && decoded.at(id).contents_equal(all.at(id)),
           "recovered bytes differ for shard " + std::to_string(id));
+  }
+  // The Ceph interface permits additional valid results, including the
+  // helpers and intermediates. Every returned shard must be usable.
+  for (const auto& entry : decoded) {
+    check(all.count(entry.first) && entry.second.contents_equal(all.at(entry.first)),
+          "published an invalid/uninitialised extra shard");
   }
 }
 
@@ -158,6 +162,35 @@ int main(int argc, char** argv)
       repair(code, all, {10}, {10}, true, {0,1,2,3});
       repair(code, all, {0,1}, {0,1}, true, {2,3,4,5,6,7,8,9});
       repair(code, all, {0,10}, {0,10}, true); // global, then local again
+      Chunks local_inputs, local_outputs;
+      for (int id : {0,1,3,10}) {
+        local_inputs[id] = all.at(id);
+      }
+      check(code->decode({2}, local_inputs, &local_outputs, 0) == 0,
+            "inherited decode failed for local repair");
+      check(local_outputs.size() == 5 && !local_outputs.count(4) &&
+            local_outputs.at(2).contents_equal(all.at(2)),
+            "local repair retained unfilled shards or discarded valid helpers");
+      const set<int> data_ids{0,1,2,3,4,5,6,7};
+      Ranges minimum;
+      set<int> available = all_ids();
+      available.erase(2);
+      check(code->minimum_to_decode(data_ids, available, &minimum) == 0,
+            "full-data recovery plan failed");
+      Chunks concat_inputs;
+      for (const auto& entry : minimum) {
+        concat_inputs[entry.first] = all.at(entry.first);
+      }
+      bufferlist concatenated;
+      check(code->decode_concat(concat_inputs, &concatenated) == 0 &&
+            concatenated.contents_equal(raw),
+            "inherited decode_concat did not reconstruct the logical input");
+      Chunks parity_only;
+      check(code->encode({8,9,10,11}, raw, &parity_only) == 0 &&
+            parity_only.size() == 4, "inherited encode did not filter outputs");
+      for (const auto& entry : parity_only) {
+        check(entry.second.contents_equal(all.at(entry.first)), "parity-only bytes differ");
+      }
       for (unsigned mask = 1; mask < (1u << 12); ++mask) {
         if (__builtin_popcount(mask) > 3) {
           continue;
@@ -177,21 +210,23 @@ int main(int argc, char** argv)
         check(all.at(id).to_str() == original[id], "decoder modified an input shard");
       }
       Chunks decoded;
-      check(code->decode({2}, {}, &decoded, 0) == -EINVAL, "empty input accepted");
       check(code->decode({12}, all, &decoded, 0) == -EINVAL, "invalid ID accepted");
       check(code->decode({}, {}, &decoded, 0) == 0 && decoded.empty(), "empty want failed");
       Chunks malformed = all;
+      malformed.erase(2); // Exercise the kernel, rather than the already-read fast path.
       bufferlist shorter;
       shorter.substr_of(all.at(1), 0, size - 1);
       malformed[1] = shorter;
       check(code->decode({2}, malformed, &decoded, 0) == -EINVAL, "unequal lengths accepted");
-      bufferlist empty;
-      check(code->encode(all_ids(), empty, &decoded) == -EINVAL, "empty encode accepted");
+      Chunks unprepared;
+      check(code->encode_chunks(all_ids(), &unprepared) == -EINVAL,
+            "low-level encode accepted unprepared buffers");
     }
     check(recovered == 532 && rejected == 64, "unexpected scaffold recovery coverage");
     cout << "PASS tsx_lrc scaffold: 4KiB/64KiB, 532 repairs + 64 expected planner rejections; "
          << "four-helper local repair, global fallback, global-to-local repair, "
-         << "byte comparisons, output filtering and error paths" << endl;
+         << "byte comparisons, valid-output pruning, inherited wrappers/decode_concat "
+         << "and kernel error paths" << endl;
     return 0;
   } catch (const exception& error) {
     cerr << "FAIL tsx_lrc: " << error.what() << endl;

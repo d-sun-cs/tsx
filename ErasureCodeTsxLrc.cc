@@ -168,27 +168,6 @@ int ErasureCodeTsxLrc::_minimum_to_decode(const set<int>& want,
   return r;
 }
 
-int ErasureCodeTsxLrc::encode(const set<int>& want, const bufferlist& in,
-                             map<int, bufferlist>* encoded)
-{
-  encoded->clear();
-  if (layers.size() != 3 || !valid_ids(want) || in.length() == 0) {
-    return -EINVAL;
-  }
-  map<int, bufferlist> work;
-  int r = encode_prepare(in, work);
-  if (!r) {
-    r = encode_chunks(want, &work);
-  }
-  if (r) {
-    return r; // Ceph18's base encode discards this error; propagate it here.
-  }
-  for (int id : want) {
-    (*encoded)[id] = work.at(id);
-  }
-  return 0;
-}
-
 int ErasureCodeTsxLrc::encode_chunks(const set<int>& want,
                                     map<int, bufferlist>* encoded)
 {
@@ -224,52 +203,34 @@ int ErasureCodeTsxLrc::encode_chunks(const set<int>& want,
   return 0;
 }
 
-int ErasureCodeTsxLrc::decode(const set<int>& want,
-                             const map<int, bufferlist>& chunks,
-                             map<int, bufferlist>* decoded, int chunk_size)
-{
-  decoded->clear();
-  if (layers.size() != 3 || !valid_ids(want) || !valid_ids(ids_of(chunks))) {
-    return -EINVAL;
-  }
-  if (want.empty()) {
-    return 0;
-  }
-  if (chunks.empty() || chunks.begin()->second.length() == 0) {
-    return -EINVAL;
-  }
-  const auto size = chunks.begin()->second.length();
-  for (const auto& chunk : chunks) {
-    if (chunk.second.length() != size) {
-      return -EINVAL;
-    }
-  }
-  map<int, bufferlist> work;
-  int r = ErasureCode::_decode(want, chunks, &work);
-  if (r) {
-    return r;
-  }
-  // Base _decode allocates all absent IDs, including unread healthy shards.
-  // Publish requested outputs only, never those uninitialised spare buffers.
-  for (int id : want) {
-    (*decoded)[id] = work.at(id);
-  }
-  return 0;
-}
-
 int ErasureCodeTsxLrc::decode_chunks(const set<int>& want,
                                     const map<int, bufferlist>& chunks,
                                     map<int, bufferlist>* decoded)
 {
+  auto fail = [decoded](int error) {
+    decoded->clear();
+    return error;
+  };
+  set<int> known = ids_of(chunks);
   RepairPlan plan;
-  int r = make_repair_plan(want, ids_of(chunks), &plan);
+  int r = make_repair_plan(want, known, &plan);
   if (r) {
-    return r;
+    return fail(r);
+  }
+  if (chunks.empty() || chunks.begin()->second.length() == 0) {
+    return fail(-EINVAL);
+  }
+  const auto size = chunks.begin()->second.length();
+  for (const auto& chunk : chunks) {
+    if (chunk.second.length() != size) {
+      return fail(-EINVAL);
+    }
   }
   for (int id = 0; id < 12; ++id) {
     auto chunk = decoded->find(id);
-    if (chunk == decoded->end() || chunk->second.length() == 0) {
-      return -EINVAL; // Low-level entry requires Ceph's prepared work buffers.
+    if (chunk == decoded->end() || chunk->second.length() != size) {
+      // Low-level entry requires Ceph's prepared work buffers.
+      return fail(-EINVAL);
     }
   }
   for (const auto& step : plan.steps) {
@@ -288,10 +249,21 @@ int ErasureCodeTsxLrc::decode_chunks(const set<int>& want,
     }
     r = layer.erasure_code->decode_chunks(layer_want, layer_chunks, &layer_decoded);
     if (r) {
-      return r;
+      return fail(r);
     }
     for (unsigned int j = 0; j < layer.chunks.size(); ++j) {
       (*decoded)[layer.chunks[j]] = layer_decoded[j];
+    }
+    known.insert(step.targets.begin(), step.targets.end());
+  }
+  // Keep Ceph's default encode/decode wrappers. _decode preallocates all
+  // absent shards, but a local repair need not fill them all. Return only
+  // known inputs and completed results; no extra shard computation or copy.
+  for (auto i = decoded->begin(); i != decoded->end();) {
+    if (known.count(i->first)) {
+      ++i;
+    } else {
+      i = decoded->erase(i);
     }
   }
   return 0;
