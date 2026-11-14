@@ -1,6 +1,21 @@
+diff --git a/cmake/modules/BuildBoost.cmake b/cmake/modules/BuildBoost.cmake
+index 1d793fb442e..15d722452c7 100644
+--- a/cmake/modules/BuildBoost.cmake
++++ b/cmake/modules/BuildBoost.cmake
+@@ -156,7 +156,7 @@ function(do_build_boost root_dir version)
+     set(boost_sha256 475d589d51a7f8b3ba2ba4eda022b170e562ca3b760ee922c146b6c65856ef39)
+     string(REPLACE "." "_" boost_version_underscore ${boost_version} )
+     list(APPEND boost_url
+-      https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/boost_${boost_version_underscore}.tar.bz2
++      https://archives.boost.io/release/${boost_version}/source/boost_${boost_version_underscore}.tar.bz2
+       https://download.ceph.com/qa/boost_${boost_version_underscore}.tar.bz2)
+     set(source_dir
+       URL ${boost_url}
+diff --git a/src/erasure-code/CMakeLists.txt b/src/erasure-code/CMakeLists.txt
+index 18291f64b5c..be043cd1564 100644
 --- a/src/erasure-code/CMakeLists.txt
 +++ b/src/erasure-code/CMakeLists.txt
-@@ -21,6 +21,7 @@
+@@ -21,6 +21,7 @@ add_subdirectory(jerasure)
  add_subdirectory(lrc)
  add_subdirectory(shec)
  add_subdirectory(clay)
@@ -8,7 +23,7 @@
  
  if(HAVE_NASM_X64_AVX2 OR HAVE_ARMV8_SIMD)
    set(WITH_EC_ISA_PLUGIN TRUE CACHE BOOL "")
-@@ -42,4 +43,7 @@
+@@ -42,4 +43,7 @@ add_custom_target(erasure_code_plugins DEPENDS
      ec_lrc
      ec_jerasure
      ec_shec
@@ -18,6 +33,7 @@
 +    ec_tsx2
 +    ec_tsx4)
 diff --git a/src/test/erasure-code/ceph_erasure_code_benchmark.cc b/src/test/erasure-code/ceph_erasure_code_benchmark.cc
+index c86e58697c0..181757ff7b8 100644
 --- a/src/test/erasure-code/ceph_erasure_code_benchmark.cc
 +++ b/src/test/erasure-code/ceph_erasure_code_benchmark.cc
 @@ -15,6 +15,9 @@
@@ -30,7 +46,7 @@ diff --git a/src/test/erasure-code/ceph_erasure_code_benchmark.cc b/src/test/era
  #include <boost/scoped_ptr.hpp>
  #include <boost/lexical_cast.hpp>
  #include <boost/program_options/option.hpp>
-@@ -60,6 +63,10 @@
+@@ -60,6 +63,16 @@ int ErasureCodeBench::setup(int argc, char** argv) {
       "erasure code plugin name")
      ("workload,w", po::value<string>()->default_value("encode"),
       "run either encode or decode")
@@ -38,15 +54,24 @@ diff --git a/src/test/erasure-code/ceph_erasure_code_benchmark.cc b/src/test/era
 +     "input bytes: constant X (default) or deterministic random")
 +    ("input-seed", po::value<std::uint32_t>()->default_value(1),
 +     "seed for deterministic random input bytes")
++    ("use-minimum", po::bool_switch()->default_value(false),
++     "select inputs with minimum_to_decode before each decode (whole shards)")
++    ("decode-only-erased", po::bool_switch()->default_value(false),
++     "request only erased shards; exhaustive mode already does this")
++    ("verify", po::bool_switch()->default_value(false),
++     "compare decoded targets with original bytes (included in timing)")
      ("erasures,e", po::value<int>()->default_value(1),
       "number of erasures when decoding")
      ("erased", po::value<vector<int> >(),
-@@ -122,6 +129,12 @@
+@@ -122,6 +135,15 @@ int ErasureCodeBench::setup(int argc, char** argv) {
    max_iterations = vm["iterations"].as<int>();
    plugin = vm["plugin"].as<string>();
    workload = vm["workload"].as<string>();
 +  input_pattern = vm["input-pattern"].as<string>();
 +  input_seed = vm["input-seed"].as<std::uint32_t>();
++  use_minimum = vm["use-minimum"].as<bool>();
++  decode_only_erased = vm["decode-only-erased"].as<bool>();
++  verify = vm["verify"].as<bool>();
 +  if (input_pattern != "constant" && input_pattern != "random") {
 +    cerr << "input-pattern must be constant or random" << endl;
 +    return -EINVAL;
@@ -54,7 +79,21 @@ diff --git a/src/test/erasure-code/ceph_erasure_code_benchmark.cc b/src/test/era
    erasures = vm["erasures"].as<int>();
    if (vm.count("erasures-generation") > 0 &&
        vm["erasures-generation"].as<string>() == "exhaustive")
-@@ -162,6 +175,22 @@
+@@ -130,6 +152,13 @@ int ErasureCodeBench::setup(int argc, char** argv) {
+     exhaustive_erasures = false;
+   if (vm.count("erased") > 0)
+     erased = vm["erased"].as<vector<int> >();
++  if (in_size <= 0 || max_iterations <= 0 || erasures < 0 ||
++      (workload != "encode" && workload != "decode") ||
++      (exhaustive_erasures && !erased.empty())) {
++    cerr << "require positive size/iterations, nonnegative erasures, "
++         << "encode/decode workload and no --erased with exhaustive mode" << endl;
++    return -EINVAL;
++  }
+   
+   try {
+     k = stoi(profile["k"]);
+@@ -162,6 +191,22 @@ int ErasureCodeBench::run() {
      return decode();
  }
  
@@ -77,7 +116,7 @@ diff --git a/src/test/erasure-code/ceph_erasure_code_benchmark.cc b/src/test/era
  int ErasureCodeBench::encode()
  {
    ErasureCodePluginRegistry &instance = ErasureCodePluginRegistry::instance();
-@@ -176,8 +205,7 @@
+@@ -176,12 +221,16 @@ int ErasureCodeBench::encode()
    }
  
    bufferlist in;
@@ -85,60 +124,248 @@ diff --git a/src/test/erasure-code/ceph_erasure_code_benchmark.cc b/src/test/era
 -  in.rebuild_aligned(ErasureCode::SIMD_ALIGN);
 +  prepare_input(in, in_size, input_pattern, input_seed);
    set<int> want_to_encode;
-   for (int i = 0; i < k + m; i++) {
+-  for (int i = 0; i < k + m; i++) {
++  for (unsigned int i = 0; i < erasure_code->get_chunk_count(); i++) {
      want_to_encode.insert(i);
-@@ -238,8 +266,12 @@
-       }
-       bufferlist tmp = all_chunks.find(*chunk)->second;
-       if (!tmp.contents_equal(decoded[*chunk])) {
-+	const string expected = tmp.to_str();
-+	const string actual = decoded[*chunk].to_str();
-+	auto mismatch = std::mismatch(expected.begin(), expected.end(), actual.begin());
- 	cerr << "chunk " << *chunk
+   }
++  if (verbose) {
++    cout << "layout data_chunks=" << erasure_code->get_data_chunk_count()
++         << " coding_chunks=" << erasure_code->get_coding_chunk_count()
++         << " total_chunks=" << erasure_code->get_chunk_count() << endl;
++  }
+   utime_t begin_time = ceph_clock_now();
+   for (int i = 0; i < max_iterations; i++) {
+     std::map<int,bufferlist> encoded;
+@@ -208,6 +257,87 @@ static void display_chunks(const map<int,bufferlist> &chunks,
+   cout << "(X) is an erased chunk" << endl;
+ }
+ 
++int ErasureCodeBench::decode_once(const map<int,bufferlist>& all_chunks,
++                                  const map<int,bufferlist>& chunks,
++                                  const set<int>& want,
++                                  ErasureCodeInterfaceRef erasure_code,
++                                  bool check)
++{
++  set<int> erased_targets;
++  if (decode_only_erased) {
++    for (const auto& chunk : all_chunks) {
++      if (!chunks.count(chunk.first)) {
++        erased_targets.insert(chunk.first);
++      }
++    }
++  }
++  const auto& targets = decode_only_erased ? erased_targets : want;
++  map<int,bufferlist> selected;
++  const auto* inputs = &chunks;
++  if (use_minimum) {
++    set<int> available;
++    for (const auto& chunk : chunks) {
++      available.insert(chunk.first);
++    }
++    map<int, vector<std::pair<int, int>>> minimum;
++    int r = erasure_code->minimum_to_decode(targets, available, &minimum);
++    if (r) {
++      cerr << "minimum_to_decode failed: " << r << endl;
++      return r;
++    }
++    for (const auto& entry : minimum) {
++      auto chunk = chunks.find(entry.first);
++      if (chunk == chunks.end()) {
++        cerr << "minimum_to_decode selected an unavailable shard" << endl;
++        return -EINVAL;
++      }
++      // This benchmark supplies whole shards, even if fewer subchunks suffice.
++      selected.emplace(chunk->first, chunk->second);
++    }
++    inputs = &selected;
++  }
++  if (verbose) {
++    cout << "decode want=";
++    for (int id : targets) {
++      cout << id << ',';
++    }
++    cout << " helpers=";
++    uint64_t bytes = 0;
++    for (const auto& chunk : *inputs) {
++      cout << chunk.first << ',';
++      bytes += chunk.second.length();
++    }
++    cout << " helper_count=" << inputs->size() << " helper_bytes=" << bytes << endl;
++  }
++  map<int,bufferlist> decoded;
++  int r = erasure_code->decode(targets, *inputs, &decoded, 0);
++  if (r) {
++    cerr << "decode failed: " << r << endl;
++    return r;
++  }
++  if (check) {
++    for (int id : targets) {
++      auto expected_chunk = all_chunks.find(id);
++      auto actual_chunk = decoded.find(id);
++      if (expected_chunk == all_chunks.end() || actual_chunk == decoded.end() ||
++          expected_chunk->second.length() != actual_chunk->second.length()) {
++        cerr << "chunk " << id << " missing or decoded with incorrect length" << endl;
++        return -EIO;
++      }
++      if (!expected_chunk->second.contents_equal(actual_chunk->second)) {
++        const string expected = expected_chunk->second.to_str();
++        const string actual = actual_chunk->second.to_str();
++        auto mismatch = std::mismatch(expected.begin(), expected.end(), actual.begin());
++        cerr << "chunk " << id
++             << " content and recovered content are different at byte "
++             << (mismatch.first - expected.begin()) << endl;
++        return -EIO;
++      }
++    }
++  }
++  return 0;
++}
++
+ int ErasureCodeBench::decode_erasures(const map<int,bufferlist> &all_chunks,
+ 				      const map<int,bufferlist> &chunks,
+ 				      unsigned i,
+@@ -224,26 +354,7 @@ int ErasureCodeBench::decode_erasures(const map<int,bufferlist> &all_chunks,
+       if (chunks.count(chunk) == 0)
+ 	want_to_read.insert(chunk);
+ 
+-    map<int,bufferlist> decoded;
+-    code = erasure_code->decode(want_to_read, chunks, &decoded, 0);
+-    if (code)
+-      return code;
+-    for (set<int>::iterator chunk = want_to_read.begin();
+-	 chunk != want_to_read.end();
+-	 ++chunk) {
+-      if (all_chunks.find(*chunk)->second.length() != decoded[*chunk].length()) {
+-	cerr << "chunk " << *chunk << " length=" << all_chunks.find(*chunk)->second.length()
+-	     << " decoded with length=" << decoded[*chunk].length() << endl;
+-	return -1;
+-      }
+-      bufferlist tmp = all_chunks.find(*chunk)->second;
+-      if (!tmp.contents_equal(decoded[*chunk])) {
+-	cerr << "chunk " << *chunk
 -	     << " content and recovered content are different" << endl;
-+	     << " content and recovered content are different at byte "
-+	     << (mismatch.first - expected.begin()) << endl;
- 	return -1;
-       }
-     }
-@@ -271,8 +303,7 @@
+-	return -1;
+-      }
+-    }
+-    return 0;
++    return decode_once(all_chunks, chunks, want_to_read, erasure_code, true);
    }
  
+   for (; i < erasure_code->get_chunk_count(); i++) {
+@@ -270,12 +381,27 @@ int ErasureCodeBench::decode()
+     return code;
+   }
+ 
++  const unsigned int chunk_count = erasure_code->get_chunk_count();
++  if (static_cast<unsigned int>(erasures) > chunk_count) {
++    cerr << "erasures exceeds the plugin's chunk count" << endl;
++    return -EINVAL;
++  }
++  for (int id : erased) {
++    if (id < 0 || static_cast<unsigned int>(id) >= chunk_count) {
++      cerr << "invalid erased shard: " << id << endl;
++      return -EINVAL;
++    }
++  }
++  if (verbose) {
++    cout << "layout data_chunks=" << erasure_code->get_data_chunk_count()
++         << " coding_chunks=" << erasure_code->get_coding_chunk_count()
++         << " total_chunks=" << chunk_count << endl;
++  }
    bufferlist in;
 -  in.append(string(in_size, 'X'));
 -  in.rebuild_aligned(ErasureCode::SIMD_ALIGN);
 +  prepare_input(in, in_size, input_pattern, input_seed);
  
    set<int> want_to_encode;
-   for (int i = 0; i < k + m; i++) {
+-  for (int i = 0; i < k + m; i++) {
++  for (unsigned int i = 0; i < chunk_count; i++) {
+     want_to_encode.insert(i);
+   }
+ 
+@@ -283,15 +409,20 @@ int ErasureCodeBench::decode()
+   code = erasure_code->encode(want_to_encode, in, &encoded);
+   if (code)
+     return code;
++  if (encoded.size() != chunk_count) {
++    cerr << "encode did not return every requested shard" << endl;
++    return -EIO;
++  }
+ 
+   set<int> want_to_read = want_to_encode;
+ 
++  map<int,bufferlist> available = encoded;
+   if (erased.size() > 0) {
+     for (vector<int>::const_iterator i = erased.begin();
+ 	 i != erased.end();
+ 	 ++i)
+-      encoded.erase(*i);
+-    display_chunks(encoded, erasure_code->get_chunk_count());
++      available.erase(*i);
++    display_chunks(available, chunk_count);
+   }
+ 
+   utime_t begin_time = ceph_clock_now();
+@@ -301,8 +432,7 @@ int ErasureCodeBench::decode()
+       if (code)
+ 	return code;
+     } else if (erased.size() > 0) {
+-      map<int,bufferlist> decoded;
+-      code = erasure_code->decode(want_to_read, encoded, &decoded, 0);
++      code = decode_once(encoded, available, want_to_read, erasure_code, verify);
+       if (code)
+ 	return code;
+     } else {
+@@ -310,12 +440,11 @@ int ErasureCodeBench::decode()
+       for (int j = 0; j < erasures; j++) {
+ 	int erasure;
+ 	do {
+-	  erasure = rand() % ( k + m );
++	  erasure = rand() % chunk_count;
+ 	} while(chunks.count(erasure) == 0);
+ 	chunks.erase(erasure);
+       }
+-      map<int,bufferlist> decoded;
+-      code = erasure_code->decode(want_to_read, chunks, &decoded, 0);
++      code = decode_once(encoded, chunks, want_to_read, erasure_code, verify);
+       if (code)
+ 	return code;
+     }
 diff --git a/src/test/erasure-code/ceph_erasure_code_benchmark.h b/src/test/erasure-code/ceph_erasure_code_benchmark.h
+index 59149a74c16..1e17f76e922 100644
 --- a/src/test/erasure-code/ceph_erasure_code_benchmark.h
 +++ b/src/test/erasure-code/ceph_erasure_code_benchmark.h
-@@ -18,6 +18,7 @@
+@@ -18,8 +18,10 @@
  #ifndef CEPH_ERASURE_CODE_BENCHMARK_H
  #define CEPH_ERASURE_CODE_BENCHMARK_H
  
 +#include <cstdint>
  #include <string>
  #include <map>
++#include <set>
  #include <vector>
-@@ -42,6 +43,8 @@
+ 
+ #include <boost/intrusive_ptr.hpp>
+@@ -42,6 +44,11 @@ class ErasureCodeBench {
    bool exhaustive_erasures;
    std::vector<int> erased;
    std::string workload;
 +  std::string input_pattern;
 +  std::uint32_t input_seed;
++  bool use_minimum;
++  bool decode_only_erased;
++  bool verify;
  
    ceph::ErasureCodeProfile profile;
  
---- a/cmake/modules/BuildBoost.cmake
-+++ b/cmake/modules/BuildBoost.cmake
-@@ -156,7 +156,7 @@
-     set(boost_sha256 475d589d51a7f8b3ba2ba4eda022b170e562ca3b760ee922c146b6c65856ef39)
-     string(REPLACE "." "_" boost_version_underscore ${boost_version} )
-     list(APPEND boost_url
--      https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/boost_${boost_version_underscore}.tar.bz2
-+      https://archives.boost.io/release/${boost_version}/source/boost_${boost_version_underscore}.tar.bz2
-       https://download.ceph.com/qa/boost_${boost_version_underscore}.tar.bz2)
-     set(source_dir
-       URL ${boost_url}
+@@ -55,6 +62,10 @@ public:
+ 		      unsigned i,
+ 		      unsigned want_erasures,
+ 		      ErasureCodeInterfaceRef erasure_code);
++  int decode_once(const std::map<int, ceph::buffer::list>& all_chunks,
++                  const std::map<int, ceph::buffer::list>& chunks,
++                  const std::set<int>& want,
++                  ErasureCodeInterfaceRef erasure_code, bool check);
+   int decode();
+   int encode();
+ };

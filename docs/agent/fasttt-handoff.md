@@ -1,6 +1,6 @@
 # FastTT / TSX 开发交接
 
-修订 **r26**，2026-11-11，Asia/Shanghai。本文件用于新agent准确继续开发，保存当前状态及必要依据；人读实现说明在 `docs/fasttt-lrc-design.md`。不需要旧聊天才能理解下面的目标、约束和下一步。
+修订 **r27**，2026-11-14，Asia/Shanghai。本文件用于新agent准确继续开发，保存当前状态及必要依据；人读实现说明在 `docs/fasttt-lrc-design.md`。不需要旧聊天才能理解下面的目标、约束和下一步。
 
 ## 0. 当前快照
 
@@ -10,13 +10,13 @@
 | 当前阶段 | 原论文实验流程已打通；正在开发独立 `tsx_lrc`。当前只做纠删码插件／内存测试，不构建完整Ceph运行环境或启动虚拟集群 |
 | Ceph基线 | 官方 `v18.2.7@6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad`，detached；父仓库4处接入修改由根单补丁重建 |
 | TSX仓库 | `https://github.com/d-sun-cs/tsx.git`，分支 `research/ceph-v18.2.7`；嵌在Ceph的 `src/erasure-code/tsx`，是独立Git仓库，不是submodule |
-| 开发提交／发布核对 | `13fb5d0de32df6fd0d49a944b213fd64c03f597e`，已推送研究分支并核对SHA；本文r26是随后状态提交，完整tip以Git／ls-remote核验。原tsx/2/4算法基线仍为 `v0.0.1-ipdps@5c85ce5e629905fcf8e660c8490f6b66a4160c69` |
-| 同步状态 | r22的3个源码修改及r25的AGENTS／两份文档共6文件，均已纳入13fb5d0并发布；新工作区可取得当前代码。本文r26另随状态提交同步，不再有待迁移的这6文件dirty差异 |
+| 开发基线／发布状态 | TSX HEAD为已发布的 `3a0c5633a4a0cc11e229f6d34e87ac331a82e0f1`；本轮r27为本地未提交修改。原tsx/2/4算法基线仍为 `v0.0.1-ipdps@5c85ce5e629905fcf8e660c8490f6b66a4160c69` |
+| 同步状态 | 未提交：`ceph-v18.2.7.patch`、`recmake.sh`、新增 `coding_benchmark_lrc.sh` 及两份文档；父benchmark的两文件修改已包含于更新后的单补丁。跨工作区须同时携带这些差异，不能只clone已发布tip就声称取得r27 |
 | M1真实状态 | 固定8+2+2骨架已编译／测试；全局为ISA占位、局部为真实XOR。`mode=fasttt` 返回未实现；TT全局、尾部与完整联合恢复未完成 |
 | M2真实状态 | 有输出拥有权／线程预算设计，无实际线程池或多线程内核。链接OpenMP不代表已并行 |
-| 最近代码验证 | r22：532次恢复＋64次预期规划拒绝通过，并验证继承的包装、decode_concat和全部返回片有效；原插件6522组合仅沿用r16结果 |
-| 本次同步 | r26按用户授权提交／推送既有代码与精简文档，核对6个文本路径、既有源码哈希和父4文件补丁；不改算法，不重跑已通过的构建／实验 |
-| 运行中任务 | 本轮没有启动构建、实验或服务；接手时仍应核验实际进程，不能由旧日志推断 |
+| 最近代码验证 | r27：LRC benchmark在4KiB／64KiB／2MiB片长各完成83次字节校验恢复、2次预期拒绝及6项计时；普通插件48命令／6522组合重新通过。LRC内核未改，r22独立测试532／64证据仍适用 |
+| 本轮修改 | 只扩展内存benchmark及根目录脚本；按插件查询总片数，可选minimum选片／只修复擦除片／字节比较。已构建安装、测试并验证单补丁复现；未实现TT、未提交或推送、未启动集群 |
+| 运行中任务 | 本轮构建／内存实验已结束；没有启动Ceph服务。接手时仍应核验实际进程，不能由旧日志推断 |
 
 先检查两个仓库的身份与差异，再读第1节；源码行为以当前代码为准，旧build和历史通过不能覆盖当前工作树事实。
 
@@ -25,7 +25,7 @@
 | 工作 | 已完成 | 尚未完成 |
 | --- | --- | --- |
 | 环境／原论文基线 | 回归Ceph18与AVX2；插件安装、原纠删码验证和论文附录各阶段流程打通；现已精简为直接shell入口 | 论文硬件上的公平性能比例、多轮正式统计不能继承 |
-| M1基础 | 注册、固定布局、Layer映射、共享规划、局部／全局占位恢复、有效输出整理及独立测试 | 真正G+/G−、显式尾部、TT与局部联合恢复、全部三擦除验收 |
+| M1基础 | 注册、固定布局、Layer映射、共享规划、有效输出整理、独立测试及ISA骨架的内存benchmark选片／恢复／计时流程 | 真正G+/G−、显式尾部、TT与局部联合恢复、全部三擦除验收 |
 | M2 | 明确输出单写者、缓冲生命周期、线程预算和比较方法 | 任务切分、池／调度、并发正确性和性能验证 |
 | M3系统验证 | 仅有旧插件的历史BlueStore流程记录 | 新M1/M2实际读片、持久重建、尾部缺失／重启可靠性；当前后置 |
 
@@ -60,7 +60,7 @@ git -C "$CEPH_ROOT" rev-parse HEAD
 父仓库只有下面4个tracked修改；根 `ceph-v18.2.7.patch` 已验证可从官方原文件逐字节重建：
 
 - `src/erasure-code/CMakeLists.txt`：启用TSX接入。
-- `src/test/erasure-code/ceph_erasure_code_benchmark.cc/.h`：constant/random输入、seed和首差异诊断。
+- `src/test/erasure-code/ceph_erasure_code_benchmark.cc/.h`：constant/random输入、seed、字节诊断、插件实际总片数及可选minimum／擦除目标／verify。
 - `cmake/modules/BuildBoost.cmake`：官方Boost下载地址；仍锁Boost1.79.0及其原SHA。
 
 不要把父仓库dirty源码当隐藏依赖；有新父修改必须同步可重建补丁。Ceph基类、OSD、ECUtil和官方LRC源码均未为当前LRC改动。当前18只用set/map接口，不引入历史Ceph20的bufferptr新重载或ECBackendL路径。
@@ -69,16 +69,16 @@ git -C "$CEPH_ROOT" rev-parse HEAD
 
 持续保留的约束：
 
-- 只用普通AVX2主线。旧TSX AVX512 stash `032f48c806f57ab39b89a12080f2ac4f203dd27d`、父旧stash `a52b8f6b4c01efe565d429957ac74c68140c3124` 不自动应用；stash不随clone／普通push迁移。
+- 新增执行脚本直接放TSX根目录；不新建runner／配置层。docs、archive、.vscode等非当前执行入口目录保留。只用普通AVX2主线。旧TSX AVX512 stash `032f48c806f57ab39b89a12080f2ac4f203dd27d`、父旧stash `a52b8f6b4c01efe565d429957ac74c68140c3124` 不自动应用；stash不随clone／普通push迁移。
 - 旧约51GiB build在Ceph根 `local_workspace/build-archives/ceph-v20.2.0-avx512-20261101`；不用其缓存／二进制，不删除。论文、结果、备份都留在 `local_workspace/`，不进入源码构建或推送。
 - 旧环境备份位于 `local_workspace/environment-backups/2026-11-01-pre-reef/`；精简前备份在 `2026-11-07-ec-simplification/`。备份用于保护原工作，不是新环境必须取得的依赖。
 - 不重启其他工作区容器、改旧Redis或清理历史进程；过去容器里有已退出的Z条目，不能当活跃集群。
 - 个人GitHub身份为d-sun-cs，认证仅限TSX目标仓库；不把令牌写入Git、URL或日志。尚未配置长期凭据，每次成功后清空令牌，故下次需重新填写仍有效的同一令牌，无须重新生成。文件为Ceph根 `local_workspace/tsx-fine-grained-token.txt`；所有推送成功并核对SHA后只清空为0字节，**保留原文件名，不删除**，临时helper清理。
-- 文档维护不自动提交／推送；本轮同步已获授权并完成开发提交发布。跨工作区固定完整提交；若后续再次出现dirty差异须一并携带，stash、ignored资料、容器与二进制仍不会随clone迁移。
+- 文档维护不自动提交／推送；最近发布tip为3a0c563，本轮r27尚未提交／推送。跨工作区固定完整提交并携带第0节dirty差异；stash、ignored资料、容器与二进制不会随clone迁移。
 
 ## 3. 安装与测试：唯一操作说明
 
-新工作区取得固定Ceph和研究分支；当前实现及精简文档已包含于开发提交13fb5d0，精确复现时在克隆后固定所需TSX提交：
+新工作区取得固定Ceph和研究分支，并携带第0节所列r27未提交差异；已发布tip只含此前实现。精确复现时固定所需TSX提交：
 
 ```bash
 git clone --branch v18.2.7 --depth 1 --recurse-submodules https://github.com/ceph/ceph.git
@@ -117,16 +117,21 @@ redis-server --bind 127.0.0.1 --port 6379 --save '' --appendonly no --daemonize 
 bash recmake.sh 8
 bash check_correctivity.sh
 bash check_lrc.sh
+bash coding_benchmark_lrc.sh
 bash coding_benchmark_cases.sh 8 3 2048 2000
 ```
 
 `recmake.sh`检查Ceph SHA、子模块、缓存归属／实验flags，幂等应用单补丁，冲突退出且不删build。显式构建benchmark、8个原TSX族、tsx_lrc及其测试、ISA与Jerasure，关闭BlueStore等系统功能；只安装tsx／isa／jerasure子目录，不构建all／vstart／MON／OSD，不全量安装。Boost1.79.0归档SHA256：`475d589d51a7f8b3ba2ba4eda022b170e562ca3b760ee922c146b6c65856ef39`，首次构建需要下载。
 
-默认产物：Ceph根 `build/bin/ceph_erasure_code_benchmark`、`build/bin/ceph_test_erasure_code_tsx_lrc`；安装插件 `/usr/local/lib/ceph/erasure-code`。安装系统目录需权限，容器用root；也可统一设置绝对 `INSTALL_PREFIX="$CEPH_ROOT/local_workspace/ec-install"`。`BUILD_DIR`可改绝对构建目录，测试可用 `PLUGIN_DIR`；旧基准脚本还支持 `CPU`／`RESULT_DIR`，默认允许的最小CPU、OMP_NUM_THREADS=1及Ceph根 `local_workspace/ec-tests/` 独立结果目录。
+默认产物：Ceph根 `build/bin/ceph_erasure_code_benchmark`、`build/bin/ceph_test_erasure_code_tsx_lrc`；安装插件 `/usr/local/lib/ceph/erasure-code`。安装系统目录需权限，容器用root；也可统一设置绝对 `INSTALL_PREFIX="$CEPH_ROOT/local_workspace/ec-install"`。`BUILD_DIR`可改绝对构建目录，测试可用 `PLUGIN_DIR`；benchmark脚本支持 `CPU`／`RESULT_DIR`，默认允许的最小CPU、OMP_NUM_THREADS=1及Ceph根 `local_workspace/ec-tests/` 独立结果目录。
 
-**正确性。** `check_correctivity.sh`无参数跑(6,2,tsx2)/(6,3,tsx)/(8,3,tsx)/(10,4,tsx4)，各对照ISA cauchy、Jerasure cauchy_good，8/3加naive/map/win/merge；2MiB片、mt19937低8位、seed1，1..m穷举并逐字节比较，48命令／6522组合。单组入口 `bash check_correctivity.sh 6 2 64 random`。它不含tsxse；tsx_lrc另用 `check_lrc.sh`，旧benchmark按k+m枚举，不能直接用于额外局部片布局。
+**正确性。** `check_correctivity.sh`无参数跑(6,2,tsx2)/(6,3,tsx)/(8,3,tsx)/(10,4,tsx4)，各对照ISA cauchy、Jerasure cauchy_good，8/3加naive/map/win/merge；2MiB片、mt19937低8位、seed1，1..m穷举并逐字节比较，48命令／6522组合。单组入口 `bash check_correctivity.sh 6 2 64 random`。它不含tsxse；tsx_lrc的独立接口测试仍用 `check_lrc.sh`，基于benchmark的流程用下述根脚本。
 
-**性能。** `coding_benchmark_cases.sh k m 每片KiB 迭代数`；四配置全矩阵163项，编码及各种数据／校验擦除数量组合；默认constant X、固定各类前几个片、跨实现同位置，每项预热2次再计时。`results.csv`存原始时间、KiB、GB/s和GiB/s，`summary.csv`按擦除总数对故障类型吞吐取算术平均；保留命令与日志，失败即停。计时不替代字节正确性检查。全跑：
+**LRC内存benchmark。** `bash coding_benchmark_lrc.sh [每片KiB=64] [每项迭代=2000]` 固定 `plugin=tsx_lrc mode=scaffold k=8 m=2 locality=4`，即ISA全局＋真实局部XOR，不需Redis／集群。先以random/seed1穷举12片的单／双擦除78种；再校验5个指定恢复：D2（4输入）、L0（4）、D0/D1（8）、D0/L0（9）、D0/D4/G0（9）。最后两类9输入体现当前规划器不保证全局最少，不误称8输入。{0,1,2}及{0,1,8}须返回-EIO，单列EXPECTED_REJECTION，不能算恢复成功。
+
+工具按 `get_chunk_count()` 构造全部12片；`--use-minimum` 每次调用minimum后只传选中整片，`--decode-only-erased` 只请求擦除目标，`--verify` 比较目标字节。三个选项默认关闭，原普通插件用法保留；穷举路径始终比较字节。日志记录want、helpers及输入字节。脚本将随机校验与constant X计时分开，计时每项先预热2次、包含minimum／map与内存分配，不含字节比较。`checks.csv` 保存83次成功校验＋2次预期拒绝，`results.csv` 保存编码及5类恢复共6项时间、每次微秒和输入数量。`stripe_GiB_s` 以全部8数据片逻辑字节计，不能当单目标修复字节吞吐或实际磁盘／网络I/O；本轮不测真实TT性能。
+
+**原插件性能。** `coding_benchmark_cases.sh k m 每片KiB 迭代数`；四配置全矩阵163项，编码及各种数据／校验擦除数量组合；默认constant X、固定各类前几个片、跨实现同位置，每项预热2次再计时。`results.csv`存原始时间、KiB、GB/s和GiB/s，`summary.csv`按擦除总数对故障类型吞吐取算术平均；保留命令与日志，失败即停。计时不替代字节正确性检查。全跑：
 
 ```bash
 for pair in '6 2' '6 3' '8 3' '10 4'; do
@@ -144,7 +149,7 @@ done
 | `ErasureCodePluginTsxLrc.h/.cc` | 注册tsx_lrc；factory创建、init，失败不发布对象 |
 | `ErasureCodeTsxLrc.h/.cc` | 固定Layer、ISA子插件、共享规划、两个_chunks接口、known输出整理；没有encode/decode覆写 |
 | `TestErasureCodeTsxLrc.cc` | registry加载已安装.so，严格只给计划输入，检查全部返回片字节／输入不变；不直接链接具体类绕过注册 |
-| `CMakeLists.txt`、`recmake.sh`、`check_lrc.sh` | ec_tsx_lrc和独立测试的构建／安装／执行；不依赖ec_lrc |
+| `CMakeLists.txt`、`recmake.sh`、`check_lrc.sh`、`coding_benchmark_lrc.sh` | ec_tsx_lrc与独立测试的构建／安装、接口验证及内存benchmark；不依赖ec_lrc |
 | 原 `ErasureCodeTsx{,2,4}.cc`及Plugin | 保持普通AVX2基线，三种校验数；naive/map/win/merge为消融，tsxse非当前基准必需项 |
 | 父 `ErasureCode.cc`、`ECUtil.cc`、`ECBackend.cc/.h` | 缓冲准备、条带循环、选片到实际读请求及结果持久化；当前未为新插件改动 |
 
@@ -199,7 +204,7 @@ P0[t] = L0[t] XOR L1[t]
 
 ## 6. 验证结果与版本边界
 
-**最近有效代码版本：13fb5d0，已包含r22测试过的三个源码修改。** r23～r26仅整理文档／导航或发布，源码哈希不变；下列记录仍适用，不表示本轮重新运行：
+**LRC内核仍为13fb5d0所含r22源码；本轮只改benchmark／脚本。** r23～r26仅整理文档／发布，以下LRC源码与产物哈希本轮核对不变；r22独立测试未重跑。r27新验证另列下方：
 
 ```text
 ErasureCodeTsxLrc.h 47426b8295c30db0394fa2e5bacc858b1b991f81d2c94d66d4efc4b8b17866d8
@@ -208,6 +213,10 @@ TestErasureCodeTsxLrc.cc 6026f52008a6d33b4df8d79057df5ffc8c00e357b80e7380c50fa77
 libec_tsx_lrc.so bb12a2b5a06bdaa02a31537cdf36410192a71fe1d0e06f6ee7b12ae7c29e0acb
 ceph_test_erasure_code_tsx_lrc b9b41bf6badaf9239ed50ece076da4400cfc5086916f2c98115f6224a0bc2f03
 ```
+
+2026-11-14/r27：在fasttt_reef构建benchmark（2步），`recmake.sh 8` 幂等接入／安装通过。新脚本在4KiB×20次、默认64KiB×2000次、2MiB×10次分别完成83次恢复字节比较、2次预期拒绝、6项计时；默认D2明确为want={2}、helpers={0,1,3,10}，输入262144B。不是所有三擦除通过，也不将三轮重复用例合并宣称不同组合。另7项CLI检查覆盖random模式、只开一种选项、坏ID、过量擦除、冲突枚举参数与fasttt未实现。原普通插件正确性重新通过48命令／6522组合，8/3的70项旧计时各10次通过。以上计时仅验流程，不作正式性能结论。
+
+证据在Ceph根 `local_workspace/ec-tests/lrc-benchmark-integration-20261114-C2Ymok3Q/`：recmake.log、lrc-{4KiB,default,2MiB}.log、对应lrc-benchmark-*目录、ordinary-correctness.log、ordinary-timing.log、benchmark-cli-checks.json。`patch-check.json` 证明单补丁应用于官方4原文件后与当前父工作树逐字节一致；父基类／OSD／官方LRC未改，所有执行脚本仍在TSX根。当前benchmark SHA256为 `39675e9297e1f08857d6a6752aa4c8dca9c598945c1da1b4f9d7762f7776eae0`；单补丁为 `e4b8e7c78731c3f5fecdcb2996a5a86ee1cbadcb32fb0fbadee997e889b980dc`。
 
 2026-11-11/r22在fasttt_reef中增量构建ec_tsx_lrc和测试（5步）、执行tsx子目录安装，从/tmp运行check_lrc，均退出0。两长度4096／65536B，随机mt19937 seed=17+片长，每长度穷举298集合：266恢复、32明确拒绝，共532成功＋64预期拒绝。拒绝分别为同组3数据8种、同组2数据＋1全局24种；是逐层规划限制，不证明数学不可解。单／双擦除78种每长度全部恢复。
 
@@ -257,3 +266,4 @@ r22另做同核包装短计时：CPU0、OMP_NUM_THREADS=1、constant X、预热1
 - 2026-11-07～08：删除repro多层编排，保留直接shell；建立固定tsx_lrc骨架与独立测试，真正TT仍留空。
 - 2026-11-11/r21～22：研究分支发布到da46287；本地随后移除包装覆写，继承基类并由低层整理有效输出，验证结果见第6节。
 - 2026-11-11/r25～26：区分文档受众、压缩重复历史；开发提交13fb5d0将默认包装改动与精简文档一并发布并核对SHA。r26记录发布状态；无新算法或实验。
+- 2026-11-14/r27：根目录单脚本打通ISA骨架的内存benchmark，支持实际总片数、minimum选片与擦除目标；重跑普通插件回归。改动尚未提交／推送，真正TT状态未变。

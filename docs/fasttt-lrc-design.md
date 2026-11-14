@@ -61,6 +61,8 @@
 
 local0子编码器看到的是 `want={2}, chunks={0:D0,1:D1,3:D3,4:L0}`，L0在这里是4而非10。外层decoded起初有12片空间；计算后仅0、1、2、3、10有效，内核删除未填条目，交回这5片，符合Ceph允许返回额外有效片的约定。
 
+根目录 `coding_benchmark_lrc.sh` 用内存工具 `ceph_erasure_code_benchmark` 验证这条路径：总片数取插件的 `get_chunk_count()`（12），`--use-minimum` 只提供选中的输入，`--decode-only-erased` 把本例目标设为{2}，`--verify` 逐字节比较。日志会显示 `helpers=0,1,3,10`，而非把其余11片全部交给解码器。它只模拟选片与计算，不涉及集群读写；运行方法统一见交接。
+
 局部／全局由 `make_repair_plan(want,available)` 判断，Ceph不传策略标志：
 
 | 情况 | 当前骨架的处理 |
