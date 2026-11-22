@@ -167,7 +167,7 @@ set_target_properties(ec_tsx2 PROPERTIES
 target_link_libraries(ec_tsx2 json_spirit ${HIREDIS_LIB})
 install(TARGETS ec_tsx2 DESTINATION ${erasure_plugin_dir})
 
-# Fixed-layout LRC with inline and Redis-backed FastTT tails.
+# Two-group LRC with inline and Redis-backed FastTT tails.
 add_library(ec_tsx_lrc SHARED
   ErasureCodePluginTsxLrc.cc
   ErasureCodeTsxLrc.cc
@@ -176,7 +176,7 @@ add_library(ec_tsx_lrc SHARED
   ${CMAKE_SOURCE_DIR}/src/common/str_map.cc)
 target_include_directories(ec_tsx_lrc PRIVATE "${HIREDIS_INCLUDE_DIR}")
 target_compile_options(ec_tsx_lrc PRIVATE -mavx2)
-target_link_libraries(ec_tsx_lrc json_spirit ${HIREDIS_LIB} OpenSSL::Crypto)
+target_link_libraries(ec_tsx_lrc json_spirit ${HIREDIS_LIB})
 set_target_properties(ec_tsx_lrc PROPERTIES INSTALL_RPATH "")
 install(TARGETS ec_tsx_lrc DESTINATION ${erasure_plugin_dir})
 

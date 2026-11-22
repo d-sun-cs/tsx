@@ -1,6 +1,6 @@
 # FastTT / TSX 开发交接
 
-修订 **r39**，2026-11-22，Asia/Shanghai。本文件用于新agent准确继续开发，保存当前状态及必要依据；人读实现说明在 `docs/fasttt-lrc-design.md`。不需要旧聊天才能理解下面的目标、约束和下一步。
+修订 **r48**，2026-11-22，Asia/Shanghai。本文件用于新agent准确继续开发，保存当前状态及必要依据；人读实现说明在 `docs/fasttt-lrc-design.md`。不需要旧聊天才能理解下面的目标、约束和下一步。
 
 ## 0. 当前快照
 
@@ -9,8 +9,8 @@
 | 研究主线 | M1 FastTT局部冗余，M2多线程。当前优先完成M1的存储布局和单线程基线 |
 | Ceph基线 | 官方 `v18.2.7@6b0e988052ec84cf2d4a54ff9bbbc5e720b621ad`，detached。五处接入修改由TSX根单补丁重建 |
 | TSX仓库 | `d-sun-cs/tsx`，`research/ceph-v18.2.7`，嵌在 `src/erasure-code/tsx` 的独立Git仓库。origin为 `git@github.com:d-sun-cs/tsx.git` |
-| 复现基线 | 本修订随FastTT-LRC实现、Redis尾部模式、单线程优化、Ceph补丁和测试入口一并纳入研究分支。复现实验记录TSX的实际提交SHA及上表Ceph SHA |
-| M1 | `mode=fasttt` 在内存工具中运行真实G+/G−及组内XOR，局部优先后联合解码。尾部随片传递。`mode=fasttt-redis` 用Redis存尾部并输出12片等长分片。`mode=scaffold` 保留ISA-L对照 |
+| 复现基线 | 本修订随融合编码、可变偶数k、原始符号Redis键和回归测试纳入研究分支。复现实验记录TSX实际提交SHA及上表Ceph SHA。`19bd227` 是旧摘要格式的基线 |
+| M1 | `mode=fasttt` 在内存工具中运行真实G+/G−及组内XOR，局部优先后联合解码。尾部随片传递。`mode=fasttt-redis` 用Redis存尾部并输出k+4片等长分片。`mode=scaffold` 保留ISA-L对照 |
 | 论文实验口径 | 每块2MiB（2048KiB），FastTT编码symbol固定256位（32B）。Ceph性能实验的普通FastTT与FastTT-LRC均采用Redis尾部模式 |
 | 验证 | Redis模式在2MiB默认片长通过全部298种一至三片擦除。AVX2及EPM、CFWP、NMA、TPS均已逐步落地并回归，见第6节 |
 | 系统边界 | 两种FastTT模式仍限内存工具，守护进程初始化时拒绝。Redis模式等长布局已验证，集群侧的元数据生命周期和恢复尚待验证 |
@@ -18,9 +18,9 @@
 ## 1. 开发进度与渐进计划
 
 1. **内存参考阶段已完成。** 先构建真实移位编码，再接入选片、局部恢复、联合求解和校验重建。内存布局与全部298种一至三擦除作为后续回归基线。
-2. **Redis等长元数据阶段已完成内存验证。** 参照普通TSX在Redis存移位尾部，借全局片内摘要定位。后续FastTT-LRC性能使用Redis模式，inline保留为正确性参考。系统持久化另按需求推进。
-3. **单线程优化已完成首轮。** AVX2、EPM、CFWP、NMA、TPS分别构建、回归和计时。下一步在同机按同一套擦除用例重跑ISA-L对照，并拆分Redis/摘要与联合计算的耗时，再定是否继续单线程调优。分阶段证据见第6节。
-4. **M2多线程。** 优先并行编码和单擦除，复杂联合求解后置。按输出范围分配唯一写者，处理尾部与初始化，共享只读输入，返回前收齐任务。旧固定窗口有7个单元的写入重叠，联合递推也有前后依赖。使用共享线程预算并计入调用线程，避免嵌套等待，比较同核心预算的吞吐与尾延迟。
+2. **Redis等长元数据阶段已完成内存验证。** 参照普通TSX在Redis存移位尾部，用各全局校验首个原始符号及片号定位。后续FastTT-LRC性能使用Redis模式，inline保留为正确性参考。系统持久化另按需求推进。
+3. **单线程优化已完成首轮。** AVX2、EPM、CFWP、NMA、TPS分别构建、回归和计时。当前只比较同布局ISA-L LRC scaffold双方均可恢复的用例。已融合全局与局部校验的编码遍历，扩展偶数k。r47按论文实验口径简化尾部模拟，取消整片散列，重点保留Redis命令开销。后续联合解码针对同组双擦除的计算。分阶段证据见第6节。
+4. **M2多线程。** 优先并行编码和单擦除，复杂联合求解后置。按输出范围分配唯一写者，处理尾部与初始化，共享只读输入，返回前收齐任务。编码窗口有k−1个单元的写入重叠，联合递推也有前后依赖。使用共享线程预算并计入调用线程，避免嵌套等待，比较同核心预算的吞吐与尾延迟。
 5. **M3系统验证。** 先明确Redis持久化、缺键后的选片重试、跨对象共享键的回收与写入顺序，再验证Ceph正常写读、降级读、持久重建和重启。此阶段当前后置。
 
 普通FastTT与论文第III节的代码对应如下。AVX2的32B向量运算是这四项的实现基础。LRC目标显式启用 `-mavx2`，使用非对齐 load/store 兼容Redis重组和临时缓冲。
@@ -28,9 +28,9 @@
 | 优化 | 普通FastTT | LRC实现 |
 | --- | --- | --- |
 | EPM | `ErasureCodeTsx.cc` 中 `decode_chunks` 以 `maperasure_ptr` 将缺数据关联到幸存校验，缺校验映射到自身输出，统一代入 | `recover_fasttt` 保留独立方程选择，用目标G的偏移同步接收已知与解出的数据符号 |
-| CFWP | 编解码按16个符号划窗，按需初始化，代入领先消元一窗以覆盖移位 | `write_globals` 按输入窗初始化新覆盖的校验范围。联合解码按分子坐标推进，保留跨窗递推余项 |
-| NMA | 编码相邻数据块成对读取，保留上一个符号并在寄存器合并，再更新校验 | `write_globals` 按数据片成对读取，用寄存器保留上一符号，同一对数据的加载同时用于G+和G− |
-| TPS | 单擦除使用垂直遍历快速路径。多擦除使用窗口代入和消元。`decode_one_data_chunk` 展开4个符号 | `write_local` 四输入同位XOR并展开4符号。`recover_single` 直接移位XOR，单个G重建用同位归约，多未知量继续联合消元 |
+| CFWP | 编解码按16个符号划窗，按需初始化，代入领先消元一窗以覆盖移位 | `write_parities` 按输入窗初始化新覆盖的校验范围。联合解码按分子坐标推进，保留跨窗递推余项 |
+| NMA | 编码相邻数据块成对读取，保留上一个符号并在寄存器合并，再更新校验 | `write_parities<true>` 成对加载数据，同时更新G±与按半条带分组的L0/L1。组大小为奇数时拆开跨组的那一对 |
+| TPS | 单擦除使用垂直遍历快速路径。多擦除使用窗口代入和消元。`decode_one_data_chunk` 展开4个符号 | `write_local` 做组内同位XOR，四输入路径展开4符号。`recover_single` 直接移位XOR，单个G重建用同位归约，多未知量继续联合消元 |
 
 每阶段在同一插件入口增量构建并运行对应测试后再继续。增量更新、码转换和THEIA预取保留为候选。
 
@@ -69,7 +69,7 @@ git -C "$CEPH_ROOT" rev-parse HEAD
 
 ## 3. 安装与测试：唯一操作说明
 
-新工作区取得固定Ceph和包含本修订的TSX研究分支。根目录补丁包含本轮完整的Ceph接入差异。已有r33的父工作树若少新基类hunk，先用 `git apply --reverse --check --exclude=src/erasure-code/ErasureCode.cc` 验证旧四处，再用 `git apply --include=src/erasure-code/ErasureCode.cc` 只补新hunk，两条都传TSX根单补丁。
+新工作区取得固定Ceph和包含第0节TSX提交的研究分支。根目录补丁包含本轮完整的Ceph接入差异。已有r33的父工作树若少新基类hunk，先用 `git apply --reverse --check --exclude=src/erasure-code/ErasureCode.cc` 验证旧四处，再用 `git apply --include=src/erasure-code/ErasureCode.cc` 只补新hunk，两条都传TSX根单补丁。
 
 ```bash
 git clone --branch v18.2.7 --depth 1 --recurse-submodules https://github.com/ceph/ceph.git
@@ -117,15 +117,15 @@ bash coding_benchmark_cases.sh 8 3 2048 2000
 
 默认产物：Ceph根 `build/bin/ceph_erasure_code_benchmark`、`build/bin/ceph_test_erasure_code_tsx_lrc`；安装插件 `/usr/local/lib/ceph/erasure-code`。安装系统目录需权限，容器用root；也可统一设置绝对 `INSTALL_PREFIX="$CEPH_ROOT/local_workspace/ec-install"`。`BUILD_DIR`可改绝对构建目录，测试可用 `PLUGIN_DIR`；benchmark脚本支持 `CPU`／`RESULT_DIR`，默认允许的最小CPU、OMP_NUM_THREADS=1及Ceph根 `local_workspace/ec-tests/` 独立结果目录。
 
-**固定论文口径。** 每片2MiB（2048KiB，2,097,152B），FastTT每个编码symbol固定256位（32B，AVX2向量宽度），因此每片主区65,536个symbol。symbol宽度由代码常量决定。普通码字有k+m个片。LRC本配置有8数据＋2全局＋2局部，共12片，profile的m=2只数全局片。每次benchmark输入只包含k个数据片，即 `-s $((k*2048*1024))`。Redis模式12片等长，尾部另存。Inline参考版的G±另含224B片内尾部。脚本默认片长均为2048KiB，其他片长属于开发正确性或冒烟检查。
+**固定论文口径。** 每片2MiB（2048KiB，2,097,152B），FastTT每个编码symbol固定256位（32B，AVX2向量宽度），因此每片主区65,536个symbol。symbol宽度由代码常量决定。普通码字有k+m个片。默认实验配置有8数据＋2全局＋2局部，共12片，profile的m=2只数全局片。每次benchmark输入只包含k个数据片，即 `-s $((k*2048*1024))`。Redis模式12片等长，尾部另存。Inline参考版的G±另含224B片内尾部。脚本默认片长均为2048KiB，其他片长属于开发正确性或冒烟检查。
 
 **影响性能比较的设置。** 记录CPU型号与绑核／线程预算、编译器与SIMD路径、输入模式和seed、擦除集合与修复目标、预热与迭代次数，以及Redis是否计入耗时、连接方式与状态。两组比较要对齐计时范围和吞吐分母，尤其要区分按选片修单片和请求整条带。需要改变既定口径或引入会改变结论的配置时，先告知用户并确认。
 
 **正确性。** `check_correctivity.sh`无参数跑(6,2,tsx2)/(6,3,tsx)/(8,3,tsx)/(10,4,tsx4)，各对照ISA cauchy、Jerasure cauchy_good，8/3加naive/map/win/merge；2MiB片、mt19937低8位、seed1，1..m穷举并逐字节比较，48命令／6522组合。单组入口 `bash check_correctivity.sh 6 2 64 random`。它不含tsxse；tsx_lrc的独立接口测试仍用 `check_lrc.sh`，基于benchmark的流程用下述根脚本。
 
-**LRC内存benchmark。** `bash coding_benchmark_lrc.sh [每片KiB=2048] [每项迭代数=2000] [scaffold|fasttt|fasttt-redis]`。默认`fasttt-redis`，用于后续FastTT性能数据。`scaffold`显式选择ISA对照，片内尾部`fasttt`保留为正确性参考。两种FastTT模式都覆盖全220种三擦除。校验输入数和字节量，保留checks.csv、results.csv和命令日志。Redis模式可用 `REDIS_PORT=16379` 指定实验端口，计时包含连接、摘要与Redis命令。只在可丢弃Redis上运行 `LRC_REDIS_TEST_PORT=16379 bash check_lrc.sh` 的元数据故障测试。`stripe_GiB_s` 以完整8数据片计，helper_bytes只统计片，不含Redis流量。
+**LRC内存benchmark。** `bash coding_benchmark_lrc.sh [每片KiB=2048] [每项迭代数=2000] [scaffold|fasttt|fasttt-redis]`。默认`fasttt-redis`，用于后续FastTT性能数据。`scaffold`显式选择ISA对照，片内尾部`fasttt`保留为正确性参考。两种FastTT模式都覆盖全220种三擦除。校验输入数和字节量，保留checks.csv、results.csv和命令日志。Redis模式可用 `REDIS_PORT=16379` 指定实验端口，计时包含Redis建连和命令。只在可丢弃Redis上运行 `LRC_REDIS_TEST_PORT=16379 bash check_lrc.sh` 的元数据故障测试。`stripe_GiB_s` 以完整8数据片计，helper_bytes只统计片，不含Redis流量。
 
-**FastTT的Redis口径。** 普通 `tsx/tsx2/tsx4` 的编码用P0首32B作键写尾部，多擦除路径按需取回。LRC采用第5节的全局校验摘要方案，局部修复无需访问Redis。r36报告的普通Ceph FastTT列和LRC的FastTT Redis列符合当前口径。片内尾部列用于此前诊断。独立Cerasure A2有自己的内存框架，结果单列。
+**FastTT的Redis口径。** 普通 `tsx/tsx2/tsx4` 的编码用P0首32B作键写尾部，多擦除路径按需取回。LRC按第5节利用各G的首个原始符号写、读尾部，局部修复无需访问Redis。r36报告的LRC Redis列对应旧摘要实现，当前结果用r47。片内尾部列用于此前诊断。独立Cerasure A2有自己的内存框架，结果单列。
 
 **原插件性能。** `coding_benchmark_cases.sh k m 每片KiB 迭代数`；四配置全矩阵163项，编码及各种数据／校验擦除数量组合；默认constant X、固定各类前几个片、跨实现同位置，每项预热2次再计时。`results.csv`存原始时间、KiB、GB/s和GiB/s，`summary.csv`按擦除总数对故障类型吞吐取算术平均；保留命令与日志，失败即停。计时不替代字节正确性检查。全跑：
 
@@ -147,7 +147,7 @@ done
 | `TestErasureCodeTsxLrc.cc` | 通过Registry加载.so，覆盖真实校验、只传选中输入、输出字节、错误路径、守护进程模式 |
 | `check_lrc.sh`、`coding_benchmark_lrc.sh` | 根目录单机合同测试和内存benchmark入口 |
 
-三种模式都使用 `plugin=tsx_lrc k=8 m=2 locality=4`，mode必须显式设置。物理片号0～7为D，8、9为G，10、11为L。m只计两个全局校验，总校验数4。局部组为{0,1,2,3,10}和{4,5,6,7,11}。scaffold使用ISA Cauchy全局和ISA单校验XOR局部，FastTT自己计算移位和普通XOR。
+三种模式使用 `plugin=tsx_lrc m=2`，mode必须显式设置。支持偶数k=4..32，默认8，两个等长局部组，`locality=k/2`（可省略）。`Layout` 推导编号：0～k−1为D，k、k+1为G±，k+2、k+3为L0/L1。总校验数4，默认组仍是{0,1,2,3,10}和{4,5,6,7,11}。scaffold使用ISA Cauchy全局和ISA单校验XOR局部，FastTT自己计算移位和普通XOR。
 
 三种模式继承Ceph18的 `encode/decode/decode_concat`。低层 `encode_chunks` 接收基类准备的全部数据和校验缓冲。成功时公开encode按want筛结果。基类用补丁传播低层错误，失败时清空结果。解码 `chunks` 的key才代表有效输入，`decoded` 的已分配缺片只是工作槽。成功后保留已读片和已恢复片，失败清空输出。已读payload可能共享，计算只写恢复目标。公开decode在目标全部存在时直接返回。
 
@@ -155,20 +155,20 @@ done
 
 ## 5. FastTT内存分片和联合解码
 
-数据长度 `B = 32 * max(1, ceil(原始字节数/256))`，输入由Ceph基类补零到8B。对32B单元t，越界为0，所有移位为非循环。
+FastTT数据长度 `B = 32 * max(1, ceil(原始字节数/(32*k)))`，输入由Ceph基类补零到kB。对32B单元t，越界为0，所有移位为非循环。
 
 ```text
-L0[t] = D0[t] XOR D1[t] XOR D2[t] XOR D3[t]
-L1[t] = D4[t] XOR D5[t] XOR D6[t] XOR D7[t]
-G+[t] = XOR(j=0..7) D_j[t-j]
-G-[t] = XOR(j=0..7) D_j[t-(7-j)]
+L0[t] = XOR(j=0..k/2-1) D_j[t]
+L1[t] = XOR(j=k/2..k-1) D_j[t]
+G+[t] = XOR(j=0..k-1) D_j[t-j]
+G-[t] = XOR(j=0..k-1) D_j[t-(k-1-j)]
 ```
 
-完整G±各B+224字节，D和L均B。`get_chunk_size` 报告B，`decode_concat` 返回补齐后的8B数据。inline模式直接输出完整G±。Redis模式输出前B−32个校验字节再加32B完整G摘要，12片均为B。Redis键为 `fasttt:lrc:tail:v1:<片号>:<SHA-256十六进制>`，值为末32B主片＋224B尾部。摘要随片保存，避免沿用旧版仅凭P0首块查键。
+完整G±各B+32(k−1)字节，D和L均B。`get_chunk_size` 报告B，`decode_concat` 返回补齐后的kB数据。inline模式直接输出完整G±。Redis模式原样输出每个G的前B字节，k+4片均为B。键为 `fasttt:lrc:raw-tail:v1:<片号>:` 加该G首个32B二进制符号，值仅为32(k−1)B的溢出尾部。k=8时每份值224B。同键可覆盖，当前只模拟尾部I/O，实验按条带使用。旧摘要格式的条带须重新编码后运行新基准。
 
-先尝试组内单缺片XOR。仍有全局工作时，`choose_equations` 从可用L0/L1/G+/G−为最多三个剩余缺失数据片选非零行列式的方程，按目标反向裁掉无关步骤。比如D0、D1缺失只需D2～D7、L0、G+。两L可以合成虚拟P0，实现直接选独立局部方程。`recover_fasttt` 单方程直接求出移位后的差值，检查缺片覆盖范围外为零。多方程用至多3阶GF(2)移位多项式。每窗16符号（512B），先代入已知数据，再用余子式生成当前窗分子，按最低次项顺序求商。余子式移位非负，本窗只使用已处理的残差，窗间保留最多21符号的递推余项。分子是定长工作区，所选校验残差仍保留整片，Redis完整摘要也按整片计算。若还缺G，在代入和求商时同步补齐相应G贡献。非法长度返回EINVAL，规划不可解或首尾余项非零返回EIO。四擦除反例{0,1,8,9}只剩一个组内方程。选片未承诺全局最小。
+先尝试组内单缺片XOR。仍有全局工作时，`choose_equations` 从可用L0/L1/G+/G−为最多三个剩余缺失数据片选非零行列式的方程，按目标反向裁掉无关步骤。比如D0、D1缺失只需D2～D7、L0、G+。两L可以合成虚拟P0，实现直接选独立局部方程。`recover_fasttt` 单方程直接求出移位后的差值，检查缺片覆盖范围外为零。多方程用至多3阶GF(2)移位多项式。每窗16符号（512B），先代入已知数据，再用余子式生成当前窗分子，按最低次项顺序求商。余子式移位非负，本窗只使用已处理的残差，64位移位多项式的次数上界为2(k−1)，窗间只保留实际需要的递推余项。分子是定长工作区，所选校验残差仍保留整片。若还缺G，在代入和求商时同步补齐相应G贡献。非法长度返回EINVAL，规划不可解或首尾余项非零返回EIO。四擦除反例{0,1,8,9}只剩一个组内方程。选片未承诺全局最小。
 
-`RedisTails` 每次调用按需建立连接，默认 `127.0.0.1:6379`（profile `redis-port` 可调）。编码把两份值用MSET提交后封装全局片。联合恢复只GET所选G，补齐完整校验并验摘要。重建G后写回元数据。局部修复没有Redis操作。选中键缺失返ENOENT，长度、摘要、连接或Redis回复异常返EIO，暂不重选。实验键无自动过期和回收。两种FastTT模式仅接受 `CODE_ENVIRONMENT_UTILITY` 和 `CODE_ENVIRONMENT_UTILITY_NODOUT`，系统验证按第1节推进。
+`RedisTails` 每次调用按需建立连接，默认 `127.0.0.1:6379`（profile `redis-port` 可调）。编码用MSET写两份尾部后，通过bufferlist引用保留同一缓冲的主片。联合恢复只GET所选G，预留一次主片加尾部的容量，再拷贝主片和尾部。重建G后写回尾部。局部修复没有Redis操作。选中键缺失返ENOENT，长度、连接或Redis回复异常返EIO，暂不重选。实验键无自动过期和回收。两种FastTT模式仅接受 `CODE_ENVIRONMENT_UTILITY` 和 `CODE_ENVIRONMENT_UTILITY_NODOUT`，系统验证按第1节推进。
 
 ## 6. 验证结果与版本边界
 
@@ -186,6 +186,47 @@ r38 逐阶段日志与源码快照在 `local_workspace/ec-tests/fasttt-lrc-avx2-
 
 - 窗口阶段增加17符号的非整窗测试。最终通过5种输入长度的1,490次inline恢复、scaffold 532次恢复／64次预期拒绝、Redis 303次恢复／1次预期拒绝。单方程首尾篡改也按预期拒绝。安装产物确认含256位 `vpxor`。4KiB的Redis fixture与220种三擦除无内存访问错误；benchmark禁用插件退出清理，因此进程退出会报告16B注册对象，日志在 `final-validation/`。
 - 针对EPM追加D0+D1+G+，只读D2～D7、G−、L0，三轮各200次，中位数AVX2阶段8.814ms，EPM阶段8.175ms，最终6.155ms。源码快照单独构建到 `mapping-ab/`。表中其他阶段为单轮探索数据。计时包含插件分配、Redis与摘要，吞吐分母为整条带8×2MiB。
+
+r40 在 `19bd227` 用旧摘要模式已安装产物复测。Xeon 8358、CPU 0、单线程、每片2MiB，按模式轮换执行，三轮每项200次。解码只请求缺片，先用随机数据逐字节校验，再用常量数据计时，各插件按自身规则选片。数据为毫秒/次中位数。
+
+| 用例 | FastTT-LRC Redis | ISA-L LRC scaffold（同布局） | ISA-L Cauchy 8+4（同主片容量） |
+| --- | ---: | ---: | ---: |
+| 编码 | 5.454 | 1.651 | 1.401 |
+| 局部 D2 | 0.393 | 0.361 | 1.431 |
+| 局部 L0 | 0.370 | 0.436 | 1.433 |
+| 跨组 D0+D4 | 0.755 | 0.673 | 1.396 |
+| 同组 D0+D1 | 3.724 | 0.864 | 1.396 |
+| D0+L0 | 3.284 | 1.022 | 1.429 |
+| 同组 D0+D1+D2 | 6.896 | 不可恢复 | 1.388 |
+| D0+D1+G+ | 6.100 | 不可恢复 | 1.384 |
+
+D2和L0的两种LRC均读4片，ISA 8+4读8片。跨组D0+D4可独立做两次局部修复。同组D0+D1均读8片。D0+L0的FastTT读8片、scaffold读9片。ISA 8+4按同片号匹配，它的8～11都是全局校验。FastTT全局路径包含Redis和整片摘要；这些对照尚未拆分耗时。命令、三轮数据、选片与校验日志在 `local_workspace/ec-tests/fasttt-lrc-matched-20261122-QkZ1wyVi/`。
+
+解读对照时注明维度。同布局scaffold用于比较两边均可恢复的用例。它未覆盖FastTT联合方程支持的所有三擦除。无局部组的ISA-L Cauchy 8+4用于评估相同主片容量下的局部读片与容错取舍。2MiB片长下它通过全部495种四擦除。FastTT-LRC在Redis元数据可用时保证任意三擦除，{0,1,8,9}只剩L0能约束D0、D1，实际返回EIO。见同目录 `coverage-4uftV9Pu/`。若按任意三擦除的保证匹配，可用ISA-L Cauchy 8+3，记录它少一片全局校验且没有局部组。FastTT的Redis元数据另计。
+
+r42 路径分测只对照同布局ISA-L LRC。Xeon 8358 CPU 0、单线程、2MiB/片、三轮各300次，随机输入预验。原产物重测总耗时为FastTT/ISA-L的中位毫秒。库函数计时与临时插件内分段计时分别执行，源码和日志保存在 `local_workspace/ec-tests/fasttt-lrc-path-costs-20261122-7SYmavh6/`，正式产物使用原哈希。
+
+- 编码 5.561/1.647。FastTT 两次整片SHA-256 3.342ms，建连和MSET约0.081ms；G±计算0.826ms，两局部校验0.790ms，尾部封装拷贝0.363ms。普通8+3以P0首32B作键并复用插件连接，直接处理移位尾部；P0与G±还共用同一批输入加载。该轮LRC实现单独扫描两个局部校验，r44已融合。
+- D2 0.380/0.406，两边均四输入XOR，计时内无Redis和摘要。D0+D1 3.826/0.878，FastTT一次整片SHA-256 1.679ms、全局/局部残差拷贝合计0.605ms、窗口联合求解1.338ms。ISA-L重用解码表，对每个偏移做无跨符号递推的GF线性组合。D0+L0 3.456/1.042，FastTT单方程计算0.697ms，仍会散列完整G。
+
+r43 用已安装插件各测793种一至四片擦除，随机2MiB/片，目标为全部缺片。按最少选片仅供计划输入，成功逐字节对照，拒绝为EIO且输出为空。按擦除数1/2/3/4，FastTT Redis通过12/12、66/66、220/220、389/495，ISA-L scaffold通过12/12、66/66、188/220、181/495。scaffold拒绝的32种三擦除为同组三数据片（8种）或同组两数据片加一全局校验（24种）。限制来自分层规划。四个校验同失两边都可用8个数据片重建，纯校验擦除的15种非空子集全部通过。FastTT Redis的全局恢复依赖选中校验的尾部元数据，局部修复没有此依赖。逐掩码、分片类型汇总和临时测试源在 `local_workspace/ec-tests/fasttt-lrc-erasure-coverage-20261122-lFeBDjXB/`。
+
+r44 的 `encode_chunks` 直接调用 `write_parities<true>`。每个16符号窗内，前两对更新L0，后两对更新L1，同时写G±；局部输出的第一对直接写入，第二对累加。双全局片重建走 `write_parities<false>`，组内单片恢复走 `write_local`。Redis尾部封装在校验生成后执行。
+
+以已发布 `19bd227` 的产物为基线，2MiB、CPU 0、单线程、Redis模式交替跑五轮各300次，编码中位 5.408→4.903ms/次（减少9.3%）。另三轮插桩中，整片SHA-256 3.335→3.338ms，扣除SHA和Redis建连/命令后的时间 1.938→1.398ms（含编码及拷贝/分配）。合同测试、2MiB的303次Redis恢复和两种已安装插件各793种一至四片擦除复测通过，逐掩码结果与r43一致。原始数据和基线/融合产物在 `local_workspace/ec-tests/fasttt-lrc-fused-encode-20261122-0TmNDhIR/`。
+
+r45 把k推广至4～32的偶数，locality默认k/2，m=2与两个局部组固定。最小k来自ISA子组至少两数据片，最大k来自64位移位多项式。k=6时D2、D3跨组，融合编码分别更新L0、L1。`coding_benchmark_lrc.sh` 仍复测默认8+2+2。其他k直接在benchmark设 `-P k=<偶数> -P m=2 -s <k×2097152>`，擦除D0、D1时加 `--use-minimum --decode-only-erased --erased 0 --erased 1 -w decode`。
+
+- 三种模式通过k=4..32的布局参考和代表性恢复。安装后k=8两种模式各793种一至四擦除结果与选片逐项匹配r43。FastTT Redis在2MiB还穷举通过k=6的175种、k=10的469种一至三擦除，默认脚本通过303次，Redis合同测试Memcheck零错误。k=8编码A/B三轮各300次中位 4.878→4.884ms/次。
+- 同组D0+D1两边均选k片，k=6/8/10分别为12/16/20MiB。FastTT选k−2数据片、G+、L0，scaffold选k−2数据片、两个全局校验。k=8的单轮200次计时为 3.748/0.905ms/次。命令与数据在 `local_workspace/ec-tests/fasttt-lrc-variable-k-20261122-xjZhnBYa/final-rerun/`。
+
+r46 复核原版与LRC解码。普通FastTT一般路径把幸存校验映射到目标恢复缓冲，按窗初始化、代入和消元，Redis通过P0首32B取两份尾部。LRC先局部规划，联合求解前复制校验残差、读取选中的G尾部并校验完整摘要，再按窗构造各缺片的分子并递推。同组D0+D1的r42计时显示整片SHA约1.68ms/个G，Redis建连和GET合计约0.10ms，联合窗口约1.34ms。
+
+`RedisTails::load` 对空vector先assign约2MiB再insert尾部，当前GCC11实测扩容并再拷贝前缀。仅在独立探针插件预留完整长度，保持同一SHA、选片和数据格式，合同测试通过。2MiB、单线程、五轮各300次，D0+D1 3.841→3.627ms，D0+L0 3.259→3.029ms。该轮仅做探针，r47已一并预留容量。记录在 `local_workspace/ec-tests/fasttt-lrc-decode-audit-20261122-evXiftRa/`。
+
+r47 回归普通TSX的原始符号键思路。LRC每个G的首符号加片号作键，保留MSET/GET实测，值只存移位尾部。移除整片SHA-256和插件的OpenSSL链接，编码保留原缓冲中的主片，解码预留一次容量。二进制键测试、尾部字节对照、缺键/短值、尾部重建及三个模式k=4..32合同测试通过。2MiB默认脚本通过303次，安装产物两种模式各793种擦除状态及选片与r43一致，k=6/10的175/469种一至三擦除通过，Redis合同测试Memcheck零错误。
+
+2MiB、CPU 0、单线程、Redis模式五轮各300次，摘要版→原始键版中位毫秒/次：编码 4.863→1.108，D0+D1 3.764→1.843，D0+L0 3.281→1.423。另三轮插桩中，建连加Redis命令编码约0.105ms，D0+D1约0.100ms。日志、产物和对照在 `local_workspace/ec-tests/fasttt-lrc-raw-tail-20261122-bHdZdkWB/`。
 
 r37确认Ceph的普通FastTT和LRC性能统一使用Redis。LRC benchmark省略mode的2MiB冒烟测试已验证默认走`fasttt-redis`，通过303次字节校验。日志在 `local_workspace/ec-tests/fasttt-lrc-redis-default-SNhjBmXy/default.log`。
 
