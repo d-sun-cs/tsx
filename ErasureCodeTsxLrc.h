@@ -4,8 +4,8 @@
 
 #include "erasure-code/ErasureCode.h"
 
-// Fixed-layout scaffold: ISA globals stand in for the future FastTT G+/G-.
-// The scaffold format is experimental and is not the FastTT-LRC storage format.
+// Fixed 8+2+2 layout. FastTT supports inline or Redis-backed tails for
+// experiments. Scaffold mode keeps the equal-length ISA comparison.
 class ErasureCodeTsxLrc final : public ceph::ErasureCode {
 public:
   explicit ErasureCodeTsxLrc(const std::string& directory)
@@ -38,6 +38,7 @@ private:
     unsigned int layer;
     std::set<int> helpers;
     std::set<int> targets;
+    std::vector<int> equations;
   };
   struct RepairPlan {
     std::set<int> inputs;
@@ -46,8 +47,9 @@ private:
 
   std::string directory;
   std::vector<Layer> layers;
-  int layers_init(bool fasttt, std::ostream* ss);
-  int init_fasttt_global_layer(ceph::ErasureCodeInterfaceRef* code, std::ostream* ss);
+  bool fasttt = false;
+  int redis_port = 0;
+  int layers_init(std::ostream* ss);
   int make_repair_plan(const std::set<int>& want,
                        const std::set<int>& available,
                        RepairPlan* plan) const;

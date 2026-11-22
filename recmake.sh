@@ -51,5 +51,5 @@ for plugin in tsx isa jerasure; do
 done
 echo "Installed EC plugins: $prefix/lib/ceph/erasure-code"
 echo "Benchmark: $build/bin/ceph_erasure_code_benchmark"
-echo "LRC scaffold test: bash $tsx/check_lrc.sh"
+echo "LRC FastTT and scaffold tests: bash $tsx/check_lrc.sh"
 echo "LRC in-memory benchmark: bash $tsx/coding_benchmark_lrc.sh"

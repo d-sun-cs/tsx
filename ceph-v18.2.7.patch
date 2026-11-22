@@ -369,3 +369,20 @@ index 59149a74c16..1e17f76e922 100644
    int decode();
    int encode();
  };
+diff --git a/src/erasure-code/ErasureCode.cc b/src/erasure-code/ErasureCode.cc
+index 5212baee251..19cb660381f 100644
+--- a/src/erasure-code/ErasureCode.cc
++++ b/src/erasure-code/ErasureCode.cc
+@@ -194,7 +194,11 @@ int ErasureCode::encode(const set<int> &want_to_encode,
+   int err = encode_prepare(in, *encoded);
+   if (err)
+     return err;
+-  encode_chunks(want_to_encode, encoded);
++  err = encode_chunks(want_to_encode, encoded);
++  if (err) {
++    encoded->clear();
++    return err;
++  }
+   for (unsigned int i = 0; i < k + m; i++) {
+     if (want_to_encode.count(i) == 0)
+       encoded->erase(i);
