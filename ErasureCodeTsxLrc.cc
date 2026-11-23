@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
@@ -28,7 +29,8 @@ constexpr size_t window_bytes = 16 * shift_bytes;
 // determinant has degree at most 2*(k-1), which must fit in Polynomial.
 using Polynomial = uint64_t;
 constexpr int max_data_chunks = (numeric_limits<Polynomial>::digits + 1) / 2;
-constexpr size_t max_feedback_bytes = 2 * (max_data_chunks - 1) * shift_bytes;
+constexpr size_t max_shift_bytes = (max_data_chunks - 1) * shift_bytes;
+constexpr size_t max_feedback_bytes = 2 * max_shift_bytes;
 
 struct Layout {
   int k;
@@ -64,14 +66,15 @@ string tail_key(int id, const char* shard)
   return key;
 }
 
+using RedisReply = unique_ptr<redisReply, decltype(&freeReplyObject)>;
+
 // One lazy connection per call. A local repair has no Redis operations.
 class RedisTails {
   const int port;
   const Layout layout;
   unique_ptr<redisContext, decltype(&redisFree)> connection{nullptr, redisFree};
-  using Reply = unique_ptr<redisReply, decltype(&freeReplyObject)>;
 
-  Reply command(const vector<string>& args)
+  RedisReply command(const vector<string>& args)
   {
     if (!connection) {
       constexpr timeval timeout{1, 0};
@@ -95,23 +98,19 @@ public:
   RedisTails(int port, Layout layout) : port(port), layout(layout) {}
   bool enabled() const { return port != 0; }
 
-  int load(int id, const char* shard, unsigned size, vector<char>* full)
+  int load(int id, const char* shard, RedisReply* tail)
   {
-    const auto reply = command({"GET", tail_key(id, shard)});
+    auto reply = command({"GET", tail_key(id, shard)});
     if (!reply) {
       return -EIO;
     }
     if (reply->type == REDIS_REPLY_NIL) {
       return -ENOENT;
     }
-    const auto tail_size = layout.tail_size();
-    if (reply->type != REDIS_REPLY_STRING || reply->len != tail_size) {
+    if (reply->type != REDIS_REPLY_STRING || reply->len != layout.tail_size()) {
       return -EIO;
     }
-    full->clear();
-    full->reserve(size_t{size} + tail_size);
-    full->assign(shard, shard + size);
-    full->insert(full->end(), reply->str, reply->str + reply->len);
+    *tail = std::move(reply);
     return 0;
   }
 
@@ -162,45 +161,6 @@ void xor_bytes(char* out, const char* in, size_t size)
   }
 }
 
-void xor_window(char* out, size_t begin, size_t end,
-                const char* input, size_t offset, size_t length)
-{
-  const size_t first = max(begin, offset);
-  const size_t last = min(end, offset + length);
-  if (first < last) {
-    xor_bytes(out + (first - begin), input + (first - offset), last - first);
-  }
-}
-
-void write_local(int target, const vector<int>& group, unsigned size,
-                 map<int, bufferlist>& work)
-{
-  char* output = work.at(target).c_str();
-  array<const char*, max_data_chunks / 2> inputs;
-  unsigned index = 0;
-  for (int id : group) {
-    if (id != target) {
-      inputs[index++] = work.at(id).c_str();
-    }
-  }
-  if (index != 4) {
-    for (size_t i = 0; i < size; i += shift_bytes) {
-      auto value = load_symbol(inputs[0] + i);
-      for (unsigned input = 1; input < index; ++input) {
-        value = _mm256_xor_si256(value, load_symbol(inputs[input] + i));
-      }
-      store_symbol(output + i, value);
-    }
-    return;
-  }
-  #pragma GCC unroll 4
-  for (size_t i = 0; i < size; i += shift_bytes) {
-    const auto left = _mm256_xor_si256(load_symbol(inputs[0] + i), load_symbol(inputs[1] + i));
-    const auto right = _mm256_xor_si256(load_symbol(inputs[2] + i), load_symbol(inputs[3] + i));
-    store_symbol(output + i, _mm256_xor_si256(left, right));
-  }
-}
-
 char* prepare_global(Layout layout, int id, unsigned size, map<int, bufferlist>& work)
 {
   auto& output = work.at(id);
@@ -238,7 +198,23 @@ void visit_shifted_sum(span<const ShiftedInput> inputs, size_t size,
   };
   // Every input contributes between the last start and the first end.
   visit_edge(0, interior_begin);
-  for (size_t i = interior_begin; i < size; i += shift_bytes) {
+  size_t i = interior_begin;
+  constexpr unsigned unroll = 4;
+  for (; i + unroll * shift_bytes <= size; i += unroll * shift_bytes) {
+    __m256i sums[unroll]{};
+    for (const auto& input : inputs) {
+      const char* source = input.data + (i - input.offset);
+      #pragma GCC unroll 4
+      for (unsigned s = 0; s < unroll; ++s) {
+        sums[s] = _mm256_xor_si256(sums[s], load_symbol(source + s * shift_bytes));
+      }
+    }
+    #pragma GCC unroll 4
+    for (unsigned s = 0; s < unroll; ++s) {
+      store(i + s * shift_bytes, sums[s]);
+    }
+  }
+  for (; i < size; i += shift_bytes) {
     auto sum = _mm256_setzero_si256();
     for (const auto& input : inputs) {
       sum = _mm256_xor_si256(sum, load_symbol(input.data + (i - input.offset)));
@@ -246,6 +222,30 @@ void visit_shifted_sum(span<const ShiftedInput> inputs, size_t size,
     store(i, sum);
   }
   visit_edge(max(interior_begin, size), length);
+}
+
+void write_local(int target, const vector<int>& group, unsigned size,
+                 map<int, bufferlist>& work)
+{
+  char* output = work.at(target).c_str();
+  array<ShiftedInput, max_data_chunks / 2> inputs;
+  unsigned index = 0;
+  for (int id : group) {
+    if (id != target) {
+      inputs[index++] = {work.at(id).c_str(), 0};
+    }
+  }
+  if (index != 4) {
+    visit_shifted_sum(span(inputs.data(), index), size, size,
+                      [output](size_t i, __m256i value) { store_symbol(output + i, value); });
+    return;
+  }
+  #pragma GCC unroll 4
+  for (size_t i = 0; i < size; i += shift_bytes) {
+    const auto left = _mm256_xor_si256(load_symbol(inputs[0].data + i), load_symbol(inputs[1].data + i));
+    const auto right = _mm256_xor_si256(load_symbol(inputs[2].data + i), load_symbol(inputs[3].data + i));
+    store_symbol(output + i, _mm256_xor_si256(left, right));
+  }
 }
 
 void write_global(Layout layout, int id, unsigned size, map<int, bufferlist>& work)
@@ -259,11 +259,46 @@ void write_global(Layout layout, int id, unsigned size, map<int, bufferlist>& wo
                     [output](size_t i, __m256i value) { store_symbol(output + i, value); });
 }
 
+struct ParityWindow {
+  char* output;
+  size_t overlap_begin;
+  size_t overlap_end;
+
+  void add(size_t offset, __m256i symbol) const
+  {
+    if (offset >= overlap_begin && offset < overlap_end) {
+      xor_symbol(output + offset, symbol);
+    } else {
+      store_symbol(output + offset, symbol);
+    }
+  }
+};
+
+struct WrittenParity {
+  char* output;
+  size_t begin = 0;
+  size_t end = 0;
+
+  ParityWindow add_window(size_t start, size_t stop)
+  {
+    const ParityWindow window{
+      output + start,
+      clamp(begin, start, stop) - start,
+      clamp(end, start, stop) - start,
+    };
+    // Consecutive pairs are two symbols apart and contribute at least
+    // two symbols, so their union stays contiguous in either direction.
+    begin = begin == end ? start : min(begin, start);
+    end = max(end, stop);
+    return window;
+  }
+};
+
 template<bool WriteLocals>
 void write_parities(Layout layout, unsigned size, map<int, bufferlist>& work)
 {
-  char* forward = prepare_global(layout, layout.k, size, work);
-  char* reverse = prepare_global(layout, layout.k + 1, size, work);
+  WrittenParity forward{prepare_global(layout, layout.k, size, work)};
+  WrittenParity reverse{prepare_global(layout, layout.k + 1, size, work)};
   array<char*, 2> locals{};
   if constexpr (WriteLocals) {
     locals = {work.at(layout.local_id(0)).c_str(), work.at(layout.local_id(1)).c_str()};
@@ -272,18 +307,14 @@ void write_parities(Layout layout, unsigned size, map<int, bufferlist>& work)
   for (int data = 0; data < layout.k; ++data) {
     inputs[data] = work.at(data).c_str();
   }
-  const auto tail_size = layout.tail_size();
-  memset(forward, 0, tail_size);
-  memset(reverse, 0, tail_size);
   for (size_t begin = 0; begin < size; begin += window_bytes) {
     const size_t length = min(window_bytes, size - begin);
-    // Earlier windows may have written into the first k-1 symbols.
-    // Initialize only the newly reachable part of each parity.
-    memset(forward + begin + tail_size, 0, length);
-    memset(reverse + begin + tail_size, 0, length);
+    const size_t pair_length = length + shift_bytes;
     for (int data = 0; data < layout.k; data += 2) {
-      char* plus = forward + begin + layout.parity_shift(layout.k, data) * shift_bytes;
-      char* minus = reverse + begin + layout.parity_shift(layout.k + 1, data + 1) * shift_bytes;
+      const size_t plus_offset = begin + layout.parity_shift(layout.k, data) * shift_bytes;
+      const size_t minus_offset = begin + layout.parity_shift(layout.k + 1, data + 1) * shift_bytes;
+      const auto plus = forward.add_window(plus_offset, plus_offset + pair_length);
+      const auto minus = reverse.add_window(minus_offset, minus_offset + pair_length);
       const char* even = inputs[data] + begin;
       const char* odd = inputs[data + 1] + begin;
       char* local = nullptr;
@@ -304,8 +335,8 @@ void write_parities(Layout layout, unsigned size, map<int, bufferlist>& work)
       for (size_t i = 0; i < length; i += shift_bytes) {
         const auto current_even = load_symbol(even + i);
         const auto current_odd = load_symbol(odd + i);
-        xor_symbol(plus + i, _mm256_xor_si256(current_even, prev_odd));
-        xor_symbol(minus + i, _mm256_xor_si256(current_odd, prev_even));
+        plus.add(i, _mm256_xor_si256(current_even, prev_odd));
+        minus.add(i, _mm256_xor_si256(current_odd, prev_even));
         if constexpr (WriteLocals) {
           // An odd-sized group can end in the middle of this pair.
           if (next_local) {
@@ -323,8 +354,8 @@ void write_parities(Layout layout, unsigned size, map<int, bufferlist>& work)
         prev_even = current_even;
         prev_odd = current_odd;
       }
-      xor_symbol(plus + length, prev_odd);
-      xor_symbol(minus + length, prev_even);
+      plus.add(length, prev_odd);
+      minus.add(length, prev_even);
     }
   }
 }
@@ -428,64 +459,134 @@ struct RecoveryColumn {
   char* output;
   array<Polynomial, 3> cofactors;
   array<char*, 2> global_outputs;
-  array<char, window_bytes + max_feedback_bytes> numerator;
+  array<char, max_feedback_bytes> tail;
 };
 
-bool divide_window(RecoveryColumn& column, size_t begin, size_t end,
-                   size_t size, size_t lead, span<const size_t> feedback,
-                   size_t carry, size_t global_count)
+bool zero_window(const char* input, size_t length)
 {
-  auto& numerator = column.numerator;
-  // The lowest exponent supplies the next output block. Subtract the
-  // resulting terms from the numerator in ascending offset order.
-  const size_t length = end - begin;
   for (size_t i = 0; i < length; i += shift_bytes) {
-    const auto value = load_symbol(numerator.data() + i);
-    const size_t position = begin + i;
-    if (position < lead || position >= lead + size) {
-      if (!_mm256_testz_si256(value, value)) {
-        return false;
-      }
-      continue;
-    }
-    const size_t offset = position - lead;
-    store_symbol(column.output + offset, value);
-    for (char* parity : span(column.global_outputs.data(), global_count)) {
-      xor_symbol(parity + offset, value);
-    }
-    for (const size_t distance : feedback) {
-      xor_symbol(numerator.data() + i + distance, value);
+    const auto value = load_symbol(input + i);
+    if (!_mm256_testz_si256(value, value)) {
+      return false;
     }
   }
-  // Carry contributions that leave this window into the next window.
-  memmove(numerator.data(), numerator.data() + length, carry);
-  memset(numerator.data() + carry, 0, length);
   return true;
 }
 
-void substitute_window(char* out, size_t begin, size_t end, unsigned size,
-                       const vector<ShiftedInput>& inputs)
+void divide_output_window(RecoveryColumn& column, size_t begin, size_t end,
+                          size_t size, span<const size_t> feedback,
+                          size_t global_count)
 {
-  for (const auto& input : inputs) {
-    xor_window(out, begin, end, input.data, input.offset, size);
+  const auto globals = span(column.global_outputs.data(), global_count);
+  // Each symbol becomes the quotient in place once earlier feedback has
+  // reached it. Only the contributions beyond the output need scratch.
+  for (size_t offset = begin; offset < end; offset += shift_bytes) {
+    const auto value = load_symbol(column.output + offset);
+    for (char* parity : globals) {
+      xor_symbol(parity + offset, value);
+    }
+    for (const size_t distance : feedback) {
+      const size_t next = offset + distance;
+      char* destination = next < size ? column.output + next
+                                      : column.tail.data() + (next - size);
+      xor_symbol(destination, value);
+    }
   }
 }
 
-bool recover_single(const vector<char>& residual, span<const ShiftedInput> inputs,
-                    size_t size, size_t shift, char* output,
-                    span<char* const> global_outputs)
+// Keep the input shard read-only. When Redis supplies a tail, its reply
+// owns the second segment until the equation has been consumed.
+struct ParityInput {
+  const char* main;
+  size_t main_size;
+  RedisReply tail{nullptr, freeReplyObject};
+
+  size_t size() const { return main_size + (tail ? tail->len : 0); }
+  const char* symbol_at(size_t offset) const
+  {
+    return offset < main_size ? main + offset : tail->str + (offset - main_size);
+  }
+
+  void copy_window(char* output, size_t begin, size_t end) const
+  {
+    const size_t main_end = min(end, main_size);
+    if (begin < main_end) {
+      memcpy(output, main + begin, main_end - begin);
+    }
+    const size_t tail_begin = max(begin, main_size);
+    const size_t available_end = min(end, size());
+    if (tail_begin < available_end) {
+      memcpy(output + (tail_begin - begin), tail->str + (tail_begin - main_size),
+             available_end - tail_begin);
+    }
+    const size_t zero_begin = max(begin, available_end);
+    if (zero_begin < end) {
+      memset(output + (zero_begin - begin), 0, end - zero_begin);
+    }
+  }
+};
+
+// The history serves cofactor shifts. The lookahead receives contributions
+// from the current data window whose parity offsets lie in later windows.
+struct ResidualWindow {
+  size_t history = 0;
+  size_t lookahead = 0;
+  array<char, max_feedback_bytes + window_bytes + max_shift_bytes> bytes;
+
+  char* current() { return bytes.data() + history; }
+};
+
+// A data shard appears in at most one local and two global parities.
+struct SubstitutionInput {
+  const char* data;
+  array<char*, 3> outputs;
+  unsigned residual_count = 0;
+  unsigned output_count = 0;
+};
+
+template<unsigned Count>
+void xor_shared(const char* input, const array<char*, 3>& outputs, size_t length)
+{
+  for (size_t i = 0; i < length; i += shift_bytes) {
+    const auto value = load_symbol(input + i);
+    for (unsigned dst = 0; dst < Count; ++dst) {
+      xor_symbol(outputs[dst] + i, value);
+    }
+  }
+}
+
+void substitute_known(const SubstitutionInput& input, size_t begin, size_t length)
+{
+  auto outputs = input.outputs;
+  // Residual pointers already point to the current window. Reconstructed
+  // globals use absolute offsets into the output shard.
+  for (unsigned g = input.residual_count; g < input.output_count; ++g) {
+    outputs[g] += begin;
+  }
+  const char* data = input.data + begin;
+  switch (input.output_count) {
+  case 1:
+    xor_bytes(outputs[0], data, length);
+    break;
+  case 2:
+    xor_shared<2>(data, outputs, length);
+    break;
+  case 3:
+    xor_shared<3>(data, outputs, length);
+    break;
+  }
+}
+
+bool recover_single(const ParityInput& parity, span<const ShiftedInput> inputs,
+                    size_t size, size_t shift, char* output)
 {
   bool consistent = true;
-  visit_shifted_sum(inputs, size, residual.size(), [&](size_t i, __m256i known) {
-    const auto value = _mm256_xor_si256(load_symbol(residual.data() + i), known);
+  visit_shifted_sum(inputs, size, parity.size(), [&](size_t i, __m256i known) {
+    const auto value = _mm256_xor_si256(load_symbol(parity.symbol_at(i)), known);
     if (i < shift || i >= shift + size) {
       consistent &= _mm256_testz_si256(value, value);
     } else {
-      const size_t offset = i - shift;
-      store_symbol(output + offset, value);
-      for (char* parity : global_outputs) {
-        xor_symbol(parity + offset, value);
-      }
+      store_symbol(output + (i - shift), value);
     }
   });
   return consistent;
@@ -524,36 +625,24 @@ int recover_fasttt(Layout layout, const vector<int>& equations, const set<int>& 
       globals.emplace_back(id, output);
     }
   }
-  array<vector<char>, 3> residuals;
-  array<vector<ShiftedInput>, 3> residual_inputs;
-  array<vector<ShiftedInput>, 2> global_inputs;
+  array<ParityInput, 3> parities;
   for (unsigned row = 0; row < count; ++row) {
     const int parity = equations[row];
-    const char* data = work.at(parity).c_str();
-    auto& residual = residuals[row];
+    auto& input = parities[row];
+    input.main = work.at(parity).c_str();
+    input.main_size = layout.shard_size(parity, size);
     if (tails.enabled() && layout.is_global(parity)) {
-      const int r = tails.load(parity, data, size, &residual);
+      input.main_size = size;
+      const int r = tails.load(parity, input.main, &input.tail);
       if (r) {
         return r;
       }
-    } else {
-      residual.assign(data, data + layout.shard_size(parity, size));
     }
   }
+  vector<pair<int, const char*>> known_data;
   for (int id : helpers) {
-    if (id >= layout.k) {
-      continue;
-    }
-    const char* data = work.at(id).c_str();
-    for (unsigned row = 0; row < count; ++row) {
-      const int shift = layout.parity_shift(equations[row], id);
-      if (shift >= 0) {
-        residual_inputs[row].push_back({data, size_t(shift) * shift_bytes});
-      }
-    }
-    for (unsigned g = 0; g < globals.size(); ++g) {
-      const int parity = globals[g].first;
-      global_inputs[g].push_back({data, size_t(layout.parity_shift(parity, id)) * shift_bytes});
+    if (id < layout.k) {
+      known_data.emplace_back(id, work.at(id).c_str());
     }
   }
   const auto map_outputs = [&globals, layout](int data, array<char*, 2>& outputs) {
@@ -562,35 +651,61 @@ int recover_fasttt(Layout layout, const vector<int>& equations, const set<int>& 
       outputs[g] = output + layout.parity_shift(parity, data) * shift_bytes;
     }
   };
-  if (count == 1) {
+  if (count == 1 && globals.empty()) {
     const int shift = layout.parity_shift(equations.front(), missing.front());
     if (shift < 0) {
       return -EIO;
     }
-    for (unsigned g = 0; g < globals.size(); ++g) {
-      for (const auto& input : global_inputs[g]) {
-        xor_bytes(globals[g].second + input.offset, input.data, size);
+    vector<ShiftedInput> residual_inputs;
+    for (const auto& [id, data] : known_data) {
+      const int input_shift = layout.parity_shift(equations.front(), id);
+      if (input_shift >= 0) {
+        residual_inputs.push_back({data, size_t(input_shift) * shift_bytes});
       }
     }
-    array<char*, 2> outputs;
-    map_outputs(missing.front(), outputs);
-    return recover_single(residuals.front(), residual_inputs.front(), size,
-                          size_t(shift) * shift_bytes, work.at(missing.front()).c_str(),
-                          span(outputs.data(), globals.size())) ? 0 : -EIO;
+    return recover_single(parities.front(), residual_inputs, size,
+                          size_t(shift) * shift_bytes, work.at(missing.front()).c_str()) ? 0 : -EIO;
   }
+  // When a global parity is also missing, share the windowed input loads
+  // even for one erased data shard. Its determinant is a single shift.
   const auto matrix = make_matrix(layout, equations, missing);
   const auto divisor = determinant(matrix, count);
   if (!divisor) {
     return -EIO;
   }
   array<RecoveryColumn, 3> columns;
+  array<ResidualWindow, 3> residuals;
   for (unsigned col = 0; col < count; ++col) {
     auto& column = columns[col];
     column.output = work.at(missing[col]).c_str();
     for (unsigned row = 0; row < count; ++row) {
-      column.cofactors[row] = cofactor(matrix, count, row, col);
+      const auto terms = cofactor(matrix, count, row, col);
+      column.cofactors[row] = terms;
+      if (terms) {
+        const size_t history = (bit_width(terms) - 1) * shift_bytes;
+        residuals[row].history = max(residuals[row].history, history);
+      }
     }
     map_outputs(missing[col], column.global_outputs);
+  }
+  vector<SubstitutionInput> substitutions;
+  substitutions.reserve(known_data.size());
+  for (const auto& [id, data] : known_data) {
+    SubstitutionInput input{data, {}};
+    for (unsigned row = 0; row < count; ++row) {
+      const int shift = layout.parity_shift(equations[row], id);
+      if (shift >= 0) {
+        const size_t offset = size_t(shift) * shift_bytes;
+        auto& residual = residuals[row];
+        residual.lookahead = max(residual.lookahead, offset);
+        input.outputs[input.residual_count++] = residual.current() + offset;
+      }
+    }
+    input.output_count = input.residual_count;
+    for (const auto& [parity, output] : globals) {
+      input.outputs[input.output_count++] = output + layout.parity_shift(parity, id) * shift_bytes;
+    }
+    substitutions.push_back(input);
   }
   const auto lead_term = first_term(divisor);
   const size_t lead = lead_term * shift_bytes;
@@ -599,41 +714,92 @@ int recover_fasttt(Layout layout, const vector<int>& equations, const set<int>& 
     feedback.push_back((first_term(terms) - lead_term) * shift_bytes);
   }
   const size_t carry = feedback.empty() ? 0 : feedback.back();
+  const size_t data_end = lead + size;
+  // A cofactor times its residual contains at most two global shifts.
+  const size_t extent = size_t{size} + 2 * layout.tail_size();
   for (unsigned col = 0; col < count; ++col) {
-    fill_n(columns[col].numerator.data(), window_bytes + carry, 0);
+    memset(columns[col].tail.data(), 0, extent - data_end);
   }
-  const size_t extent = size_t{size} + count * layout.tail_size();
-  const size_t global_length = size_t{size} + layout.tail_size();
+  for (unsigned row = 0; row < count; ++row) {
+    auto& residual = residuals[row];
+    fill_n(residual.bytes.data(), residual.history, 0);
+    parities[row].copy_window(residual.current(), 0, residual.lookahead);
+  }
+  array<char, window_bytes> prefix;
   // Cramer's rule over GF(2)[z]. With nonnegative cofactor shifts, this
-  // numerator window only uses residuals prepared up through its end.
-  for (size_t begin = 0; begin < extent; begin += window_bytes) {
-    const size_t end = min(begin + window_bytes, extent);
+  // numerator window uses the current residual window and bounded history.
+  for (size_t begin = 0; begin < extent;) {
+    size_t end = min(begin + window_bytes, extent);
+    const bool in_data = begin >= lead && begin < data_end;
+    // A window lies entirely in the prefix, the destination, or the tail.
+    if (begin < lead) {
+      end = min(end, lead);
+    } else if (in_data) {
+      end = min(end, data_end);
+    }
+    const size_t length = end - begin;
     for (unsigned row = 0; row < count; ++row) {
       auto& residual = residuals[row];
-      if (begin < residual.size()) {
-        substitute_window(residual.data() + begin, begin, min(end, residual.size()),
-                          size, residual_inputs[row]);
-      }
+      parities[row].copy_window(residual.current() + residual.lookahead,
+                               begin + residual.lookahead, end + residual.lookahead);
     }
-    if (begin < global_length) {
-      for (unsigned g = 0; g < globals.size(); ++g) {
-        substitute_window(globals[g].second + begin, begin, min(end, global_length),
-                          size, global_inputs[g]);
+    if (begin < size) {
+      const size_t data_length = min(end, size_t{size}) - begin;
+      for (const auto& input : substitutions) {
+        substitute_known(input, begin, data_length);
       }
     }
     for (unsigned col = 0; col < count; ++col) {
       auto& column = columns[col];
+      char* window;
+      size_t previous = 0;
+      if (begin < lead) {
+        window = prefix.data();
+      } else if (in_data) {
+        const size_t offset = begin - lead;
+        window = column.output + offset;
+        previous = offset ? min(carry, length) : 0;
+        // The first cofactor will initialize fresh bytes in this window.
+        // Only future bytes that can receive feedback need to be zeroed.
+        const size_t known_end = offset ? offset + carry : 0;
+        const size_t clear_begin = min(size_t{size}, max(end - lead, known_end));
+        const size_t clear_end = min(size_t{size}, end - lead + carry);
+        memset(column.output + clear_begin, 0, clear_end - clear_begin);
+      } else {
+        window = column.tail.data() + (begin - data_end);
+        previous = length;
+      }
+      bool initialized = previous == length;
       for (unsigned row = 0; row < count; ++row) {
         const auto& residual = residuals[row];
         for (auto terms = column.cofactors[row]; terms; terms &= terms - 1) {
-          xor_window(column.numerator.data(), begin, end, residual.data(),
-                     first_term(terms) * shift_bytes, residual.size());
+          const auto offset = residual.history - first_term(terms) * shift_bytes;
+          const char* source = residual.bytes.data() + offset;
+          if (initialized) {
+            xor_bytes(window, source, length);
+          } else {
+            // A nonzero determinant guarantees at least one cofactor.
+            // Preserve feedback in the prefix and copy the fresh range.
+            xor_bytes(window, source, previous);
+            memcpy(window + previous, source + previous, length - previous);
+            initialized = true;
+          }
         }
       }
-      if (!divide_window(column, begin, end, size, lead, feedback, carry, globals.size())) {
+      if (in_data) {
+        divide_output_window(column, begin - lead, end - lead, size, feedback, globals.size());
+      } else if (!zero_window(window, length)) {
         return -EIO;
       }
     }
+    for (unsigned row = 0; row < count; ++row) {
+      auto& residual = residuals[row];
+      const size_t keep = residual.history + residual.lookahead;
+      if (keep) {
+        memmove(residual.bytes.data(), residual.bytes.data() + length, keep);
+      }
+    }
+    begin = end;
   }
   return 0;
 }
