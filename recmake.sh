@@ -44,7 +44,7 @@ cmake -S "$ceph" -B "$build" -G Ninja \
 cmake --build "$build" --parallel "$jobs" --target \
   ceph_erasure_code_benchmark ec_tsx ec_tsx2 ec_tsx4 ec_tsxse \
   ec_tsxnaive ec_tsxmap ec_tsxwin ec_tsxmerge ec_isa ec_jerasure \
-  ec_tsx_lrc ceph_test_erasure_code_tsx_lrc
+  ec_tsx_lrc ceph_test_erasure_code_tsx_lrc ec_tsx_mt ceph_test_erasure_code_tsx_mt
 # Install only these three plugin subdirectories, not the whole Ceph project.
 for plugin in tsx isa jerasure; do
   cmake -P "$build/src/erasure-code/$plugin/cmake_install.cmake"
@@ -53,3 +53,4 @@ echo "Installed EC plugins: $prefix/lib/ceph/erasure-code"
 echo "Benchmark: $build/bin/ceph_erasure_code_benchmark"
 echo "LRC FastTT and scaffold tests: bash $tsx/check_lrc.sh"
 echo "LRC in-memory benchmark: bash $tsx/coding_benchmark_lrc.sh"
+echo "Multithreaded FastTT in-memory tests: bash $tsx/coding_benchmark_mt.sh"

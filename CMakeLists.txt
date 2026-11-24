@@ -180,10 +180,28 @@ target_link_libraries(ec_tsx_lrc json_spirit ${HIREDIS_LIB})
 set_target_properties(ec_tsx_lrc PROPERTIES INSTALL_RPATH "")
 install(TARGETS ec_tsx_lrc DESTINATION ${erasure_plugin_dir})
 
+add_library(ec_tsx_mt SHARED
+  ErasureCodePluginTsxMt.cc
+  ErasureCodeTsxMt.cc
+  $<TARGET_OBJECTS:erasure_code_objs>
+  $<TARGET_OBJECTS:crush_objs>
+  ${CMAKE_SOURCE_DIR}/src/common/str_map.cc)
+target_include_directories(ec_tsx_mt PRIVATE "${HIREDIS_INCLUDE_DIR}")
+target_compile_options(ec_tsx_mt PRIVATE -mavx2 -O3)
+target_link_libraries(ec_tsx_mt json_spirit ${HIREDIS_LIB} OpenMP::OpenMP_CXX)
+set_target_properties(ec_tsx_mt PROPERTIES INSTALL_RPATH "")
+install(TARGETS ec_tsx_mt DESTINATION ${erasure_plugin_dir})
+
 if(WITH_TESTS)
   add_executable(ceph_test_erasure_code_tsx_lrc TestErasureCodeTsxLrc.cc)
   target_include_directories(ceph_test_erasure_code_tsx_lrc PRIVATE "${HIREDIS_INCLUDE_DIR}")
   target_link_libraries(ceph_test_erasure_code_tsx_lrc
     ceph-common global ${CMAKE_DL_LIBS} ${HIREDIS_LIB})
   add_dependencies(ceph_test_erasure_code_tsx_lrc ec_tsx_lrc ec_isa)
+
+  add_executable(ceph_test_erasure_code_tsx_mt TestErasureCodeTsxMt.cc)
+  target_include_directories(ceph_test_erasure_code_tsx_mt PRIVATE "${HIREDIS_INCLUDE_DIR}")
+  target_link_libraries(ceph_test_erasure_code_tsx_mt
+    ceph-common global ${CMAKE_DL_LIBS} ${HIREDIS_LIB})
+  add_dependencies(ceph_test_erasure_code_tsx_mt ec_tsx_mt)
 endif()
